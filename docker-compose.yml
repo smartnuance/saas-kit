@@ -1,0 +1,30 @@
+version: '3.9'
+
+services:
+
+  pg:
+    image: postgres:13.1
+    volumes:
+      - saas-kit-pg:/var/lib/postgresql/data
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "${DB_PORT}:5432"
+    restart: unless-stopped
+  
+networks:
+  default:
+    external:
+      # create network once globally per docker host:
+      # > docker network create saas-kit-net
+      name: saas-kit-net
+
+volumes:
+  # create volume once globally per docker host:
+  # > docker volume create --name=saas-kit-pg
+  saas-kit-pg:
+    external: true
