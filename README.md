@@ -37,7 +37,7 @@ Create a local postgres instance or use the provided `docker-compose.yml` file t
 
 For developers's convenience all commands necessary for development like code generation is done via `go:generate` commands at the top of each service's `run.go` or for very lazy developers they are all delegated from one file and invoked by a single generate command:
 
-> go generate ./pkg/auth/run.go
+> go generate ./pkg/auth
 
 ### Run service(s)
 
@@ -47,8 +47,18 @@ Run all sevices by separate go routines:
 
 Run single service:
 
-> go run ./cmd/auth/main.go
+> go run ./cmd/auth
 
+
+### Build service(s)
+
+To include build information we use the [`govvv`](github.com/ahmetb/govvv) utility:
+
+> go get github.com/ahmetb/govvv
+
+Then
+
+> govvv build ./cmd/auth -pkg github.com/smartnuance/saas-kit/pkg/auth
 
 ## Packages used
 

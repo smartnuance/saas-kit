@@ -18,6 +18,8 @@ import (
 	"github.com/smartnuance/saas-kit/pkg/lib"
 )
 
+// Build Variables picked up by govvv
+// go get github.com/ahmetb/govvv
 var (
 	GitCommit string
 	Version   string
