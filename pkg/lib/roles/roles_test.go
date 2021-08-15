@@ -1,9 +1,10 @@
 package roles
 
 import (
-	"encoding/json"
 	"reflect"
 	"testing"
+
+	"github.com/smartnuance/saas-kit/pkg/lib"
 )
 
 func Test_initRoles(t *testing.T) {
@@ -55,19 +56,11 @@ func Test_initRoles(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			c, s := initRoles(tt.inheritedRoles)
 			if !reflect.DeepEqual(c, tt.expClosure) {
-				t.Errorf("got = \n%s;\nwant \n%s", pp(c), pp(tt.expClosure))
+				t.Errorf("got = \n%s;\nwant \n%s", lib.PP(c), lib.PP(tt.expClosure))
 			}
 			if !reflect.DeepEqual(s, tt.expSwitchRoles) {
-				t.Errorf("got = \n%s;\nwant \n%s", pp(s), pp(tt.expSwitchRoles))
+				t.Errorf("got = \n%s;\nwant \n%s", lib.PP(s), lib.PP(tt.expSwitchRoles))
 			}
 		})
 	}
-}
-
-func pp(v interface{}) string {
-	b, err := json.MarshalIndent(v, "", "  ")
-	if err == nil {
-		return string(b)
-	}
-	return err.Error()
 }
