@@ -18,12 +18,13 @@ import (
 	"github.com/smartnuance/saas-kit/pkg/lib"
 )
 
+const ServiceName = "auth"
+
 // Build Variables picked up by govvv
 // go get github.com/ahmetb/govvv
 var (
 	GitCommit string
 	Version   string
-	BuildDate string
 )
 
 type Env struct {
@@ -63,17 +64,23 @@ func Load() (env Env, err error) {
 		return
 	}
 
-	env.release = envs["SAAS_KIT_ENV"] == "prod"
+	env.release = lib.Stage(envs["SAAS_KIT_ENV"]) == lib.PROD
 
-	env.DatabaseEnv = lib.NewDatabaseEnv(envs)
+	env.DatabaseEnv = lib.LoadDatabaseEnv(envs)
 	return
 }
 
-func (env Env) Setup() (service Service, err error) {
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable", env.Host, env.User, env.Password, env.DBName, env.Port)
-	service.DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	s.Env = env
+
+	lib.SetupLogger(ServiceName, Version, env.release)
+
+	log.Debug().Str("GitCommit", GitCommit).Interface("ServiceStruct", s).Msg("Setup service")
+
+	s.DB, err = lib.SetupDatabase(env.DatabaseEnv)
 	if err != nil {
-		err = errors.Wrap(err, "failed to connect database at "+dsn)
+		return
+	}
+
 	}
 
 	if env.release {
