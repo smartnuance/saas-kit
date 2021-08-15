@@ -3,18 +3,17 @@ package auth
 //go:generate go-bindata -ignore=\\.gitignore -o ./bindata/migrations.go -prefix "migrations/" -pkg gen migrations/...
 
 import (
-	"fmt"
-
 	"github.com/gin-gonic/gin"
 	"github.com/golang-migrate/migrate/v4"
 	migrateDriver "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	migrateBindata "github.com/golang-migrate/migrate/v4/source/go_bindata"
 	"github.com/pkg/errors"
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
+	"github.com/rs/zerolog/log"
 	migrations "github.com/smartnuance/saas-kit/pkg/auth/bindata"
+	"github.com/smartnuance/saas-kit/pkg/auth/tokens"
 	"github.com/smartnuance/saas-kit/pkg/lib"
 )
 
@@ -27,14 +26,19 @@ var (
 	Version   string
 )
 
+// Env is a hierarchical environment configuration for the authentication service and it's API handlers.
 type Env struct {
 	lib.DatabaseEnv
+	tokens.TokenEnv
 	release bool
 }
 
+// Service offers the APIs of the authentication service.
+// This struct holds hierarchically structured state that is shared between requests.
 type Service struct {
 	Env
-	DB *gorm.DB
+	DB       *gorm.DB
+	TokenAPI *tokens.TokenController
 }
 
 func Main() (authService Service, err error) {
@@ -67,9 +71,11 @@ func Load() (env Env, err error) {
 	env.release = lib.Stage(envs["SAAS_KIT_ENV"]) == lib.PROD
 
 	env.DatabaseEnv = lib.LoadDatabaseEnv(envs)
+	env.TokenEnv = tokens.Load(envs)
 	return
 }
 
+func (env Env) Setup() (s Service, err error) {
 	s.Env = env
 
 	lib.SetupLogger(ServiceName, Version, env.release)
@@ -81,11 +87,15 @@ func Load() (env Env, err error) {
 		return
 	}
 
+	s.TokenAPI, err = tokens.Setup(s.TokenEnv)
+	if err != nil {
+		return
 	}
 
 	if env.release {
 		gin.SetMode(gin.ReleaseMode)
 	}
+
 	return
 }
 
@@ -129,23 +139,6 @@ func (s *Service) AutoMigrate() error {
 }
 
 func (s *Service) Run() (err error) {
-
-	router := gin.Default()
-
-	// v1 := router.Group("/api/v1")
-	// userAPI := v1.Group("/users")
-	// {
-	// 	userAPI.GET("/:id", user)
-	// 	userAPI.PUT("/:id", updateUser)
-	// 	userAPI.DELETE("/:id", deleteUser)
-	// }
-	// tokenAPI := router.Group("/token")
-	// {
-	// 	tokenAPI.POST("/:id", login)
-	// 	tokenAPI.POST("/:id", refresh)
-	// 	tokenAPI.POST("/:id", revoke)
-	// }
-
-	err = router.Run()
+	err = router(s).Run()
 	return
 }
