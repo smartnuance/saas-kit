@@ -35,6 +35,8 @@ Create a local postgres instance or use the provided `docker-compose.yml` file t
 
 ### Go-bindata
 
+> go get -u github.com/go-bindata/go-bindata/...
+
 For developers's convenience all commands necessary for development like code generation is done via `go:generate` commands at the top of each service's `run.go` or for very lazy developers they are all delegated from one file and invoked by a single generate command:
 
 > go generate ./pkg/auth
@@ -54,11 +56,15 @@ Run single service:
 
 To include build information we use the [`govvv`](github.com/ahmetb/govvv) utility:
 
-> go get github.com/ahmetb/govvv
+> go get -u github.com/ahmetb/govvv
 
 Then
 
-> govvv build ./cmd/auth -pkg github.com/smartnuance/saas-kit/pkg/auth
+> govvv build -pkg github.com/smartnuance/saas-kit/pkg/auth -o ./bin/ ./cmd/auth
+
+
+> ./bin/auth
+
 
 ## Packages used
 
@@ -69,5 +75,15 @@ Database interaction:
 - [gorm](https://gorm.io) for postgres, **not using auto-migrations**
 - [golang-migrate](https://github.com/golang-migrate/migrate) for **clean up/down migrations**
 
+Token handling:
+- [jwt-go](https://github.com/golang-jwt/jwt) (v4!)
+
+Logging:
+- [zerolog](https://github.com/rs/zerolog)
+
 Asset handling:
 - [go-bindata](https://github.com/go-bindata/go-bindata)
+
+Environment & Building:
+- [godotenv](https://github.com/joho/godotenv)
+- [govvv](https://github.com/ahmetb/govvv)
