@@ -62,6 +62,11 @@ Then
 
 > govvv build -pkg github.com/smartnuance/saas-kit/pkg/auth -o ./bin/ ./cmd/auth
 
+To create reproducable builds, you can use [EARTHLY](https://docs.earthly.dev):
+
+> earthly --build-arg service=auth +build
+
+With either way the resulting runnable is executed by:
 
 > ./bin/auth
 
@@ -87,3 +92,4 @@ Asset handling:
 Environment & Building:
 - [godotenv](https://github.com/joho/godotenv)
 - [govvv](https://github.com/ahmetb/govvv)
+- [EARTHLY](https://docs.earthly.dev)
