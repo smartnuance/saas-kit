@@ -16,6 +16,6 @@ build:
     SAVE ARTIFACT $service AS LOCAL bin/$service
 
 lint:
-    RUN go get golang.org/x/lint/golint
-    COPY cmd pkg ./
-    RUN golint -set_exit_status ./...
+    RUN go install honnef.co/go/tools/cmd/staticcheck@2021.1
+    COPY . ./
+    RUN staticcheck ./...

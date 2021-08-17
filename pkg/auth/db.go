@@ -8,6 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
+//lint:file-ignore U1000 Ignore unused fields, gorm model fields are used to create migrations
 type (
 	Instance struct {
 		gorm.Model

@@ -82,7 +82,7 @@ func (c *TokenController) GenerateToken(email string, isUser bool) (token string
 func (c *TokenController) ValidateToken(encodedToken string) (*jwt.Token, error) {
 	return jwt.Parse(encodedToken, func(token *jwt.Token) (interface{}, error) {
 		if _, isvalid := token.Method.(*jwt.SigningMethodHMAC); !isvalid {
-			return nil, fmt.Errorf("Invalid token", token.Header["alg"])
+			return nil, fmt.Errorf("invalid token (%s)", token.Header["alg"])
 		}
 		return []byte(c.SigningKeyPath), nil
 	})

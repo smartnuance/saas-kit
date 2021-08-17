@@ -93,3 +93,15 @@ Environment & Building:
 - [godotenv](https://github.com/joho/godotenv)
 - [govvv](https://github.com/ahmetb/govvv)
 - [EARTHLY](https://docs.earthly.dev)
+
+# Contribute
+
+## Configure linter
+
+We are using the configurable [staticcheck](https://staticcheck.io/docs/) linter.
+
+> staticcheck ./...
+
+Check that your [VScode](https://code.visualstudio.com/) workspace settings contain
+
+    "go.lintTool": "staticcheck"
