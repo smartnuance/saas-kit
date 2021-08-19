@@ -23,7 +23,7 @@ Choose your environment `dev` (default), `test` or `prod`:
 
 Create an environment file `.env.dev` or `.env.test` for the environments used, where you might want to override some env-specific variables.
 
-###  database
+### Database
 
 Create a local postgres instance or use the provided `docker-compose.yml` file to set it up:
 
@@ -33,9 +33,18 @@ Create a local postgres instance or use the provided `docker-compose.yml` file t
 
 > docker-compose --env-file .env.dev up
 
+To interact with database, we use a schema first approach with [sqlboiler](https://github.com/volatiletech/sqlboiler#getting-started). It generates type-safe code to interact with the DB.
+
+For command line tools in development:
+
+> go install github.com/volatiletech/sqlboiler/v4@latest
+
+> go install github.com/volatiletech/sqlboiler/v4/drivers/sqlboiler-psql@latest
+
+
 ### Go-bindata
 
-> go get -u github.com/go-bindata/go-bindata/...
+> go install github.com/go-bindata/go-bindata/...@latest
 
 For developers's convenience all commands necessary for development like code generation is done via `go:generate` commands at the top of each service's `run.go` or for very lazy developers they are all delegated from one file and invoked by a single generate command:
 
@@ -56,7 +65,7 @@ Run single service:
 
 To include build information we use the [`govvv`](github.com/ahmetb/govvv) utility:
 
-> go get -u github.com/ahmetb/govvv
+> go install github.com/ahmetb/govvv@latest
 
 Then
 
@@ -77,7 +86,7 @@ API framework:
 - [gin](https://github.com/gin-gonic/gin)
 
 Database interaction:
-- [gorm](https://gorm.io) for postgres, **not using auto-migrations**
+- [sqlboiler](https://github.com/volatiletech/sqlboiler#getting-started) for generated db interaction
 - [golang-migrate](https://github.com/golang-migrate/migrate) for **clean up/down migrations**
 
 Token handling:

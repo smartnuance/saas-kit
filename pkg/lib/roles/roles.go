@@ -1,7 +1,7 @@
 package roles
 
 import (
-	"errors"
+	"github.com/pkg/errors"
 
 	"container/list"
 

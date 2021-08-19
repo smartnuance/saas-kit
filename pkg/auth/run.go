@@ -1,15 +1,19 @@
 package auth
 
 //go:generate go-bindata -ignore=\\.gitignore -o ./bindata/migrations.go -prefix "migrations/" -pkg gen migrations/...
+//go:generate go-bindata -ignore=\\.gitignore -o ./bindata/migrations.go -prefix "migrations/" -pkg gen migrations/...
 
 import (
+	"database/sql"
+	"flag"
+	"os"
+
 	"github.com/gin-gonic/gin"
 	"github.com/golang-migrate/migrate/v4"
 	migrateDriver "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	migrateBindata "github.com/golang-migrate/migrate/v4/source/go_bindata"
 	"github.com/pkg/errors"
-	"gorm.io/gorm"
 
 	"github.com/rs/zerolog/log"
 	migrations "github.com/smartnuance/saas-kit/pkg/auth/bindata"
@@ -37,11 +41,16 @@ type Env struct {
 // This struct holds hierarchically structured state that is shared between requests.
 type Service struct {
 	Env
-	DB       *gorm.DB
+	DB       *sql.DB
 	TokenAPI *tokens.TokenController
 }
 
+var migrateDownFlag bool
+var fakeMigrationVersion int
+var clearDBFlag bool
+
 func Main() (authService Service, err error) {
+	// Common steps for all command options
 	var env Env
 	env, err = Load()
 	if err != nil {
@@ -51,14 +60,47 @@ func Main() (authService Service, err error) {
 	if err != nil {
 		return
 	}
-	err = authService.Migrate()
-	if err != nil {
+
+	// Parse command options
+	migrateCommand := flag.NewFlagSet("migrate", flag.ExitOnError)
+	migrateCommand.BoolVar(&migrateDownFlag, "down", false, "migrate DB all down to empty")
+	migrateCommand.IntVar(&fakeMigrationVersion, "fake", -1, "fakes DB version to specific version without actually migrating")
+	migrateCommand.BoolVar(&clearDBFlag, "clear", false, "clear DB")
+	flag.Parse()
+
+	// Check if a subcommand has been provided
+	// os.Arg[0] is the main command
+	// os.Arg[1] will be the subcommand
+	if len(os.Args) >= 2 {
+		// Switch on the subcommand and parse the flags for appropriate FlagSet
+		// os.Args[2:] will be all arguments starting after the subcommand at os.Args[1]
+		switch os.Args[1] {
+		case "migrate":
+			migrateCommand.Parse(os.Args[2:])
+
+			if fakeMigrationVersion != -1 {
+				err = authService.FakeMigration(fakeMigrationVersion)
+			} else if migrateDownFlag {
+				err = authService.MigrateDown()
+			} else if clearDBFlag {
+				err = authService.ClearDB()
+			} else {
+				err = authService.Migrate()
+			}
+			return
+		default:
+			os.Exit(1)
+		}
+	} else {
+		// Just migrate up and run the service
+		err = authService.Migrate()
+		if err != nil {
+			return
+		}
+		err = authService.Run()
 		return
 	}
-	err = authService.Run()
-	if err != nil {
-		return
-	}
+
 	return
 }
 
@@ -71,7 +113,7 @@ func Load() (env Env, err error) {
 	env.release = lib.Stage(envs["SAAS_KIT_ENV"]) == lib.PROD
 
 	env.DatabaseEnv = lib.LoadDatabaseEnv(envs)
-	env.TokenEnv = tokens.Load(envs)
+	env.TokenEnv = tokens.Load(envs, ServiceName)
 	return
 }
 
@@ -99,15 +141,10 @@ func (env Env) Setup() (s Service, err error) {
 	return
 }
 
-// Migrate migrates with the DB instance of the service up to the newest version
-func (s *Service) Migrate() error {
-	db, err := s.DB.DB()
+func (s *Service) migrator() (*migrate.Migrate, error) {
+	driver, err := migrateDriver.WithInstance(s.DB, &migrateDriver.Config{})
 	if err != nil {
-		return err
-	}
-	driver, err := migrateDriver.WithInstance(db, &migrateDriver.Config{})
-	if err != nil {
-		return err
+		return nil, err
 	}
 
 	migrationsRessource := migrateBindata.Resource(migrations.AssetNames(),
@@ -116,12 +153,22 @@ func (s *Service) Migrate() error {
 		})
 	d, err := migrateBindata.WithInstance(migrationsRessource)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	migrator, err := migrate.NewWithInstance("go-bindata", d, s.Env.DBName, driver)
 	if err != nil {
-		return errors.Wrap(err, "failed to migrate database "+s.Env.DBName)
+		return nil, errors.Wrap(err, "failed to migrate database "+s.Env.DBName)
+	}
+	return migrator, nil
+}
+
+// Migrate migrates the DB up to the newest version
+// Uses the DB instance of the service.
+func (s *Service) Migrate() error {
+	migrator, err := s.migrator()
+	if err != nil {
+		return err
 	}
 	err = migrator.Up()
 	// ignore error happing on no change to database necessary
@@ -131,11 +178,49 @@ func (s *Service) Migrate() error {
 	return err
 }
 
-// AutoMigrate alters tables and constraints with the DB instance of the service using gin's auto migration
-//
-// Only use this during development to write sql files in migrations/.
-func (s *Service) AutoMigrate() error {
-	return s.DB.AutoMigrate(&Profile{})
+// ClearDB migrates the DB down to an empty database.
+// Uses the DB instance of the service.
+func (s *Service) ClearDB() error {
+	migrator, err := s.migrator()
+	if err != nil {
+		return err
+	}
+	err = migrator.Drop()
+	// ignore error happing on no change to database necessary
+	if err != migrate.ErrNoChange {
+		return err
+	}
+	return nil
+}
+
+// MigrateDown migrates the DB down to an empty database.
+// Uses the DB instance of the service.
+func (s *Service) MigrateDown() error {
+	migrator, err := s.migrator()
+	if err != nil {
+		return err
+	}
+	err = migrator.Down()
+	// ignore error happing on no change to database necessary
+	if err != migrate.ErrNoChange {
+		return err
+	}
+	return nil
+}
+
+// FakeMigration fakes a specific version without migrating.
+// Uses the DB instance of the service.
+func (s *Service) FakeMigration(version int) error {
+	migrator, err := s.migrator()
+	if err != nil {
+		return err
+	}
+	err = migrator.Force(version)
+	// ignore error happing on no change to database necessary
+	if err != migrate.ErrNoChange {
+		return err
+	}
+	return nil
 }
 
 func (s *Service) Run() (err error) {

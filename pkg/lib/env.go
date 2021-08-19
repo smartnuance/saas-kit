@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"database/sql"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -9,8 +10,7 @@ import (
 	"fmt"
 
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
 type Stage string
@@ -39,13 +39,14 @@ func LoadDatabaseEnv(envs map[string]string) DatabaseEnv {
 	}
 }
 
-func SetupDatabase(env DatabaseEnv) (db *gorm.DB, err error) {
+func SetupDatabase(env DatabaseEnv) (db *sql.DB, err error) {
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable", env.Host, env.User, env.Password, env.DBName, env.Port)
-	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, err = sql.Open("postgres", dsn)
 	if err != nil {
 		err = errors.Wrap(err, "failed to connect database at "+dsn)
 		return
 	}
+	boil.SetDB(db)
 	return
 }
 

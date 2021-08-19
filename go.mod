@@ -3,6 +3,8 @@ module github.com/smartnuance/saas-kit
 go 1.16
 
 require (
+	github.com/ahmetb/govvv v0.3.0 // indirect
+	github.com/friendsofgo/errors v0.9.2
 	github.com/gin-gonic/gin v1.7.4
 	github.com/golang-jwt/jwt/v4 v4.0.0
 	github.com/golang-migrate/migrate/v4 v4.14.1
@@ -11,6 +13,10 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.23.0
 	github.com/stretchr/testify v1.7.0 // indirect
+	github.com/volatiletech/null/v8 v8.1.2
+	github.com/volatiletech/sqlboiler/v4 v4.6.0
+	github.com/volatiletech/strmangle v0.0.1
+	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5 // indirect
 	golang.org/x/net v0.0.0-20210813160813-60bc85c4be6d // indirect
 	golang.org/x/sys v0.0.0-20210809222454-d867a43fc93e // indirect
 	golang.org/x/text v0.3.7 // indirect

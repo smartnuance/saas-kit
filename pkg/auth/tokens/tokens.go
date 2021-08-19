@@ -2,30 +2,37 @@ package tokens
 
 import (
 	"crypto/rsa"
-	"fmt"
 	"io/ioutil"
+	"strconv"
 	"time"
 
 	jwt "github.com/golang-jwt/jwt/v4"
 	"github.com/pkg/errors"
+	"github.com/smartnuance/saas-kit/pkg/lib/tokens"
 )
 
 type TokenEnv struct {
 	SigningKeyPath    string
 	ValidationKeyPath string
-	Issuer            string
+	// Issuer is the issuer string of JWT tokens; defaults to service name
+	Issuer string
 }
 
 type TokenController struct {
 	TokenEnv
 	signingKey    *rsa.PrivateKey
-	validationKey *rsa.PublicKey
+	ValidationKey *rsa.PublicKey
 }
 
-func Load(envs map[string]string) TokenEnv {
+func Load(envs map[string]string, serviceName string) TokenEnv {
+	issuer := envs["TOKEN_ISSUER"]
+	if len(issuer) == 0 {
+		issuer = serviceName
+	}
 	return TokenEnv{
 		SigningKeyPath:    envs["TOKEN_SIGNING_KEY_PATH"],
 		ValidationKeyPath: envs["TOKEN_VALIDATION_KEY_PATH"],
+		Issuer:            issuer,
 	}
 }
 
@@ -47,44 +54,51 @@ func Setup(env TokenEnv) (c *TokenController, err error) {
 		err = errors.Wrapf(err, "could not read validation key file at "+env.ValidationKeyPath)
 		return
 	}
-	c.validationKey, err = jwt.ParseRSAPublicKeyFromPEM(validationKey)
+	c.ValidationKey, err = jwt.ParseRSAPublicKeyFromPEM(validationKey)
 	if err != nil {
 		return
 	}
 	return
 }
 
-type authCustomClaims struct {
-	Name string `json:"name"`
-	User bool   `json:"user"`
-	jwt.StandardClaims
-}
-
-func (c *TokenController) GenerateToken(email string, isUser bool) (token string, err error) {
-	claims := &authCustomClaims{
-		email,
-		isUser,
-		jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour * 48).Unix(),
+func (c *TokenController) GenerateAccessToken(userID, instanceID int, isUser bool, roles []string) (token string, err error) {
+	claims := tokens.AccessTokenClaims{
+		User:  isUser,
+		Roles: roles,
+		StandardClaims: jwt.StandardClaims{
+			Audience:  strconv.Itoa(instanceID),
+			Subject:   strconv.Itoa(userID),
+			ExpiresAt: time.Now().Add(time.Minute * 15).Unix(),
 			Issuer:    c.Issuer,
 			IssuedAt:  time.Now().Unix(),
 		},
 	}
-	jwtToken := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
+	jwtToken := jwt.NewWithClaims(jwt.SigningMethodRS256, &claims)
 
-	token, err = jwtToken.SignedString(c.SigningKeyPath)
+	token, err = jwtToken.SignedString(c.signingKey)
 	if err != nil {
+		err = errors.Wrap(err, "signing access token failed")
 		return
 	}
 	return
 }
 
-func (c *TokenController) ValidateToken(encodedToken string) (*jwt.Token, error) {
-	return jwt.Parse(encodedToken, func(token *jwt.Token) (interface{}, error) {
-		if _, isvalid := token.Method.(*jwt.SigningMethodHMAC); !isvalid {
-			return nil, fmt.Errorf("invalid token (%s)", token.Header["alg"])
-		}
-		return []byte(c.SigningKeyPath), nil
-	})
+func (c *TokenController) GenerateRefreshToken(userID, instanceID int, isUser bool) (token string, expiresAt time.Time, err error) {
+	expiresAt = time.Now().Add(time.Hour * 24 * 7)
+	claims := jwt.StandardClaims{
+		Audience:  strconv.Itoa(instanceID),
+		Subject:   strconv.Itoa(userID),
+		ExpiresAt: expiresAt.Unix(),
+		Issuer:    c.Issuer,
+		IssuedAt:  time.Now().Unix(),
+	}
 
+	jwtToken := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
+
+	token, err = jwtToken.SignedString(c.signingKey)
+	if err != nil {
+		err = errors.Wrap(err, "signing refresh token failed")
+		return
+	}
+	return
 }

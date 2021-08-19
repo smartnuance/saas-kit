@@ -1,35 +1,53 @@
 package tokens
 
 import (
-	"errors"
+	"crypto/rsa"
+
+	"github.com/pkg/errors"
 
 	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/rs/zerolog/log"
 )
 
-//jwt service
-type JWTService interface {
-	GenerateToken(email string, isUser bool) string
-	ValidateToken(token string) (*jwt.Token, error)
+type AccessTokenClaims struct {
+	User  bool     `json:"user"`
+	Roles []string `json:"roles"`
+	jwt.StandardClaims
 }
 
-func AuthorizeJWT(service JWTService) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		const BEARER_SCHEMA = "Bearer"
-		authHeader := c.GetHeader("Authorization")
-		tokenString := authHeader[len(BEARER_SCHEMA):]
-		token, err := service.ValidateToken(tokenString)
-		if token.Valid {
-			claims := token.Claims.(jwt.MapClaims)
-			fmt.Println(claims)
-		} else {
-			fmt.Println(err)
-			c.AbortWithStatus(http.StatusUnauthorized)
-		}
+const BearerSchema = "Bearer "
 
+func AuthorizeJWT(validationKey *rsa.PublicKey) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		authHeader := ctx.GetHeader("Authorization")
+		if len(authHeader) <= len(BearerSchema) {
+			log.Error().Msgf("missing/invalid authorization header, needs to start with '%s'", BearerSchema)
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+		tokenString := authHeader[len(BearerSchema):]
+		var claims AccessTokenClaims
+		token, err := jwt.ParseWithClaims(tokenString, &claims, func(token *jwt.Token) (interface{}, error) {
+			if _, isvalid := token.Method.(*jwt.SigningMethodRSA); !isvalid {
+				return nil, fmt.Errorf("invalid token signing method: %s", token.Header["alg"])
+			}
+			return validationKey, nil
+		})
+		if err != nil {
+			log.Error().Err(err).Msg("error parsing authorization header")
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+		if !token.Valid {
+			log.Error().Msg("invalid token in authorization header")
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+		ctx.Set("claims", claims)
 	}
 }
 

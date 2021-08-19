@@ -1,125 +1,98 @@
 package auth
 
+//go:generate sqlboiler --config sqlboiler.toml psql
+
 import (
+	"context"
 	"database/sql"
+	"time"
 
-	_ "github.com/golang-migrate/migrate/v4"
-	"github.com/lib/pq"
-	"gorm.io/gorm"
+	"github.com/pkg/errors"
+	m "github.com/smartnuance/saas-kit/pkg/auth/dbmodels"
+	"github.com/volatiletech/null/v8"
+	"github.com/volatiletech/sqlboiler/v4/boil"
+	// . "github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
-//lint:file-ignore U1000 Ignore unused fields, gorm model fields are used to create migrations
-type (
-	Instance struct {
-		gorm.Model
-		Name string
-		url  string
+func FindUserByEmail(ctx context.Context, email string) (*m.User, error) {
+	user, err := m.Users(m.UserWhere.Email.EQ(email)).OneG(ctx)
+	if err == sql.ErrNoRows {
+		// transform sql error in specific error of login context
+		return nil, errors.WithStack(ErrUserDoesNotExist)
 	}
+	return user, err
+}
 
-	User struct {
-		gorm.Model
-		Name        string
-		Email       *string
-		Username    sql.NullString
-		ActivatedAt sql.NullTime
+func GetInstance(ctx context.Context, instanceURL string) (instance *m.Instance, err error) {
+	instance, err = m.Instances(m.InstanceWhere.URL.EQ(instanceURL)).OneG(ctx)
+	if err == sql.ErrNoRows {
+		// transform sql error in specific error of login context
+		err = errors.WithStack(ErrInstanceDoesNotExist)
+		return
 	}
+	return instance, err
+}
 
-	Profile struct {
-		gorm.Model
-		UserID     int
-		User       User
-		InstanceID int
-		Instance   Instance
-		Roles      pq.StringArray `gorm:"type:text[]"`
+func GetProfile(ctx context.Context, userID, instanceID int64) (profile *m.Profile, err error) {
+	where := &m.ProfileWhere
+	profile, err = m.Profiles(where.UserID.EQ(userID), where.InstanceID.EQ(instanceID)).OneG(ctx)
+	if err == sql.ErrNoRows {
+		// transform sql error in specific error of login context
+		err = errors.WithStack(ErrProfileDoesNotExist)
+		return
 	}
-)
+	return profile, err
+}
 
-// // createTodo add a new todo
-// func createTodo(c *gin.Context) {
-// 	completed, _ := strconv.Atoi(c.PostForm("completed"))
-// 	todo := todoModel{Title: c.PostForm("title"), Completed: completed}
-// 	db.Save(&todo)
-// 	c.JSON(http.StatusCreated, gin.H{"status": http.StatusCreated, "message": "Todo item created successfully!", "resourceId": todo.ID})
-// }
+func GetUserAndProfile(ctx context.Context, userID int64, instanceURL string) (user *m.User, profile *m.Profile, err error) {
+	profile, err = m.Profiles(m.ProfileWhere.UserID.EQ(userID)).OneG(ctx)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// transform sql error in specific error of login context
+			err = errors.WithStack(ErrProfileDoesNotExist)
+			return
+		}
+		return
+	}
+	user, err = profile.User().OneG(ctx)
+	if err != nil {
+		return
+	}
+	return
+}
 
-// // fetchAllTodo fetch all todos
-// func fetchAllTodo(c *gin.Context) {
-// 	var todos []todoModel
-// 	var _todos []transformedTodo
+func CreateUser(ctx context.Context, name, email string, passwordHash []byte) (user *m.User, err error) {
+	user = &m.User{
+		Name:     null.StringFrom(name),
+		Email:    email,
+		Password: passwordHash,
+	}
+	err = user.InsertG(ctx, boil.Infer())
+	if err != nil {
+		return
+	}
+	return
+}
 
-// 	db.Find(&todos)
+func DeleteUser(ctx context.Context, userID int64) error {
+	_, err := m.Users(m.UserWhere.ID.EQ(userID)).DeleteAllG(ctx, false)
+	return err
+}
 
-// 	if len(todos) <= 0 {
-// 		c.JSON(http.StatusNotFound, gin.H{"status": http.StatusNotFound, "message": "No todo found!"})
-// 		return
-// 	}
+func SaveToken(ctx context.Context, userID int64, token string, expiresAt time.Time) error {
+	t := m.Token{
+		UserID:    null.Int64From(userID),
+		Token:     token,
+		ExpiresAt: expiresAt,
+	}
+	return t.InsertG(ctx, boil.Infer())
+}
 
-// 	//transforms the todos for building a good response
-// 	for _, item := range todos {
-// 		completed := false
-// 		if item.Completed == 1 {
-// 			completed = true
-// 		} else {
-// 			completed = false
-// 		}
-// 		_todos = append(_todos, transformedTodo{ID: item.ID, Title: item.Title, Completed: completed})
-// 	}
-// 	c.JSON(http.StatusOK, gin.H{"status": http.StatusOK, "data": _todos})
-// }
-
-// // fetchSingleTodo fetch a single todo
-// func fetchSingleTodo(c *gin.Context) {
-// 	var todo todoModel
-// 	todoID := c.Param("id")
-
-// 	db.First(&todo, todoID)
-
-// 	if todo.ID == 0 {
-// 		c.JSON(http.StatusNotFound, gin.H{"status": http.StatusNotFound, "message": "No todo found!"})
-// 		return
-// 	}
-
-// 	completed := false
-// 	if todo.Completed == 1 {
-// 		completed = true
-// 	} else {
-// 		completed = false
-// 	}
-
-// 	_todo := transformedTodo{ID: todo.ID, Title: todo.Title, Completed: completed}
-// 	c.JSON(http.StatusOK, gin.H{"status": http.StatusOK, "data": _todo})
-// }
-
-// // updateTodo update a todo
-// func updateTodo(c *gin.Context) {
-// 	var todo todoModel
-// 	todoID := c.Param("id")
-
-// 	db.First(&todo, todoID)
-
-// 	if todo.ID == 0 {
-// 		c.JSON(http.StatusNotFound, gin.H{"status": http.StatusNotFound, "message": "No todo found!"})
-// 		return
-// 	}
-
-// 	db.Model(&todo).Update("title", c.PostForm("title"))
-// 	completed, _ := strconv.Atoi(c.PostForm("completed"))
-// 	db.Model(&todo).Update("completed", completed)
-// 	c.JSON(http.StatusOK, gin.H{"status": http.StatusOK, "message": "Todo updated successfully!"})
-// }
-
-// // deleteTodo remove a todo
-// func deleteTodo(c *gin.Context) {
-// 	var todo todoModel
-// 	todoID := c.Param("id")
-
-// 	db.First(&todo, todoID)
-
-// 	if todo.ID == 0 {
-// 		c.JSON(http.StatusNotFound, gin.H{"status": http.StatusNotFound, "message": "No todo found!"})
-// 		return
-// 	}
-
-// 	db.Delete(&todo)
-// 	c.JSON(http.StatusOK, gin.H{"status": http.StatusOK, "message": "Todo deleted successfully!"})
-// }
+func DeleteToken(ctx context.Context, userID int64, token string) (int64, error) {
+	where := &m.TokenWhere
+	numDeleted, err := m.Tokens(
+		where.UserID.EQ(null.Int64From(userID)),
+		where.Token.EQ(token),
+	).DeleteAllG(ctx)
+	return numDeleted, err
+}
