@@ -11,9 +11,6 @@
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
-# Files included in binaries via go-bindata
-bindata/
-
 # Generated files
 gen/
 

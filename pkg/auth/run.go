@@ -1,25 +1,23 @@
 package auth
 
-//go:generate go-bindata -ignore=\\.gitignore -o ./bindata/migrations.go -prefix "migrations/" -pkg gen migrations/...
-//go:generate go-bindata -ignore=\\.gitignore -o ./bindata/migrations.go -prefix "migrations/" -pkg gen migrations/...
-
 import (
 	"database/sql"
+	"embed"
 	"flag"
 	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-migrate/migrate/v4"
 	migrateDriver "github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
 	migrateBindata "github.com/golang-migrate/migrate/v4/source/go_bindata"
 	"github.com/pkg/errors"
-
 	"github.com/rs/zerolog/log"
-	migrations "github.com/smartnuance/saas-kit/pkg/auth/bindata"
 	"github.com/smartnuance/saas-kit/pkg/auth/tokens"
 	"github.com/smartnuance/saas-kit/pkg/lib"
 )
+
+//go:embed migrations/*
+var migrationDir embed.FS
 
 const ServiceName = "auth"
 
@@ -147,9 +145,18 @@ func (s *Service) migrator() (*migrate.Migrate, error) {
 		return nil, err
 	}
 
-	migrationsRessource := migrateBindata.Resource(migrations.AssetNames(),
+	var assetNames []string
+	names, err := migrationDir.ReadDir("migrations")
+	if err != nil {
+		return nil, err
+	}
+	for _, n := range names {
+		assetNames = append(assetNames, n.Name())
+	}
+
+	migrationsRessource := migrateBindata.Resource(assetNames,
 		func(name string) ([]byte, error) {
-			return migrations.Asset(name)
+			return migrationDir.ReadFile("migrations/" + name)
 		})
 	d, err := migrateBindata.WithInstance(migrationsRessource)
 	if err != nil {

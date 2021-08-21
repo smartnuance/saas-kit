@@ -41,11 +41,6 @@ For command line tools in development:
 
 > go install github.com/volatiletech/sqlboiler/v4/drivers/sqlboiler-psql@latest
 
-
-### Go-bindata
-
-> go install github.com/go-bindata/go-bindata/...@latest
-
 For developers's convenience all commands necessary for development like code generation is done via `go:generate` commands at the top of each service's `run.go` or for very lazy developers they are all delegated from one file and invoked by a single generate command:
 
 > go generate ./pkg/auth

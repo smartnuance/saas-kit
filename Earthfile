@@ -9,7 +9,6 @@ all:
 build:
     ARG service
     RUN go install github.com/ahmetb/govvv@latest
-    RUN go install github.com/go-bindata/go-bindata/...@latest
     RUN go install github.com/volatiletech/sqlboiler/v4@latest
     RUN go install github.com/volatiletech/sqlboiler/v4/drivers/sqlboiler-psql@latest
 
