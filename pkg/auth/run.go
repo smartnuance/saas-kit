@@ -4,12 +4,13 @@ import (
 	"database/sql"
 	"embed"
 	"flag"
+	"net/http"
 	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-migrate/migrate/v4"
 	migrateDriver "github.com/golang-migrate/migrate/v4/database/postgres"
-	migrateBindata "github.com/golang-migrate/migrate/v4/source/go_bindata"
+	"github.com/golang-migrate/migrate/v4/source/httpfs"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"github.com/smartnuance/saas-kit/pkg/auth/tokens"
@@ -145,25 +146,11 @@ func (s *Service) migrator() (*migrate.Migrate, error) {
 		return nil, err
 	}
 
-	var assetNames []string
-	names, err := migrationDir.ReadDir("migrations")
+	src, err := httpfs.New(http.FS(migrationDir), "migrations")
 	if err != nil {
 		return nil, err
 	}
-	for _, n := range names {
-		assetNames = append(assetNames, n.Name())
-	}
-
-	migrationsRessource := migrateBindata.Resource(assetNames,
-		func(name string) ([]byte, error) {
-			return migrationDir.ReadFile("migrations/" + name)
-		})
-	d, err := migrateBindata.WithInstance(migrationsRessource)
-	if err != nil {
-		return nil, err
-	}
-
-	migrator, err := migrate.NewWithInstance("go-bindata", d, s.Env.DBName, driver)
+	migrator, err := migrate.NewWithInstance("httpfs", src, s.Env.DBName, driver)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to migrate database "+s.Env.DBName)
 	}
