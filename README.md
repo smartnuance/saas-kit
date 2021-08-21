@@ -35,15 +35,31 @@ Create a local postgres instance or use the provided `docker-compose.yml` file t
 
 To interact with database, we use a schema first approach with [sqlboiler](https://github.com/volatiletech/sqlboiler#getting-started). It generates type-safe code to interact with the DB.
 
-For command line tools in development:
+### Development tools
 
-> go install github.com/volatiletech/sqlboiler/v4@latest
+All tools necessary for development like installing code generators is done via `go:generate` commands at the top of `cmd/dev/main.go`:
 
-> go install github.com/volatiletech/sqlboiler/v4/drivers/sqlboiler-psql@latest
+> go generate ./cmd/dev
 
-For developers's convenience all commands necessary for development like code generation is done via `go:generate` commands at the top of each service's `run.go` or for very lazy developers they are all delegated from one file and invoked by a single generate command:
+(a subset of those tools are installed in CI build step of `Earthfile`)
+
+For developers's convenience all generation commands are collected via `go:generate` at the top of each service's `run.go`, e.g. for the auth service
 
 > go generate ./pkg/auth
+
+### Migrate database
+
+To start from an empty database (and test down migrations):
+
+> go run ./cmd/auth migrate -down
+
+Just migrate service without running it afterwards:
+
+> go run ./cmd/auth migrate
+
+When database is on newest version, we have to generated git-versioned DB models by
+
+> go generate ./pkg/auth/db.go
 
 ### Run service(s)
 
@@ -55,6 +71,7 @@ Run single service:
 
 > go run ./cmd/auth
 
+(up migrations are applied during startup)
 
 ### Build service(s)
 

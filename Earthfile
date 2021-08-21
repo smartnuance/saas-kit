@@ -9,9 +9,7 @@ all:
 build:
     ARG service
     RUN go install github.com/ahmetb/govvv@latest
-    RUN go install github.com/volatiletech/sqlboiler/v4@latest
-    RUN go install github.com/volatiletech/sqlboiler/v4/drivers/sqlboiler-psql@latest
-
+    
     COPY . ./
     RUN go generate ./pkg/$service/run.go
     RUN govvv build -pkg github.com/smartnuance/saas-kit/pkg/$service ./cmd/$service
