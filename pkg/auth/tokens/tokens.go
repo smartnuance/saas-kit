@@ -67,7 +67,6 @@ func (c *TokenController) GenerateAccessToken(userID, instanceID int, isUser boo
 		Role:     role,
 		Instance: instanceID,
 		StandardClaims: jwt.StandardClaims{
-			Audience:  strconv.Itoa(instanceID),
 			Subject:   strconv.Itoa(userID),
 			ExpiresAt: time.Now().Add(time.Minute * 15).Unix(),
 			Issuer:    c.Issuer,
@@ -86,12 +85,15 @@ func (c *TokenController) GenerateAccessToken(userID, instanceID int, isUser boo
 
 func (c *TokenController) GenerateRefreshToken(userID, instanceID int, isUser bool) (token string, expiresAt time.Time, err error) {
 	expiresAt = time.Now().Add(time.Hour * 24 * 7)
-	claims := jwt.StandardClaims{
-		Audience:  strconv.Itoa(instanceID),
-		Subject:   strconv.Itoa(userID),
-		ExpiresAt: expiresAt.Unix(),
-		Issuer:    c.Issuer,
-		IssuedAt:  time.Now().Unix(),
+	claims := tokens.RefreshTokenClaims{
+		User:     isUser,
+		Instance: instanceID,
+		StandardClaims: jwt.StandardClaims{
+			Subject:   strconv.Itoa(userID),
+			ExpiresAt: expiresAt.Unix(),
+			Issuer:    c.Issuer,
+			IssuedAt:  time.Now().Unix(),
+		},
 	}
 
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)

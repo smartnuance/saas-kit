@@ -13,10 +13,19 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// AccessTokenClaims contain temporary authorization information.
 type AccessTokenClaims struct {
 	User     bool   `json:"user"`
 	Role     string `json:"role"`
 	Instance int    `json:"instance"`
+	jwt.StandardClaims
+}
+
+// RefreshTokenClaims contain everything necessary to recreate an accesstoken,
+// i.e. identify the right profile to load role and user meta information from.
+type RefreshTokenClaims struct {
+	User     bool `json:"user"`
+	Instance int  `json:"instance"`
 	jwt.StandardClaims
 }
 

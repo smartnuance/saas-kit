@@ -11,6 +11,7 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	m "github.com/smartnuance/saas-kit/pkg/auth/dbmodels"
 	"github.com/smartnuance/saas-kit/pkg/lib/roles"
+	"github.com/smartnuance/saas-kit/pkg/lib/tokens"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -95,7 +96,7 @@ func (s *Service) Refresh(ctx *gin.Context) (string, error) {
 		return "", errors.WithStack(ErrMissingRefreshToken)
 	}
 
-	var claims jwt.StandardClaims
+	var claims tokens.RefreshTokenClaims
 	token, err := jwt.ParseWithClaims(body.RefreshToken, &claims, func(token *jwt.Token) (interface{}, error) {
 		if _, isvalid := token.Method.(*jwt.SigningMethodRSA); !isvalid {
 			return nil, fmt.Errorf("invalid token signing method: %s", token.Header["alg"])
@@ -113,11 +114,7 @@ func (s *Service) Refresh(ctx *gin.Context) (string, error) {
 	if err != nil {
 		return "", errors.WithStack(ErrInvalidUserID)
 	}
-	instanceID, err := strconv.Atoi(claims.Audience)
-	if err != nil {
-		return "", errors.WithStack(ErrInvalidInstanceID)
-	}
-	profile, err := GetProfile(ctx, int64(userID), int64(instanceID))
+	profile, err := GetProfile(ctx, int64(userID), int64(claims.Instance))
 	if err != nil {
 		return "", errors.WithStack(ErrProfileDoesNotExist)
 	}
@@ -128,7 +125,7 @@ func (s *Service) Refresh(ctx *gin.Context) (string, error) {
 		role = roles.NoRole
 	}
 
-	return s.TokenAPI.GenerateAccessToken(userID, instanceID, true, role)
+	return s.TokenAPI.GenerateAccessToken(userID, claims.Instance, true, role)
 }
 
 func (s *Service) Revoke(ctx *gin.Context) error {
@@ -162,7 +159,6 @@ var (
 	ErrInvalidCredentials   = errors.New("invalid credentials, email/password combination wrong")
 	ErrMissingUserID        = errors.New("missing user id")
 	ErrInvalidUserID        = errors.New("invalid user id provided")
-	ErrInvalidInstanceID    = errors.New("invalid instance id provided")
 	ErrMissingRefreshToken  = errors.New("missing refresh token in JSON body")
 	ErrTokenInvalid         = errors.New("token invalid")
 	ErrTokenNotFound        = errors.New("token not found")
