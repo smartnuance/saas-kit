@@ -16,7 +16,7 @@ func Test_initRoles(t *testing.T) {
 	}{
 		{
 			name:           "default",
-			inheritedRoles: InheritedRoles,
+			inheritedRoles: inheritedRoles,
 			expClosure: ClosureMap{
 				"event organizer": {
 					"event organizer": true,

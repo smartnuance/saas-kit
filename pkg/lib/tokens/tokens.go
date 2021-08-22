@@ -14,8 +14,9 @@ import (
 )
 
 type AccessTokenClaims struct {
-	User  bool     `json:"user"`
-	Roles []string `json:"roles"`
+	User     bool   `json:"user"`
+	Role     string `json:"role"`
+	Instance int    `json:"instance"`
 	jwt.StandardClaims
 }
 
@@ -47,7 +48,9 @@ func AuthorizeJWT(validationKey *rsa.PublicKey) gin.HandlerFunc {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
-		ctx.Set("claims", claims)
+
+		ctx.Set("role", claims.Role)
+		ctx.Set("instance", claims.Instance)
 	}
 }
 

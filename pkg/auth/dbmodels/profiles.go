@@ -19,19 +19,18 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"github.com/volatiletech/sqlboiler/v4/queries/qmhelper"
-	"github.com/volatiletech/sqlboiler/v4/types"
 	"github.com/volatiletech/strmangle"
 )
 
 // Profile is an object representing the database table.
 type Profile struct {
-	ID         int64             `boil:"id" json:"id" toml:"id" yaml:"id"`
-	UserID     int64             `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
-	InstanceID int64             `boil:"instance_id" json:"instance_id" toml:"instance_id" yaml:"instance_id"`
-	Roles      types.StringArray `boil:"roles" json:"roles,omitempty" toml:"roles" yaml:"roles,omitempty"`
-	CreatedAt  time.Time         `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	UpdatedAt  time.Time         `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
-	DeletedAt  null.Time         `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
+	ID         int64       `boil:"id" json:"id" toml:"id" yaml:"id"`
+	UserID     int64       `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
+	InstanceID int64       `boil:"instance_id" json:"instance_id" toml:"instance_id" yaml:"instance_id"`
+	Role       null.String `boil:"role" json:"role,omitempty" toml:"role" yaml:"role,omitempty"`
+	CreatedAt  time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt  time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	DeletedAt  null.Time   `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
 
 	R *profileR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L profileL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -41,7 +40,7 @@ var ProfileColumns = struct {
 	ID         string
 	UserID     string
 	InstanceID string
-	Roles      string
+	Role       string
 	CreatedAt  string
 	UpdatedAt  string
 	DeletedAt  string
@@ -49,7 +48,7 @@ var ProfileColumns = struct {
 	ID:         "id",
 	UserID:     "user_id",
 	InstanceID: "instance_id",
-	Roles:      "roles",
+	Role:       "role",
 	CreatedAt:  "created_at",
 	UpdatedAt:  "updated_at",
 	DeletedAt:  "deleted_at",
@@ -59,7 +58,7 @@ var ProfileTableColumns = struct {
 	ID         string
 	UserID     string
 	InstanceID string
-	Roles      string
+	Role       string
 	CreatedAt  string
 	UpdatedAt  string
 	DeletedAt  string
@@ -67,7 +66,7 @@ var ProfileTableColumns = struct {
 	ID:         "profiles.id",
 	UserID:     "profiles.user_id",
 	InstanceID: "profiles.instance_id",
-	Roles:      "profiles.roles",
+	Role:       "profiles.role",
 	CreatedAt:  "profiles.created_at",
 	UpdatedAt:  "profiles.updated_at",
 	DeletedAt:  "profiles.deleted_at",
@@ -75,28 +74,26 @@ var ProfileTableColumns = struct {
 
 // Generated where
 
-type whereHelpertypes_StringArray struct{ field string }
+type whereHelpernull_String struct{ field string }
 
-func (w whereHelpertypes_StringArray) EQ(x types.StringArray) qm.QueryMod {
+func (w whereHelpernull_String) EQ(x null.String) qm.QueryMod {
 	return qmhelper.WhereNullEQ(w.field, false, x)
 }
-func (w whereHelpertypes_StringArray) NEQ(x types.StringArray) qm.QueryMod {
+func (w whereHelpernull_String) NEQ(x null.String) qm.QueryMod {
 	return qmhelper.WhereNullEQ(w.field, true, x)
 }
-func (w whereHelpertypes_StringArray) IsNull() qm.QueryMod { return qmhelper.WhereIsNull(w.field) }
-func (w whereHelpertypes_StringArray) IsNotNull() qm.QueryMod {
-	return qmhelper.WhereIsNotNull(w.field)
-}
-func (w whereHelpertypes_StringArray) LT(x types.StringArray) qm.QueryMod {
+func (w whereHelpernull_String) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpernull_String) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
+func (w whereHelpernull_String) LT(x null.String) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.LT, x)
 }
-func (w whereHelpertypes_StringArray) LTE(x types.StringArray) qm.QueryMod {
+func (w whereHelpernull_String) LTE(x null.String) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.LTE, x)
 }
-func (w whereHelpertypes_StringArray) GT(x types.StringArray) qm.QueryMod {
+func (w whereHelpernull_String) GT(x null.String) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.GT, x)
 }
-func (w whereHelpertypes_StringArray) GTE(x types.StringArray) qm.QueryMod {
+func (w whereHelpernull_String) GTE(x null.String) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.GTE, x)
 }
 
@@ -104,7 +101,7 @@ var ProfileWhere = struct {
 	ID         whereHelperint64
 	UserID     whereHelperint64
 	InstanceID whereHelperint64
-	Roles      whereHelpertypes_StringArray
+	Role       whereHelpernull_String
 	CreatedAt  whereHelpertime_Time
 	UpdatedAt  whereHelpertime_Time
 	DeletedAt  whereHelpernull_Time
@@ -112,7 +109,7 @@ var ProfileWhere = struct {
 	ID:         whereHelperint64{field: "\"profiles\".\"id\""},
 	UserID:     whereHelperint64{field: "\"profiles\".\"user_id\""},
 	InstanceID: whereHelperint64{field: "\"profiles\".\"instance_id\""},
-	Roles:      whereHelpertypes_StringArray{field: "\"profiles\".\"roles\""},
+	Role:       whereHelpernull_String{field: "\"profiles\".\"role\""},
 	CreatedAt:  whereHelpertime_Time{field: "\"profiles\".\"created_at\""},
 	UpdatedAt:  whereHelpertime_Time{field: "\"profiles\".\"updated_at\""},
 	DeletedAt:  whereHelpernull_Time{field: "\"profiles\".\"deleted_at\""},
@@ -142,8 +139,8 @@ func (*profileR) NewStruct() *profileR {
 type profileL struct{}
 
 var (
-	profileAllColumns            = []string{"id", "user_id", "instance_id", "roles", "created_at", "updated_at", "deleted_at"}
-	profileColumnsWithoutDefault = []string{"user_id", "instance_id", "roles", "deleted_at"}
+	profileAllColumns            = []string{"id", "user_id", "instance_id", "role", "created_at", "updated_at", "deleted_at"}
+	profileColumnsWithoutDefault = []string{"user_id", "instance_id", "role", "deleted_at"}
 	profileColumnsWithDefault    = []string{"id", "created_at", "updated_at"}
 	profilePrimaryKeyColumns     = []string{"id"}
 )

@@ -61,10 +61,11 @@ func Setup(env TokenEnv) (c *TokenController, err error) {
 	return
 }
 
-func (c *TokenController) GenerateAccessToken(userID, instanceID int, isUser bool, roles []string) (token string, err error) {
+func (c *TokenController) GenerateAccessToken(userID, instanceID int, isUser bool, role string) (token string, err error) {
 	claims := tokens.AccessTokenClaims{
-		User:  isUser,
-		Roles: roles,
+		User:     isUser,
+		Role:     role,
+		Instance: instanceID,
 		StandardClaims: jwt.StandardClaims{
 			Audience:  strconv.Itoa(instanceID),
 			Subject:   strconv.Itoa(userID),

@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS profiles(
   id bigserial PRIMARY KEY,
   user_id bigint NOT NULL,
   instance_id bigint NOT NULL,
-  roles text [],
+  role text,
   created_at timestamp with time zone NOT NULL DEFAULT NOW(),
   updated_at timestamp with time zone NOT NULL DEFAULT NOW(),
   deleted_at timestamp with time zone,

@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
 	m "github.com/smartnuance/saas-kit/pkg/auth/dbmodels"
+	"github.com/smartnuance/saas-kit/pkg/lib/roles"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -44,7 +45,20 @@ func (s *Service) Login(ctx *gin.Context) (accessToken, refreshToken string, err
 	if err != nil {
 		return
 	}
-	accessToken, err = s.TokenAPI.GenerateAccessToken(int(user.ID), int(instance.ID), true, []string{})
+
+	profile, err := GetProfile(ctx, user.ID, instance.ID)
+	if err != nil {
+		err = errors.WithStack(ErrProfileDoesNotExist)
+		return
+	}
+
+	var role string
+	if profile.Role.Valid {
+		role = profile.Role.String
+	} else {
+		role = roles.NoRole
+	}
+	accessToken, err = s.TokenAPI.GenerateAccessToken(int(user.ID), int(instance.ID), true, role)
 	if err != nil {
 		return
 	}
@@ -107,8 +121,14 @@ func (s *Service) Refresh(ctx *gin.Context) (string, error) {
 	if err != nil {
 		return "", errors.WithStack(ErrProfileDoesNotExist)
 	}
+	var role string
+	if profile.Role.Valid {
+		role = profile.Role.String
+	} else {
+		role = roles.NoRole
+	}
 
-	return s.TokenAPI.GenerateAccessToken(userID, instanceID, true, profile.Roles)
+	return s.TokenAPI.GenerateAccessToken(userID, instanceID, true, role)
 }
 
 func (s *Service) Revoke(ctx *gin.Context) error {
