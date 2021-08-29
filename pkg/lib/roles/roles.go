@@ -2,10 +2,16 @@ package roles
 
 import (
 	"container/list"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/pkg/errors"
 )
 
+const (
+	RoleKey     = "role"
+	InstanceKey = "instance"
+)
 const (
 	RoleSuperAdmin     = "super admin"
 	RoleInstanceAdmin  = "instance admin"
@@ -53,25 +59,25 @@ var inheritedRoles = map[string][]inheritedRole{
 	},
 }
 
-type ClosureMap map[string]map[string]bool
+type closureMap map[string]map[string]bool
 
 // implicitRolesClosure lists the transitive closure of each role's implicitly inherited roles.
 // The map's structure is
 //   current role -> ancestor role -> (if ancestor is in closure)
-var implicitRolesClosure = ClosureMap{}
+var implicitRolesClosure = closureMap{}
 
 // switchRoles lists each role's ancestor roles allowed to switch to.
 // The map's structure is
 //   current role -> ancestor role -> (if current role can switch to ancestor role)
-var switchRoles = ClosureMap{}
+var switchRoles = closureMap{}
 
 func init() {
 	implicitRolesClosure, switchRoles = initRoles(inheritedRoles)
 }
 
-func initRoles(inheritedRoles map[string][]inheritedRole) (implicitRolesClosure ClosureMap, switchRoles ClosureMap) {
-	implicitRolesClosure = ClosureMap{}
-	switchRoles = ClosureMap{}
+func initRoles(inheritedRoles map[string][]inheritedRole) (implicitRolesClosure closureMap, switchRoles closureMap) {
+	implicitRolesClosure = closureMap{}
+	switchRoles = closureMap{}
 
 	// build closures in role inheritance graph
 	for _, role := range Roles {
@@ -122,43 +128,115 @@ func initRoles(inheritedRoles map[string][]inheritedRole) (implicitRolesClosure 
 	return
 }
 
-// CanSwitchTo checks if the user's role can switch to a given role and acquiring those role's permissions.
-func CanSwitchTo(userRole string, role string) bool {
-	_, ok := switchRoles[userRole][role]
+func valid(role string) bool {
+	_, ok := implicitRolesClosure[role]
 	return ok
 }
 
-// CanActIn checks if the user can act in the desired role implicitly.
-func CanActIn(ctx *gin.Context, role string) bool {
-	userRole, _, ok := FromContext(ctx)
-	if !ok {
+// CanSwitchTo checks if the user's role can switch to a targetRole and acquiring those role's permissions.
+// Switching is allowed when there is an implicit path from userRole to role
+// or userrole directly, explicitly inherits targetRole.
+func CanSwitchTo(userRole string, targetRole string) bool {
+	_, okImplicit := implicitRolesClosure[userRole][targetRole]
+	_, okExplicit := switchRoles[userRole][targetRole]
+	return okImplicit || okExplicit
+}
+
+// SwitchTo attempts to switch to a temporary targetRole.
+// The user's role defined in context is checked against the rules defining if switching is allowed.
+// The temporary role is set on the context under the "role" key, overwriting the original role.
+func SwitchTo(ctx *gin.Context, targetRole string) error {
+	role, _, err := Get(ctx)
+	if err != nil {
+		return err
+	}
+	if !CanSwitchTo(role, targetRole) {
+		return ErrSwitchNotAllowed
+	}
+	ctx.Set("role", targetRole)
+	return nil
+}
+
+// CanActIn checks if the user can act in the desired targetRole implicitly.
+func CanActIn(ctx *gin.Context, targetRole string) bool {
+	role, _, err := Get(ctx)
+	if err != nil {
 		return false
 	}
 
-	_, ok = implicitRolesClosure[userRole][role]
+	_, ok := implicitRolesClosure[role][targetRole]
 	return ok
 }
 
 // CanActFor checks if the user can act for the desired instance.
 func CanActFor(ctx *gin.Context, instanceID int) bool {
-	_, userInstance, ok := FromContext(ctx)
-	if !ok {
+	_, userInstance, err := Get(ctx)
+	if err != nil {
 		return false
 	}
 
 	return userInstance == instanceID
 }
 
-// FromContext retrieves user's role from context's claims.
-// Returns ok equals true when the instance was found in context (since there is no default instance).
-// The default role on the other hand ist NoRole.
-func FromContext(ctx *gin.Context) (role string, instanceID int, ok bool) {
-	role = ctx.GetString("role") // corresponds to NoRole if empty
-	var instance interface{}
-	instance, ok = ctx.Get("instance") // should never be empty
+// Get retrieves the user's role and instance to act for from context.
+// The default role is NoRole. An invalid role results in ErrInvalidRole.
+// There is no default instance. An invalid instance results in ErrInvalidInstance.
+func Get(ctx *gin.Context) (role string, instanceID int, err error) {
+	role = ctx.GetString(RoleKey) // corresponds to NoRole if empty
+	if !valid(role) {
+		err = ErrInvalidRole
+		return
+	}
+	instance, ok := ctx.Get(InstanceKey) // should never be empty
 	if !ok {
+		err = ErrInvalidInstance
 		return
 	}
 	instanceID = instance.(int)
 	return
 }
+
+// FromHeaders parses headers to retrieve user's temporary role and instance to act for,
+// overwriting default role/instance from context.
+// When role parameter is missing, falls back to role specified in context.
+// When instance parameter is missing, falls back to instance specified in context.
+// Returns an error when neither parameter nor fallback was provided for role or instance.
+func FromHeaders(ctx *gin.Context) (role string, instanceID int, err error) {
+	role = ctx.GetHeader(RoleKey)
+	if len(role) > 0 {
+		if !valid(role) {
+			err = ErrInvalidRole
+			return
+		}
+	} else {
+		// if no instance is provided, fallback to role from context
+		role, _, err = Get(ctx)
+		if err != nil {
+			return
+		}
+	}
+
+	_instanceID := ctx.GetHeader(InstanceKey)
+	if len(_instanceID) > 0 {
+		instanceID, err = strconv.Atoi(_instanceID)
+		if err != nil {
+			err = ErrInvalidInstance
+			return
+		}
+	} else {
+		// if no instance is provided, fallback to instance from context
+		_, instanceID, err = Get(ctx)
+		if err != nil {
+			return
+		}
+	}
+	return
+}
+
+var (
+	ErrMissingRole      = errors.New("missing role")
+	ErrInvalidRole      = errors.New("invalid role provided")
+	ErrMissingInstance  = errors.New("missing instance")
+	ErrInvalidInstance  = errors.New("invalid instance provided")
+	ErrSwitchNotAllowed = errors.New("role switch not allowed")
+)

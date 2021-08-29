@@ -601,7 +601,7 @@ func (userL) LoadTokens(ctx context.Context, e boil.ContextExecutor, singular bo
 			}
 
 			for _, a := range args {
-				if queries.Equal(a, obj.ID) {
+				if a == obj.ID {
 					continue Outer
 				}
 			}
@@ -659,7 +659,7 @@ func (userL) LoadTokens(ctx context.Context, e boil.ContextExecutor, singular bo
 
 	for _, foreign := range resultSlice {
 		for _, local := range slice {
-			if queries.Equal(local.ID, foreign.UserID) {
+			if local.ID == foreign.UserID {
 				local.R.Tokens = append(local.R.Tokens, foreign)
 				if foreign.R == nil {
 					foreign.R = &tokenR{}
@@ -752,7 +752,7 @@ func (o *User) AddTokens(ctx context.Context, exec boil.ContextExecutor, insert 
 	var err error
 	for _, rel := range related {
 		if insert {
-			queries.Assign(&rel.UserID, o.ID)
+			rel.UserID = o.ID
 			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
 				return errors.Wrap(err, "failed to insert into foreign table")
 			}
@@ -773,7 +773,7 @@ func (o *User) AddTokens(ctx context.Context, exec boil.ContextExecutor, insert 
 				return errors.Wrap(err, "failed to update foreign table")
 			}
 
-			queries.Assign(&rel.UserID, o.ID)
+			rel.UserID = o.ID
 		}
 	}
 
@@ -794,99 +794,6 @@ func (o *User) AddTokens(ctx context.Context, exec boil.ContextExecutor, insert 
 			rel.R.User = o
 		}
 	}
-	return nil
-}
-
-// SetTokensG removes all previously related items of the
-// user replacing them completely with the passed
-// in related items, optionally inserting them as new records.
-// Sets o.R.User's Tokens accordingly.
-// Replaces o.R.Tokens with related.
-// Sets related.R.User's Tokens accordingly.
-// Uses the global database handle.
-func (o *User) SetTokensG(ctx context.Context, insert bool, related ...*Token) error {
-	return o.SetTokens(ctx, boil.GetContextDB(), insert, related...)
-}
-
-// SetTokens removes all previously related items of the
-// user replacing them completely with the passed
-// in related items, optionally inserting them as new records.
-// Sets o.R.User's Tokens accordingly.
-// Replaces o.R.Tokens with related.
-// Sets related.R.User's Tokens accordingly.
-func (o *User) SetTokens(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Token) error {
-	query := "update \"tokens\" set \"user_id\" = null where \"user_id\" = $1"
-	values := []interface{}{o.ID}
-	if boil.IsDebug(ctx) {
-		writer := boil.DebugWriterFrom(ctx)
-		fmt.Fprintln(writer, query)
-		fmt.Fprintln(writer, values)
-	}
-	_, err := exec.ExecContext(ctx, query, values...)
-	if err != nil {
-		return errors.Wrap(err, "failed to remove relationships before set")
-	}
-
-	if o.R != nil {
-		for _, rel := range o.R.Tokens {
-			queries.SetScanner(&rel.UserID, nil)
-			if rel.R == nil {
-				continue
-			}
-
-			rel.R.User = nil
-		}
-
-		o.R.Tokens = nil
-	}
-	return o.AddTokens(ctx, exec, insert, related...)
-}
-
-// RemoveTokensG relationships from objects passed in.
-// Removes related items from R.Tokens (uses pointer comparison, removal does not keep order)
-// Sets related.R.User.
-// Uses the global database handle.
-func (o *User) RemoveTokensG(ctx context.Context, related ...*Token) error {
-	return o.RemoveTokens(ctx, boil.GetContextDB(), related...)
-}
-
-// RemoveTokens relationships from objects passed in.
-// Removes related items from R.Tokens (uses pointer comparison, removal does not keep order)
-// Sets related.R.User.
-func (o *User) RemoveTokens(ctx context.Context, exec boil.ContextExecutor, related ...*Token) error {
-	if len(related) == 0 {
-		return nil
-	}
-
-	var err error
-	for _, rel := range related {
-		queries.SetScanner(&rel.UserID, nil)
-		if rel.R != nil {
-			rel.R.User = nil
-		}
-		if _, err = rel.Update(ctx, exec, boil.Whitelist("user_id")); err != nil {
-			return err
-		}
-	}
-	if o.R == nil {
-		return nil
-	}
-
-	for _, rel := range related {
-		for i, ri := range o.R.Tokens {
-			if rel != ri {
-				continue
-			}
-
-			ln := len(o.R.Tokens)
-			if ln > 1 && i < ln-1 {
-				o.R.Tokens[i] = o.R.Tokens[ln-1]
-			}
-			o.R.Tokens = o.R.Tokens[:ln-1]
-			break
-		}
-	}
-
 	return nil
 }
 

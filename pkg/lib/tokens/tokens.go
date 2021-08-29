@@ -58,6 +58,7 @@ func AuthorizeJWT(validationKey *rsa.PublicKey) gin.HandlerFunc {
 			return
 		}
 
+		ctx.Set("user", claims.User)
 		ctx.Set("role", claims.Role)
 		ctx.Set("instance", claims.Instance)
 	}

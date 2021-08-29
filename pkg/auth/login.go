@@ -64,7 +64,7 @@ func (s *Service) Login(ctx *gin.Context) (accessToken, refreshToken string, err
 		return
 	}
 
-	err = SaveToken(ctx, user.ID, refreshToken, expiresAt)
+	err = SaveToken(ctx, profile, refreshToken, expiresAt)
 	if err != nil {
 		return
 	}
@@ -114,6 +114,7 @@ func (s *Service) Refresh(ctx *gin.Context) (string, error) {
 	if err != nil {
 		return "", errors.WithStack(ErrInvalidUserID)
 	}
+
 	profile, err := GetProfile(ctx, int64(userID), int64(claims.Instance))
 	if err != nil {
 		return "", errors.WithStack(ErrProfileDoesNotExist)
@@ -129,22 +130,26 @@ func (s *Service) Refresh(ctx *gin.Context) (string, error) {
 }
 
 func (s *Service) Revoke(ctx *gin.Context) error {
-	id := ctx.Param("id")
-	if len(id) == 0 {
+	_userID := ctx.Param("user_id")
+	if len(_userID) == 0 {
 		return errors.WithStack(ErrMissingUserID)
 	}
-	userID, err := strconv.Atoi(id)
+	userID, err := strconv.Atoi(_userID)
 	if err != nil {
 		return errors.WithStack(ErrInvalidUserID)
 	}
 
-	var body RefreshTokenBody
-	err = ctx.ShouldBind(&body)
+	_, instanceID, err := roles.FromHeaders(ctx)
 	if err != nil {
-		return errors.WithStack(ErrMissingRefreshToken)
+		return err
 	}
 
-	numDeleted, err := DeleteToken(ctx, int64(userID), body.RefreshToken)
+	// Check permission to revoke token for potentially different user
+	if !(roles.CanActFor(ctx, instanceID) || roles.CanActIn(ctx, roles.RoleSuperAdmin)) {
+		return ErrUnauthorized
+	}
+
+	numDeleted, err := DeleteToken(ctx, int64(userID))
 	if err != nil {
 		return err
 	}
@@ -155,6 +160,7 @@ func (s *Service) Revoke(ctx *gin.Context) error {
 }
 
 var (
+	ErrUnauthorized         = errors.New("role insufficient to act on desired instances")
 	ErrMissingCredentials   = errors.New("missing credentials, email and password have to be provided")
 	ErrInvalidCredentials   = errors.New("invalid credentials, email/password combination wrong")
 	ErrMissingUserID        = errors.New("missing user id")

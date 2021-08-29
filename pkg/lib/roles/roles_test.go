@@ -11,44 +11,44 @@ func Test_initRoles(t *testing.T) {
 	tests := []struct {
 		name           string
 		inheritedRoles map[string][]inheritedRole
-		expClosure     ClosureMap
-		expSwitchRoles ClosureMap
+		expClosure     closureMap
+		expSwitchRoles closureMap
 	}{
 		{
 			name:           "default",
 			inheritedRoles: inheritedRoles,
-			expClosure: ClosureMap{
+			expClosure: closureMap{
 				"event organizer": {
 					"event organizer": true,
 					"teacher":         true,
-					"anonymous":       true,
+					"":                true,
 				},
 				"instance admin": {
 					"event organizer": true,
 					"instance admin":  true,
 					"teacher":         true,
-					"anonymous":       true,
+					"":                true,
 				},
 				"super admin": {
 					"super admin": true,
-					"anonymous":   true,
+					"":            true,
 				},
 				"teacher": {
-					"teacher":   true,
-					"anonymous": true,
+					"teacher": true,
+					"":        true,
 				},
-				"anonymous": {
-					"anonymous": true,
+				"": {
+					"": true,
 				},
 			},
-			expSwitchRoles: ClosureMap{
+			expSwitchRoles: closureMap{
 				"event organizer": {},
 				"instance admin":  {},
 				"super admin": {
 					"instance admin": true,
 				},
-				"teacher":   {},
-				"anonymous": {},
+				"teacher": {},
+				"":        {},
 			},
 		},
 	}

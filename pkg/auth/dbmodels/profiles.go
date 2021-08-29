@@ -119,15 +119,18 @@ var ProfileWhere = struct {
 var ProfileRels = struct {
 	Instance string
 	User     string
+	Tokens   string
 }{
 	Instance: "Instance",
 	User:     "User",
+	Tokens:   "Tokens",
 }
 
 // profileR is where relationships are stored.
 type profileR struct {
-	Instance *Instance `boil:"Instance" json:"Instance" toml:"Instance" yaml:"Instance"`
-	User     *User     `boil:"User" json:"User" toml:"User" yaml:"User"`
+	Instance *Instance  `boil:"Instance" json:"Instance" toml:"Instance" yaml:"Instance"`
+	User     *User      `boil:"User" json:"User" toml:"User" yaml:"User"`
+	Tokens   TokenSlice `boil:"Tokens" json:"Tokens" toml:"Tokens" yaml:"Tokens"`
 }
 
 // NewStruct creates a new relationship struct
@@ -470,6 +473,27 @@ func (o *Profile) User(mods ...qm.QueryMod) userQuery {
 	return query
 }
 
+// Tokens retrieves all the token's Tokens with an executor.
+func (o *Profile) Tokens(mods ...qm.QueryMod) tokenQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"tokens\".\"profile_id\"=?", o.ID),
+	)
+
+	query := Tokens(queryMods...)
+	queries.SetFrom(query.Query, "\"tokens\"")
+
+	if len(queries.GetSelect(query.Query)) == 0 {
+		queries.SetSelect(query.Query, []string{"\"tokens\".*"})
+	}
+
+	return query
+}
+
 // LoadInstance allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for an N-1 relationship.
 func (profileL) LoadInstance(ctx context.Context, e boil.ContextExecutor, singular bool, maybeProfile interface{}, mods queries.Applicator) error {
@@ -680,6 +704,104 @@ func (profileL) LoadUser(ctx context.Context, e boil.ContextExecutor, singular b
 	return nil
 }
 
+// LoadTokens allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (profileL) LoadTokens(ctx context.Context, e boil.ContextExecutor, singular bool, maybeProfile interface{}, mods queries.Applicator) error {
+	var slice []*Profile
+	var object *Profile
+
+	if singular {
+		object = maybeProfile.(*Profile)
+	} else {
+		slice = *maybeProfile.(*[]*Profile)
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &profileR{}
+		}
+		args = append(args, object.ID)
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &profileR{}
+			}
+
+			for _, a := range args {
+				if a == obj.ID {
+					continue Outer
+				}
+			}
+
+			args = append(args, obj.ID)
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.From(`tokens`),
+		qm.WhereIn(`tokens.profile_id in ?`, args...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load tokens")
+	}
+
+	var resultSlice []*Token
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice tokens")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on tokens")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for tokens")
+	}
+
+	if len(tokenAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.Tokens = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &tokenR{}
+			}
+			foreign.R.Profile = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.ProfileID {
+				local.R.Tokens = append(local.R.Tokens, foreign)
+				if foreign.R == nil {
+					foreign.R = &tokenR{}
+				}
+				foreign.R.Profile = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
 // SetInstanceG of the profile to the related item.
 // Sets o.R.Instance to related.
 // Adds o to related.R.Profiles.
@@ -787,6 +909,68 @@ func (o *Profile) SetUser(ctx context.Context, exec boil.ContextExecutor, insert
 		related.R.Profiles = append(related.R.Profiles, o)
 	}
 
+	return nil
+}
+
+// AddTokensG adds the given related objects to the existing relationships
+// of the profile, optionally inserting them as new records.
+// Appends related to o.R.Tokens.
+// Sets related.R.Profile appropriately.
+// Uses the global database handle.
+func (o *Profile) AddTokensG(ctx context.Context, insert bool, related ...*Token) error {
+	return o.AddTokens(ctx, boil.GetContextDB(), insert, related...)
+}
+
+// AddTokens adds the given related objects to the existing relationships
+// of the profile, optionally inserting them as new records.
+// Appends related to o.R.Tokens.
+// Sets related.R.Profile appropriately.
+func (o *Profile) AddTokens(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Token) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.ProfileID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"tokens\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"profile_id"}),
+				strmangle.WhereClause("\"", "\"", 2, tokenPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.ProfileID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &profileR{
+			Tokens: related,
+		}
+	} else {
+		o.R.Tokens = append(o.R.Tokens, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &tokenR{
+				Profile: o,
+			}
+		} else {
+			rel.R.Profile = o
+		}
+	}
 	return nil
 }
 

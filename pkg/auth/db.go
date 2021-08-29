@@ -79,20 +79,27 @@ func DeleteUser(ctx context.Context, userID int64) error {
 	return err
 }
 
-func SaveToken(ctx context.Context, userID int64, token string, expiresAt time.Time) error {
+func SaveToken(ctx context.Context, profile *m.Profile, token string, expiresAt time.Time) error {
 	t := m.Token{
-		UserID:    null.Int64From(userID),
+		UserID:    profile.UserID,
 		Token:     token,
 		ExpiresAt: expiresAt,
 	}
 	return t.InsertG(ctx, boil.Infer())
 }
 
-func DeleteToken(ctx context.Context, userID int64, token string) (int64, error) {
+func DeleteToken(ctx context.Context, profileID int64) (int64, error) {
 	where := &m.TokenWhere
 	numDeleted, err := m.Tokens(
-		where.UserID.EQ(null.Int64From(userID)),
-		where.Token.EQ(token),
+		where.ProfileID.EQ(profileID),
+	).DeleteAllG(ctx)
+	return numDeleted, err
+}
+
+func DeleteAllToken(ctx context.Context, userID int64) (int64, error) {
+	where := &m.TokenWhere
+	numDeleted, err := m.Tokens(
+		where.UserID.EQ(userID),
 	).DeleteAllG(ctx)
 	return numDeleted, err
 }

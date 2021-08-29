@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
-	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -24,11 +23,12 @@ import (
 
 // Token is an object representing the database table.
 type Token struct {
-	ID        int64      `boil:"id" json:"id" toml:"id" yaml:"id"`
-	UserID    null.Int64 `boil:"user_id" json:"user_id,omitempty" toml:"user_id" yaml:"user_id,omitempty"`
-	Token     string     `boil:"token" json:"token" toml:"token" yaml:"token"`
-	CreatedAt time.Time  `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	ExpiresAt time.Time  `boil:"expires_at" json:"expires_at" toml:"expires_at" yaml:"expires_at"`
+	ID        int64     `boil:"id" json:"id" toml:"id" yaml:"id"`
+	UserID    int64     `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
+	ProfileID int64     `boil:"profile_id" json:"profile_id" toml:"profile_id" yaml:"profile_id"`
+	Token     string    `boil:"token" json:"token" toml:"token" yaml:"token"`
+	CreatedAt time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	ExpiresAt time.Time `boil:"expires_at" json:"expires_at" toml:"expires_at" yaml:"expires_at"`
 
 	R *tokenR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L tokenL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -37,12 +37,14 @@ type Token struct {
 var TokenColumns = struct {
 	ID        string
 	UserID    string
+	ProfileID string
 	Token     string
 	CreatedAt string
 	ExpiresAt string
 }{
 	ID:        "id",
 	UserID:    "user_id",
+	ProfileID: "profile_id",
 	Token:     "token",
 	CreatedAt: "created_at",
 	ExpiresAt: "expires_at",
@@ -51,12 +53,14 @@ var TokenColumns = struct {
 var TokenTableColumns = struct {
 	ID        string
 	UserID    string
+	ProfileID string
 	Token     string
 	CreatedAt string
 	ExpiresAt string
 }{
 	ID:        "tokens.id",
 	UserID:    "tokens.user_id",
+	ProfileID: "tokens.profile_id",
 	Token:     "tokens.token",
 	CreatedAt: "tokens.created_at",
 	ExpiresAt: "tokens.expires_at",
@@ -64,38 +68,17 @@ var TokenTableColumns = struct {
 
 // Generated where
 
-type whereHelpernull_Int64 struct{ field string }
-
-func (w whereHelpernull_Int64) EQ(x null.Int64) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, false, x)
-}
-func (w whereHelpernull_Int64) NEQ(x null.Int64) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, true, x)
-}
-func (w whereHelpernull_Int64) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
-func (w whereHelpernull_Int64) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
-func (w whereHelpernull_Int64) LT(x null.Int64) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LT, x)
-}
-func (w whereHelpernull_Int64) LTE(x null.Int64) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LTE, x)
-}
-func (w whereHelpernull_Int64) GT(x null.Int64) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GT, x)
-}
-func (w whereHelpernull_Int64) GTE(x null.Int64) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GTE, x)
-}
-
 var TokenWhere = struct {
 	ID        whereHelperint64
-	UserID    whereHelpernull_Int64
+	UserID    whereHelperint64
+	ProfileID whereHelperint64
 	Token     whereHelperstring
 	CreatedAt whereHelpertime_Time
 	ExpiresAt whereHelpertime_Time
 }{
 	ID:        whereHelperint64{field: "\"tokens\".\"id\""},
-	UserID:    whereHelpernull_Int64{field: "\"tokens\".\"user_id\""},
+	UserID:    whereHelperint64{field: "\"tokens\".\"user_id\""},
+	ProfileID: whereHelperint64{field: "\"tokens\".\"profile_id\""},
 	Token:     whereHelperstring{field: "\"tokens\".\"token\""},
 	CreatedAt: whereHelpertime_Time{field: "\"tokens\".\"created_at\""},
 	ExpiresAt: whereHelpertime_Time{field: "\"tokens\".\"expires_at\""},
@@ -103,14 +86,17 @@ var TokenWhere = struct {
 
 // TokenRels is where relationship names are stored.
 var TokenRels = struct {
-	User string
+	Profile string
+	User    string
 }{
-	User: "User",
+	Profile: "Profile",
+	User:    "User",
 }
 
 // tokenR is where relationships are stored.
 type tokenR struct {
-	User *User `boil:"User" json:"User" toml:"User" yaml:"User"`
+	Profile *Profile `boil:"Profile" json:"Profile" toml:"Profile" yaml:"Profile"`
+	User    *User    `boil:"User" json:"User" toml:"User" yaml:"User"`
 }
 
 // NewStruct creates a new relationship struct
@@ -122,8 +108,8 @@ func (*tokenR) NewStruct() *tokenR {
 type tokenL struct{}
 
 var (
-	tokenAllColumns            = []string{"id", "user_id", "token", "created_at", "expires_at"}
-	tokenColumnsWithoutDefault = []string{"user_id", "token", "expires_at"}
+	tokenAllColumns            = []string{"id", "user_id", "profile_id", "token", "created_at", "expires_at"}
+	tokenColumnsWithoutDefault = []string{"user_id", "profile_id", "token", "expires_at"}
 	tokenColumnsWithDefault    = []string{"id", "created_at"}
 	tokenPrimaryKeyColumns     = []string{"id"}
 )
@@ -423,6 +409,21 @@ func (q tokenQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (bool
 	return count > 0, nil
 }
 
+// Profile pointed to by the foreign key.
+func (o *Token) Profile(mods ...qm.QueryMod) profileQuery {
+	queryMods := []qm.QueryMod{
+		qm.Where("\"id\" = ?", o.ProfileID),
+		qmhelper.WhereIsNull("deleted_at"),
+	}
+
+	queryMods = append(queryMods, mods...)
+
+	query := Profiles(queryMods...)
+	queries.SetFrom(query.Query, "\"profiles\"")
+
+	return query
+}
+
 // User pointed to by the foreign key.
 func (o *Token) User(mods ...qm.QueryMod) userQuery {
 	queryMods := []qm.QueryMod{
@@ -436,6 +437,111 @@ func (o *Token) User(mods ...qm.QueryMod) userQuery {
 	queries.SetFrom(query.Query, "\"users\"")
 
 	return query
+}
+
+// LoadProfile allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for an N-1 relationship.
+func (tokenL) LoadProfile(ctx context.Context, e boil.ContextExecutor, singular bool, maybeToken interface{}, mods queries.Applicator) error {
+	var slice []*Token
+	var object *Token
+
+	if singular {
+		object = maybeToken.(*Token)
+	} else {
+		slice = *maybeToken.(*[]*Token)
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &tokenR{}
+		}
+		args = append(args, object.ProfileID)
+
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &tokenR{}
+			}
+
+			for _, a := range args {
+				if a == obj.ProfileID {
+					continue Outer
+				}
+			}
+
+			args = append(args, obj.ProfileID)
+
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.From(`profiles`),
+		qm.WhereIn(`profiles.id in ?`, args...),
+		qmhelper.WhereIsNull(`profiles.deleted_at`),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load Profile")
+	}
+
+	var resultSlice []*Profile
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice Profile")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results of eager load for profiles")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for profiles")
+	}
+
+	if len(tokenAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+
+	if len(resultSlice) == 0 {
+		return nil
+	}
+
+	if singular {
+		foreign := resultSlice[0]
+		object.R.Profile = foreign
+		if foreign.R == nil {
+			foreign.R = &profileR{}
+		}
+		foreign.R.Tokens = append(foreign.R.Tokens, object)
+		return nil
+	}
+
+	for _, local := range slice {
+		for _, foreign := range resultSlice {
+			if local.ProfileID == foreign.ID {
+				local.R.Profile = foreign
+				if foreign.R == nil {
+					foreign.R = &profileR{}
+				}
+				foreign.R.Tokens = append(foreign.R.Tokens, local)
+				break
+			}
+		}
+	}
+
+	return nil
 }
 
 // LoadUser allows an eager lookup of values, cached into the
@@ -455,9 +561,7 @@ func (tokenL) LoadUser(ctx context.Context, e boil.ContextExecutor, singular boo
 		if object.R == nil {
 			object.R = &tokenR{}
 		}
-		if !queries.IsNil(object.UserID) {
-			args = append(args, object.UserID)
-		}
+		args = append(args, object.UserID)
 
 	} else {
 	Outer:
@@ -467,14 +571,12 @@ func (tokenL) LoadUser(ctx context.Context, e boil.ContextExecutor, singular boo
 			}
 
 			for _, a := range args {
-				if queries.Equal(a, obj.UserID) {
+				if a == obj.UserID {
 					continue Outer
 				}
 			}
 
-			if !queries.IsNil(obj.UserID) {
-				args = append(args, obj.UserID)
-			}
+			args = append(args, obj.UserID)
 
 		}
 	}
@@ -533,7 +635,7 @@ func (tokenL) LoadUser(ctx context.Context, e boil.ContextExecutor, singular boo
 
 	for _, local := range slice {
 		for _, foreign := range resultSlice {
-			if queries.Equal(local.UserID, foreign.ID) {
+			if local.UserID == foreign.ID {
 				local.R.User = foreign
 				if foreign.R == nil {
 					foreign.R = &userR{}
@@ -542,6 +644,61 @@ func (tokenL) LoadUser(ctx context.Context, e boil.ContextExecutor, singular boo
 				break
 			}
 		}
+	}
+
+	return nil
+}
+
+// SetProfileG of the token to the related item.
+// Sets o.R.Profile to related.
+// Adds o to related.R.Tokens.
+// Uses the global database handle.
+func (o *Token) SetProfileG(ctx context.Context, insert bool, related *Profile) error {
+	return o.SetProfile(ctx, boil.GetContextDB(), insert, related)
+}
+
+// SetProfile of the token to the related item.
+// Sets o.R.Profile to related.
+// Adds o to related.R.Tokens.
+func (o *Token) SetProfile(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Profile) error {
+	var err error
+	if insert {
+		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
+			return errors.Wrap(err, "failed to insert into foreign table")
+		}
+	}
+
+	updateQuery := fmt.Sprintf(
+		"UPDATE \"tokens\" SET %s WHERE %s",
+		strmangle.SetParamNames("\"", "\"", 1, []string{"profile_id"}),
+		strmangle.WhereClause("\"", "\"", 2, tokenPrimaryKeyColumns),
+	)
+	values := []interface{}{related.ID, o.ID}
+
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, updateQuery)
+		fmt.Fprintln(writer, values)
+	}
+	if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	o.ProfileID = related.ID
+	if o.R == nil {
+		o.R = &tokenR{
+			Profile: related,
+		}
+	} else {
+		o.R.Profile = related
+	}
+
+	if related.R == nil {
+		related.R = &profileR{
+			Tokens: TokenSlice{o},
+		}
+	} else {
+		related.R.Tokens = append(related.R.Tokens, o)
 	}
 
 	return nil
@@ -582,7 +739,7 @@ func (o *Token) SetUser(ctx context.Context, exec boil.ContextExecutor, insert b
 		return errors.Wrap(err, "failed to update local table")
 	}
 
-	queries.Assign(&o.UserID, related.ID)
+	o.UserID = related.ID
 	if o.R == nil {
 		o.R = &tokenR{
 			User: related,
@@ -599,47 +756,6 @@ func (o *Token) SetUser(ctx context.Context, exec boil.ContextExecutor, insert b
 		related.R.Tokens = append(related.R.Tokens, o)
 	}
 
-	return nil
-}
-
-// RemoveUserG relationship.
-// Sets o.R.User to nil.
-// Removes o from all passed in related items' relationships struct (Optional).
-// Uses the global database handle.
-func (o *Token) RemoveUserG(ctx context.Context, related *User) error {
-	return o.RemoveUser(ctx, boil.GetContextDB(), related)
-}
-
-// RemoveUser relationship.
-// Sets o.R.User to nil.
-// Removes o from all passed in related items' relationships struct (Optional).
-func (o *Token) RemoveUser(ctx context.Context, exec boil.ContextExecutor, related *User) error {
-	var err error
-
-	queries.SetScanner(&o.UserID, nil)
-	if _, err = o.Update(ctx, exec, boil.Whitelist("user_id")); err != nil {
-		return errors.Wrap(err, "failed to update local table")
-	}
-
-	if o.R != nil {
-		o.R.User = nil
-	}
-	if related == nil || related.R == nil {
-		return nil
-	}
-
-	for i, ri := range related.R.Tokens {
-		if queries.Equal(o.UserID, ri.UserID) {
-			continue
-		}
-
-		ln := len(related.R.Tokens)
-		if ln > 1 && i < ln-1 {
-			related.R.Tokens[i] = related.R.Tokens[ln-1]
-		}
-		related.R.Tokens = related.R.Tokens[:ln-1]
-		break
-	}
 	return nil
 }
 

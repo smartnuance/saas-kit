@@ -32,10 +32,12 @@ CREATE TABLE IF NOT EXISTS profiles(
 );
 CREATE TABLE IF NOT EXISTS tokens(
   id bigserial PRIMARY KEY,
-  user_id bigint,
+  user_id bigint NOT NULL,
+  profile_id bigint NOT NULL,
   token text NOT NULL,
   created_at timestamp with time zone NOT NULL DEFAULT NOW(),
   expires_at timestamp with time zone NOT NULL,
-  CONSTRAINT fk_user FOREIGN KEY(user_id) REFERENCES users(id)
+  CONSTRAINT fk_user FOREIGN KEY(user_id) REFERENCES users(id),
+  CONSTRAINT fk_profile FOREIGN KEY(profile_id) REFERENCES profiles(id)
 );
-CREATE INDEX token_idx ON tokens(user_id, token);
+CREATE INDEX token_idx ON tokens(user_id, profile_id, token);
