@@ -3,6 +3,7 @@ module github.com/smartnuance/saas-kit
 go 1.16
 
 require (
+	github.com/RichardKnop/go-fixtures v0.0.0-20191226211317-8d7ddb76c9e2 // indirect
 	github.com/friendsofgo/errors v0.9.2
 	github.com/gin-gonic/gin v1.7.4
 	github.com/golang-jwt/jwt/v4 v4.0.0

@@ -4,9 +4,12 @@ import (
 	"database/sql"
 	"embed"
 	"flag"
+	"io/ioutil"
 	"net/http"
+	"net/http/httptest"
 	"os"
 
+	"github.com/RichardKnop/go-fixtures"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-migrate/migrate/v4"
 	migrateDriver "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -47,6 +50,10 @@ type Service struct {
 var migrateDownFlag bool
 var fakeMigrationVersion int
 var clearDBFlag bool
+var userName string
+var userEmail string
+var userPassword string
+var userInstanceID int
 
 func Main() (authService Service, err error) {
 	// Common steps for all command options
@@ -65,6 +72,12 @@ func Main() (authService Service, err error) {
 	migrateCommand.BoolVar(&migrateDownFlag, "down", false, "migrate DB all down to empty")
 	migrateCommand.IntVar(&fakeMigrationVersion, "fake", -1, "fakes DB version to specific version without actually migrating")
 	migrateCommand.BoolVar(&clearDBFlag, "clear", false, "clear DB")
+	fixtureCommand := flag.NewFlagSet("fixture", flag.ExitOnError)
+	userCommand := flag.NewFlagSet("adduser", flag.ExitOnError)
+	userCommand.StringVar(&userName, "name", "", "name of user to add")
+	userCommand.StringVar(&userEmail, "email", "", "email of user to add")
+	userCommand.StringVar(&userPassword, "password", "", "password of user to add")
+	userCommand.IntVar(&userInstanceID, "instance", 1, "instance of user to add a default profile for")
 	flag.Parse()
 
 	// Check if a subcommand has been provided
@@ -75,7 +88,10 @@ func Main() (authService Service, err error) {
 		// os.Args[2:] will be all arguments starting after the subcommand at os.Args[1]
 		switch os.Args[1] {
 		case "migrate":
-			migrateCommand.Parse(os.Args[2:])
+			err = migrateCommand.Parse(os.Args[2:])
+			if err != nil {
+				return
+			}
 
 			if fakeMigrationVersion != -1 {
 				err = authService.FakeMigration(fakeMigrationVersion)
@@ -87,8 +103,36 @@ func Main() (authService Service, err error) {
 				err = authService.Migrate()
 			}
 			return
+		case "fixture":
+			err = fixtureCommand.Parse(os.Args[2:])
+			if err != nil {
+				return
+			}
+
+			var data []byte
+			data, err = ioutil.ReadFile(fixtureCommand.Arg(0))
+			if err != nil {
+				return
+			}
+			err = fixtures.Load(data, authService.DB, "postgres")
+			if err != nil {
+				return
+			}
+		case "adduser":
+			err = userCommand.Parse(os.Args[2:])
+			if err != nil {
+				return
+			}
+
+			r := httptest.NewRecorder()
+			ctx, _ := gin.CreateTestContext(r)
+			_, err = authService.signup(ctx, userInstanceID, SignupBody{Name: userName, Email: userEmail, Password: userPassword}, "super admin")
+			if err != nil {
+				return
+			}
 		default:
-			os.Exit(1)
+			err = errors.Errorf("invalid command: %s", os.Args[1])
+			return
 		}
 	} else {
 		// Just migrate up and run the service

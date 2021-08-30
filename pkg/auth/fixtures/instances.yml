@@ -1,0 +1,10 @@
+---
+
+- table: instances
+  pk:
+    id: 1
+  fields:
+    name: smartnuance
+    url: smartnuance.com
+    created_at: ON_INSERT_NOW()
+    updated_at: ON_UPDATE_NOW()

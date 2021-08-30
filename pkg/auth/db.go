@@ -61,13 +61,26 @@ func GetUserAndProfile(ctx context.Context, userID int64, instanceURL string) (u
 	return
 }
 
-func CreateUser(ctx context.Context, name, email string, passwordHash []byte) (user *m.User, err error) {
+func CreateProfile(ctx context.Context, tx *sql.Tx, instanceID int64, user *m.User, role string) (profile *m.Profile, err error) {
+	profile = &m.Profile{
+		InstanceID: instanceID,
+		UserID:     user.ID,
+		Role:       null.StringFrom(role),
+	}
+	err = profile.Upsert(ctx, tx, true, boil.None().Cols, boil.Infer(), boil.Infer())
+	if err != nil {
+		return
+	}
+	return
+}
+
+func CreateUser(ctx context.Context, tx *sql.Tx, name, email string, passwordHash []byte) (user *m.User, err error) {
 	user = &m.User{
 		Name:     null.StringFrom(name),
 		Email:    email,
 		Password: passwordHash,
 	}
-	err = user.InsertG(ctx, boil.Infer())
+	err = user.Insert(ctx, tx, boil.Infer())
 	if err != nil {
 		return
 	}
