@@ -15,9 +15,9 @@ func router(s *Service) *gin.Engine {
 	config := cors.DefaultConfig()
 	config.AddAllowHeaders("PUT", "PATCH", "GET", "POST", "DELETE", "OPTIONS")
 	if s.release {
-		config.AllowOrigins = []string{"http://localhost:46223"}
 		config.AllowOriginFunc = func(origin string) bool {
-			return origin == "https://github.com"
+			_, ok := s.AllowOrigins[origin]
+			return ok
 		}
 	} else {
 		config.AllowAllOrigins = true

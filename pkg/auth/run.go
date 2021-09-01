@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 
 	"github.com/RichardKnop/go-fixtures"
 	"github.com/gin-gonic/gin"
@@ -36,15 +37,17 @@ var (
 type Env struct {
 	lib.DatabaseEnv
 	tokens.TokenEnv
-	release bool
+	AllowOrigins []string
+	release      bool
 }
 
 // Service offers the APIs of the authentication service.
 // This struct holds hierarchically structured state that is shared between requests.
 type Service struct {
 	Env
-	DB       *sql.DB
-	TokenAPI *tokens.TokenController
+	DB           *sql.DB
+	TokenAPI     *tokens.TokenController
+	AllowOrigins map[string]struct{}
 }
 
 var migrateDownFlag bool
@@ -157,6 +160,7 @@ func Load() (env Env, err error) {
 
 	env.DatabaseEnv = lib.LoadDatabaseEnv(envs)
 	env.TokenEnv = tokens.Load(envs, ServiceName)
+	env.AllowOrigins = strings.Split(envs["ALLOW_ORIGINS"], ",")
 	return
 }
 
@@ -175,6 +179,11 @@ func (env Env) Setup() (s Service, err error) {
 	s.TokenAPI, err = tokens.Setup(s.TokenEnv)
 	if err != nil {
 		return
+	}
+
+	s.AllowOrigins = map[string]struct{}{}
+	for _, o := range env.AllowOrigins {
+		s.AllowOrigins[o] = struct{}{}
 	}
 
 	if env.release {
