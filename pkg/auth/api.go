@@ -3,6 +3,7 @@ package auth
 import (
 	"net/http"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 	"github.com/smartnuance/saas-kit/pkg/lib/tokens"
@@ -10,6 +11,18 @@ import (
 
 func router(s *Service) *gin.Engine {
 	var router = gin.Default()
+
+	config := cors.DefaultConfig()
+	config.AddAllowHeaders("PUT", "PATCH", "GET", "POST", "DELETE", "OPTIONS")
+	if s.release {
+		config.AllowOrigins = []string{"http://localhost:46223"}
+		config.AllowOriginFunc = func(origin string) bool {
+			return origin == "https://github.com"
+		}
+	} else {
+		config.AllowAllOrigins = true
+	}
+	router.Use(cors.New(config))
 
 	api := router.Group("/")
 
