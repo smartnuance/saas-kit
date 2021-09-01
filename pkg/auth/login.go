@@ -95,7 +95,7 @@ func (s *Service) Refresh(ctx *gin.Context) (string, error) {
 	}
 
 	var claims tokens.RefreshTokenClaims
-	err = tokens.CheckRefreshToken(body.RefreshToken, claims, s.TokenAPI.ValidationKey, s.Issuer, s.Audience)
+	err = tokens.CheckRefreshToken(body.RefreshToken, &claims, s.TokenAPI.ValidationKey, s.Issuer, s.Audience)
 	if err != nil {
 		return "", errors.WithStack(ErrTokenInvalid)
 	}
@@ -136,10 +136,10 @@ func (s *Service) Revoke(ctx *gin.Context) error {
 
 	// Check permission to revoke token for potentially different user
 	if !(roles.CanActFor(ctx, instanceID) || roles.CanActIn(ctx, roles.RoleSuperAdmin)) {
-		return ErrUnauthorized
+		return errors.WithStack(ErrUnauthorized)
 	}
 
-	numDeleted, err := DeleteToken(ctx, int64(userID))
+	numDeleted, err := DeleteAllTokens(ctx, int64(userID))
 	if err != nil {
 		return err
 	}

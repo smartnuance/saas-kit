@@ -41,9 +41,9 @@ func AuthorizeJWT(validationKey *rsa.PublicKey, issuer, audience string) gin.Han
 		}
 		tokenString := authHeader[len(BearerSchema):]
 		var claims AccessTokenClaims
-		err := CheckAccessToken(tokenString, claims, validationKey, issuer, audience)
+		err := CheckAccessToken(tokenString, &claims, validationKey, issuer, audience)
 		if err != nil {
-			log.Error().Err(err)
+			log.Error().Err(err).Msg("")
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
@@ -54,7 +54,7 @@ func AuthorizeJWT(validationKey *rsa.PublicKey, issuer, audience string) gin.Han
 	}
 }
 
-func CheckAccessToken(tokenStr string, claims AccessTokenClaims, validationKey *rsa.PublicKey, issuer, audience string) error {
+func CheckAccessToken(tokenStr string, claims *AccessTokenClaims, validationKey *rsa.PublicKey, issuer, audience string) error {
 	token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
 		if _, isvalid := token.Method.(*jwt.SigningMethodRSA); !isvalid {
 			return nil, fmt.Errorf("invalid token signing method: %s", token.Header["alg"])
@@ -78,7 +78,7 @@ func CheckAccessToken(tokenStr string, claims AccessTokenClaims, validationKey *
 	return nil
 }
 
-func CheckRefreshToken(tokenStr string, claims RefreshTokenClaims, validationKey *rsa.PublicKey, issuer, audience string) error {
+func CheckRefreshToken(tokenStr string, claims *RefreshTokenClaims, validationKey *rsa.PublicKey, issuer, audience string) error {
 	token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
 		if _, isvalid := token.Method.(*jwt.SigningMethodRSA); !isvalid {
 			return nil, fmt.Errorf("invalid token signing method: %s", token.Header["alg"])

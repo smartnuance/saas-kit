@@ -95,6 +95,7 @@ func DeleteUser(ctx context.Context, userID int64) error {
 func SaveToken(ctx context.Context, profile *m.Profile, token string, expiresAt time.Time) error {
 	t := m.Token{
 		UserID:    profile.UserID,
+		ProfileID: profile.ID,
 		Token:     token,
 		ExpiresAt: expiresAt,
 	}
@@ -109,7 +110,7 @@ func DeleteToken(ctx context.Context, profileID int64) (int64, error) {
 	return numDeleted, err
 }
 
-func DeleteAllToken(ctx context.Context, userID int64) (int64, error) {
+func DeleteAllTokens(ctx context.Context, userID int64) (int64, error) {
 	where := &m.TokenWhere
 	numDeleted, err := m.Tokens(
 		where.UserID.EQ(userID),
