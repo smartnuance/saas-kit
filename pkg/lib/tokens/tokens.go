@@ -13,19 +13,26 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+const (
+	AccessPurpose  = "access"
+	RefreshPurpose = "refresh"
+)
+
 // AccessTokenClaims contain temporary authorization information.
 type AccessTokenClaims struct {
+	Purpose  string `json:"purp"`
 	User     bool   `json:"user"`
 	Role     string `json:"role"`
-	Instance int    `json:"instance"`
+	Instance int    `json:"inst"`
 	jwt.StandardClaims
 }
 
 // RefreshTokenClaims contain everything necessary to recreate an accesstoken,
 // i.e. identify the right profile to load role and user meta information from.
 type RefreshTokenClaims struct {
-	User     bool `json:"user"`
-	Instance int  `json:"instance"`
+	Purpose  string `json:"purp"`
+	User     bool   `json:"user"`
+	Instance int    `json:"inst"`
 	jwt.StandardClaims
 }
 
@@ -67,6 +74,9 @@ func CheckAccessToken(tokenStr string, claims *AccessTokenClaims, validationKey 
 	if !token.Valid {
 		return errors.Wrap(err, "invalid token claims")
 	}
+	if claims.Purpose != AccessPurpose {
+		return errors.Wrap(err, "invalid token purpose")
+	}
 	ok := claims.VerifyIssuer(issuer, true)
 	if !ok {
 		return errors.New("invalid token issuer")
@@ -90,6 +100,9 @@ func CheckRefreshToken(tokenStr string, claims *RefreshTokenClaims, validationKe
 	}
 	if !token.Valid {
 		return errors.Wrap(err, "invalid token claims")
+	}
+	if claims.Purpose != RefreshPurpose {
+		return errors.Errorf("invalid token purpose %s", claims.Purpose)
 	}
 	ok := claims.VerifyIssuer(issuer, true)
 	if !ok {

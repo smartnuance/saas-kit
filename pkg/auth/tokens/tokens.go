@@ -71,6 +71,7 @@ func Setup(env TokenEnv) (c *TokenController, err error) {
 
 func (c *TokenController) GenerateAccessToken(userID, instanceID int, isUser bool, role string) (token string, err error) {
 	claims := tokens.AccessTokenClaims{
+		Purpose:  tokens.AccessPurpose,
 		User:     isUser,
 		Role:     role,
 		Instance: instanceID,
@@ -95,6 +96,7 @@ func (c *TokenController) GenerateAccessToken(userID, instanceID int, isUser boo
 func (c *TokenController) GenerateRefreshToken(userID, instanceID int, isUser bool) (token string, expiresAt time.Time, err error) {
 	expiresAt = time.Now().Add(time.Hour * 24 * 7)
 	claims := tokens.RefreshTokenClaims{
+		Purpose:  tokens.RefreshPurpose,
 		User:     isUser,
 		Instance: instanceID,
 		StandardClaims: jwt.StandardClaims{
