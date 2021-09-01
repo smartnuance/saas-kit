@@ -31,7 +31,7 @@ type RefreshTokenClaims struct {
 
 const BearerSchema = "Bearer "
 
-func AuthorizeJWT(validationKey *rsa.PublicKey) gin.HandlerFunc {
+func AuthorizeJWT(validationKey *rsa.PublicKey, issuer, audience string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		authHeader := ctx.GetHeader("Authorization")
 		if len(authHeader) <= len(BearerSchema) {
@@ -41,19 +41,9 @@ func AuthorizeJWT(validationKey *rsa.PublicKey) gin.HandlerFunc {
 		}
 		tokenString := authHeader[len(BearerSchema):]
 		var claims AccessTokenClaims
-		token, err := jwt.ParseWithClaims(tokenString, &claims, func(token *jwt.Token) (interface{}, error) {
-			if _, isvalid := token.Method.(*jwt.SigningMethodRSA); !isvalid {
-				return nil, fmt.Errorf("invalid token signing method: %s", token.Header["alg"])
-			}
-			return validationKey, nil
-		})
+		err := CheckAccessToken(tokenString, claims, validationKey, issuer, audience)
 		if err != nil {
-			log.Error().Err(err).Msg("error parsing authorization header")
-			ctx.AbortWithStatus(http.StatusUnauthorized)
-			return
-		}
-		if !token.Valid {
-			log.Error().Msg("invalid token in authorization header")
+			log.Error().Err(err)
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
@@ -64,7 +54,50 @@ func AuthorizeJWT(validationKey *rsa.PublicKey) gin.HandlerFunc {
 	}
 }
 
-var (
-	ErrMissingToken = errors.New("missing token")
-	ErrInvalidToken = errors.New("invalid token")
-)
+func CheckAccessToken(tokenStr string, claims AccessTokenClaims, validationKey *rsa.PublicKey, issuer, audience string) error {
+	token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
+		if _, isvalid := token.Method.(*jwt.SigningMethodRSA); !isvalid {
+			return nil, fmt.Errorf("invalid token signing method: %s", token.Header["alg"])
+		}
+		return validationKey, nil
+	})
+	if err != nil {
+		return errors.Wrap(err, "invalid token")
+	}
+	if !token.Valid {
+		return errors.Wrap(err, "invalid token claims")
+	}
+	ok := claims.VerifyIssuer(issuer, true)
+	if !ok {
+		return errors.New("invalid token issuer")
+	}
+	ok = claims.VerifyAudience(audience, true)
+	if !ok {
+		return errors.New("invalid token audience")
+	}
+	return nil
+}
+
+func CheckRefreshToken(tokenStr string, claims RefreshTokenClaims, validationKey *rsa.PublicKey, issuer, audience string) error {
+	token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
+		if _, isvalid := token.Method.(*jwt.SigningMethodRSA); !isvalid {
+			return nil, fmt.Errorf("invalid token signing method: %s", token.Header["alg"])
+		}
+		return validationKey, nil
+	})
+	if err != nil {
+		return errors.Wrap(err, "invalid token")
+	}
+	if !token.Valid {
+		return errors.Wrap(err, "invalid token claims")
+	}
+	ok := claims.VerifyIssuer(issuer, true)
+	if !ok {
+		return errors.New("invalid token issuer")
+	}
+	ok = claims.VerifyAudience(audience, true)
+	if !ok {
+		return errors.New("invalid token audience")
+	}
+	return nil
+}

@@ -25,7 +25,7 @@ func router(s *Service) *gin.Engine {
 	})
 
 	// with authorization middleware
-	tokenAPI := api.Group("/revoke", tokens.AuthorizeJWT(s.TokenAPI.ValidationKey))
+	tokenAPI := api.Group("/revoke", tokens.AuthorizeJWT(s.TokenAPI.ValidationKey, s.Issuer, s.Audience))
 	{
 		tokenAPI.DELETE("/:user_id", func(ctx *gin.Context) {
 			RevokeHandler(ctx, s)

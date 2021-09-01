@@ -8,6 +8,7 @@ import (
 
 	jwt "github.com/golang-jwt/jwt/v4"
 	"github.com/pkg/errors"
+	"github.com/smartnuance/saas-kit/pkg/lib"
 	"github.com/smartnuance/saas-kit/pkg/lib/tokens"
 )
 
@@ -16,6 +17,8 @@ type TokenEnv struct {
 	ValidationKeyPath string
 	// Issuer is the issuer string of JWT tokens; defaults to service name
 	Issuer string
+	// Audience is the audience string of JWT tokens; defaults to DefaultAudience
+	Audience string
 }
 
 type TokenController struct {
@@ -29,10 +32,15 @@ func Load(envs map[string]string, serviceName string) TokenEnv {
 	if len(issuer) == 0 {
 		issuer = serviceName
 	}
+	audience := envs["TOKEN_AUDIENCE"]
+	if len(audience) == 0 {
+		audience = lib.DefaultAudience
+	}
 	return TokenEnv{
 		SigningKeyPath:    envs["TOKEN_SIGNING_KEY_PATH"],
 		ValidationKeyPath: envs["TOKEN_VALIDATION_KEY_PATH"],
 		Issuer:            issuer,
+		Audience:          audience,
 	}
 }
 
@@ -71,6 +79,7 @@ func (c *TokenController) GenerateAccessToken(userID, instanceID int, isUser boo
 			ExpiresAt: time.Now().Add(time.Minute * 15).Unix(),
 			Issuer:    c.Issuer,
 			IssuedAt:  time.Now().Unix(),
+			Audience:  c.Audience,
 		},
 	}
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodRS256, &claims)
@@ -93,6 +102,7 @@ func (c *TokenController) GenerateRefreshToken(userID, instanceID int, isUser bo
 			ExpiresAt: expiresAt.Unix(),
 			Issuer:    c.Issuer,
 			IssuedAt:  time.Now().Unix(),
+			Audience:  c.Audience,
 		},
 	}
 

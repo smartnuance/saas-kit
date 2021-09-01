@@ -1,14 +1,12 @@
 package auth
 
 import (
-	"fmt"
 	"strconv"
 	"time"
 
 	"github.com/pkg/errors"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v4"
 	m "github.com/smartnuance/saas-kit/pkg/auth/dbmodels"
 	"github.com/smartnuance/saas-kit/pkg/lib/roles"
 	"github.com/smartnuance/saas-kit/pkg/lib/tokens"
@@ -97,16 +95,8 @@ func (s *Service) Refresh(ctx *gin.Context) (string, error) {
 	}
 
 	var claims tokens.RefreshTokenClaims
-	token, err := jwt.ParseWithClaims(body.RefreshToken, &claims, func(token *jwt.Token) (interface{}, error) {
-		if _, isvalid := token.Method.(*jwt.SigningMethodRSA); !isvalid {
-			return nil, fmt.Errorf("invalid token signing method: %s", token.Header["alg"])
-		}
-		return s.TokenAPI.ValidationKey, nil
-	})
+	err = tokens.CheckRefreshToken(body.RefreshToken, claims, s.TokenAPI.ValidationKey, s.Issuer, s.Audience)
 	if err != nil {
-		return "", errors.WithStack(ErrTokenInvalid)
-	}
-	if !token.Valid {
 		return "", errors.WithStack(ErrTokenInvalid)
 	}
 
