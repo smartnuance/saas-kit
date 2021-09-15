@@ -28,13 +28,13 @@ func (s *Service) Login(ctx *gin.Context) (accessToken, refreshToken string, err
 		return
 	}
 	var user *m.User
-	user, err = loginWithCredentials(ctx, body.Email, body.Password)
+	user, err = s.loginWithCredentials(ctx, body.Email, body.Password)
 	if err != nil {
 		return
 	}
 
 	var instance *m.Instance
-	instance, err = GetInstance(ctx, body.InstanceURL)
+	instance, err = s.DBAPI.GetInstance(ctx, body.InstanceURL)
 	if err != nil {
 		return
 	}
@@ -45,7 +45,7 @@ func (s *Service) Login(ctx *gin.Context) (accessToken, refreshToken string, err
 		return
 	}
 
-	profile, err := GetProfile(ctx, user.ID, instance.ID)
+	profile, err := s.DBAPI.GetProfile(ctx, user.ID, instance.ID)
 	if err != nil {
 		err = errors.WithStack(ErrProfileDoesNotExist)
 		return
@@ -62,7 +62,7 @@ func (s *Service) Login(ctx *gin.Context) (accessToken, refreshToken string, err
 		return
 	}
 
-	err = SaveToken(ctx, profile, refreshToken, expiresAt)
+	err = s.DBAPI.SaveToken(ctx, profile, refreshToken, expiresAt)
 	if err != nil {
 		return
 	}
@@ -70,8 +70,8 @@ func (s *Service) Login(ctx *gin.Context) (accessToken, refreshToken string, err
 	return accessToken, refreshToken, nil
 }
 
-func loginWithCredentials(ctx *gin.Context, email string, password string) (*m.User, error) {
-	user, err := FindUserByEmail(ctx, email)
+func (s *Service) loginWithCredentials(ctx *gin.Context, email string, password string) (*m.User, error) {
+	user, err := s.DBAPI.FindUserByEmail(ctx, email)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +105,7 @@ func (s *Service) Refresh(ctx *gin.Context) (string, error) {
 		return "", errors.WithStack(ErrInvalidUserID)
 	}
 
-	profile, err := GetProfile(ctx, int64(userID), int64(claims.Instance))
+	profile, err := s.DBAPI.GetProfile(ctx, int64(userID), int64(claims.Instance))
 	if err != nil {
 		return "", errors.WithStack(ErrProfileDoesNotExist)
 	}
@@ -139,7 +139,7 @@ func (s *Service) Revoke(ctx *gin.Context) error {
 		return errors.WithStack(ErrUnauthorized)
 	}
 
-	numDeleted, err := DeleteAllTokens(ctx, int64(userID))
+	numDeleted, err := s.DBAPI.DeleteAllTokens(ctx, int64(userID))
 	if err != nil {
 		return err
 	}

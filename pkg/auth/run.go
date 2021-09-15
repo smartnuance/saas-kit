@@ -46,6 +46,7 @@ type Env struct {
 type Service struct {
 	Env
 	DB           *sql.DB
+	DBAPI        DBAPI
 	TokenAPI     *tokens.TokenController
 	AllowOrigins map[string]struct{}
 }
@@ -175,6 +176,7 @@ func (env Env) Setup() (s Service, err error) {
 	if err != nil {
 		return
 	}
+	s.DBAPI = &dbAPI{DB: s.DB}
 
 	s.TokenAPI, err = tokens.Setup(s.TokenEnv)
 	if err != nil {

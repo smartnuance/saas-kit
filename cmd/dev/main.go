@@ -3,6 +3,7 @@ package main
 //go:generate go install github.com/ahmetb/govvv@latest
 //go:generate go install github.com/volatiletech/sqlboiler/v4@latest
 //go:generate go install github.com/volatiletech/sqlboiler/v4/drivers/sqlboiler-psql@latest
+//go:generate go install github.com/golang/mock/mockgen@latest
 
 import (
 	"log"

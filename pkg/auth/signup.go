@@ -54,25 +54,25 @@ func (s *Service) signup(ctx *gin.Context, instanceID int, body SignupBody, role
 
 	// use a transaction to ensure user is only created with a valid profile
 	var tx *sql.Tx
-	tx, err = s.DB.BeginTx(ctx, nil)
+	tx, err = s.DBAPI.BeginTx(ctx)
 	if err != nil {
 		return
 	}
 
 	var user *m.User
-	user, err = CreateUser(ctx, tx, body.Name, body.Email, hashedPassword)
+	user, err = s.DBAPI.CreateUser(ctx, tx, body.Name, body.Email, hashedPassword)
 	if err != nil {
 		return
 	}
 
-	_, err = CreateProfile(ctx, tx, int64(instanceID), user, role)
+	_, err = s.DBAPI.CreateProfile(ctx, tx, int64(instanceID), user, role)
 	if err != nil {
 		return
 	}
 
-	err = tx.Commit()
+	err = s.DBAPI.Commit(tx)
 	if err != nil {
-		errRollback := tx.Rollback()
+		errRollback := s.DBAPI.Rollback(tx)
 		if errRollback != nil {
 			errors.Wrapf(err, errRollback.Error())
 		}

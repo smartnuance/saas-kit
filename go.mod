@@ -9,8 +9,10 @@ require (
 	github.com/gin-gonic/gin v1.7.4
 	github.com/golang-jwt/jwt/v4 v4.0.0
 	github.com/golang-migrate/migrate/v4 v4.14.1
+	github.com/golang/mock v1.4.4
 	github.com/joho/godotenv v1.3.0
 	github.com/lib/pq v1.10.2 // indirect
+	github.com/maxatome/go-testdeep v1.10.0
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.23.0

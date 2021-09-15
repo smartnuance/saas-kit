@@ -115,6 +115,10 @@ Environment & Building:
 - [govvv](https://github.com/ahmetb/govvv)
 - [EARTHLY](https://docs.earthly.dev)
 
+Testing:
+- [gomock](https://github.com/golang/mock)
+- [go-testdep](https://github.com/maxatome/go-testdeep)
+
 # Contribute
 
 ## Configure linter
@@ -126,3 +130,12 @@ We are using the configurable [staticcheck](https://staticcheck.io/docs/) linter
 Check that your [VScode](https://code.visualstudio.com/) workspace settings contain
 
     "go.lintTool": "staticcheck"
+
+
+## Configure testing
+
+If your IDE (like VScode) shows broken test output because it does not support colored output, add this to your workspace settings:
+
+    "go.testEnvVars": {
+        "TESTDEEP_COLOR": "off"
+    },
