@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"database/sql"
 	"embed"
 	"flag"
@@ -8,7 +9,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"os/signal"
 	"strings"
+	"time"
 
 	"github.com/RichardKnop/go-fixtures"
 	"github.com/gin-gonic/gin"
@@ -37,6 +40,7 @@ var (
 type Env struct {
 	lib.DatabaseEnv
 	tokens.TokenEnv
+	port         string
 	AllowOrigins []string
 	release      bool
 }
@@ -157,6 +161,7 @@ func Load() (env Env, err error) {
 		return
 	}
 
+	env.port = envs["AUTH_SERVICE_PORT"]
 	env.release = lib.Stage(envs["SAAS_KIT_ENV"]) == lib.PROD
 
 	env.DatabaseEnv = lib.LoadDatabaseEnv(envs)
@@ -170,7 +175,7 @@ func (env Env) Setup() (s Service, err error) {
 
 	lib.SetupLogger(ServiceName, Version, env.release)
 
-	log.Debug().Str("GitCommit", GitCommit).Interface("ServiceStruct", s).Msg("Setup service")
+	log.Info().Str("GitCommit", GitCommit).Msg("Setup service")
 
 	s.DB, err = lib.SetupDatabase(env.DatabaseEnv)
 	if err != nil {
@@ -273,6 +278,30 @@ func (s *Service) FakeMigration(version int) error {
 }
 
 func (s *Service) Run() (err error) {
-	err = router(s).Run()
+	srv := &http.Server{
+		Addr:    ":" + s.port,
+		Handler: router(s),
+	}
+
+	go func() {
+		// service connections
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Error().Err(err)
+		}
+	}()
+
+	// Wait for interrupt/kill signal to gracefully shutdown the server with a timeout
+	quit := make(chan os.Signal)
+	signal.Notify(quit, os.Interrupt, os.Kill)
+	<-quit
+	log.Info().Msg("gracefully shutdown service...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Error().Stack().Err(err).Msg("error during shutdown")
+	}
+	log.Info().Msg("...shutdown done")
+
 	return
 }
