@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"os/signal"
 	"strings"
 	"time"
 
@@ -148,7 +147,7 @@ func Main() (authService Service, err error) {
 		if err != nil {
 			return
 		}
-		err = authService.Run()
+		err = lib.RunInterruptible(authService.Run)
 		return
 	}
 
@@ -277,7 +276,7 @@ func (s *Service) FakeMigration(version int) error {
 	return nil
 }
 
-func (s *Service) Run() (err error) {
+func (s *Service) Run(ctx context.Context) (err error) {
 	srv := &http.Server{
 		Addr:    ":" + s.port,
 		Handler: router(s),
@@ -290,10 +289,7 @@ func (s *Service) Run() (err error) {
 		}
 	}()
 
-	// Wait for interrupt/kill signal to gracefully shutdown the server with a timeout
-	quit := make(chan os.Signal)
-	signal.Notify(quit, os.Interrupt, os.Kill)
-	<-quit
+	<-ctx.Done()
 	log.Info().Msg("gracefully shutdown service...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
