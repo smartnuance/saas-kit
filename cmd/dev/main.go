@@ -6,10 +6,10 @@ package main
 //go:generate go install github.com/golang/mock/mockgen@latest
 
 import (
-	"log"
 	"sync"
 
 	"github.com/smartnuance/saas-kit/pkg/auth"
+	"github.com/smartnuance/saas-kit/pkg/lib"
 )
 
 func main() {
@@ -17,10 +17,19 @@ func main() {
 
 	wg.Add(1)
 	go func() {
-		_, err := auth.Main()
+		env, err := auth.Load()
 		if err != nil {
-			log.Fatal(err)
+			return
 		}
+		// here we might need to adjust some env values for running services as go routines
+		authService, err := env.Setup()
+		if err != nil {
+			return
+		}
+
+		err = lib.RunInterruptible(authService.Run)
+		wg.Done()
+		return
 	}()
 
 	wg.Wait()
