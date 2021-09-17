@@ -24,7 +24,7 @@ import (
 
 // Instance is an object representing the database table.
 type Instance struct {
-	ID        int64     `boil:"id" json:"id" toml:"id" yaml:"id"`
+	ID        string    `boil:"id" json:"id" toml:"id" yaml:"id"`
 	Name      string    `boil:"name" json:"name" toml:"name" yaml:"name"`
 	URL       string    `boil:"url" json:"url" toml:"url" yaml:"url"`
 	CreatedAt time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
@@ -68,29 +68,6 @@ var InstanceTableColumns = struct {
 }
 
 // Generated where
-
-type whereHelperint64 struct{ field string }
-
-func (w whereHelperint64) EQ(x int64) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
-func (w whereHelperint64) NEQ(x int64) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
-func (w whereHelperint64) LT(x int64) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
-func (w whereHelperint64) LTE(x int64) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
-func (w whereHelperint64) GT(x int64) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
-func (w whereHelperint64) GTE(x int64) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
-func (w whereHelperint64) IN(slice []int64) qm.QueryMod {
-	values := make([]interface{}, 0, len(slice))
-	for _, value := range slice {
-		values = append(values, value)
-	}
-	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
-}
-func (w whereHelperint64) NIN(slice []int64) qm.QueryMod {
-	values := make([]interface{}, 0, len(slice))
-	for _, value := range slice {
-		values = append(values, value)
-	}
-	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
-}
 
 type whereHelperstring struct{ field string }
 
@@ -160,14 +137,14 @@ func (w whereHelpernull_Time) GTE(x null.Time) qm.QueryMod {
 }
 
 var InstanceWhere = struct {
-	ID        whereHelperint64
+	ID        whereHelperstring
 	Name      whereHelperstring
 	URL       whereHelperstring
 	CreatedAt whereHelpertime_Time
 	UpdatedAt whereHelpertime_Time
 	DeletedAt whereHelpernull_Time
 }{
-	ID:        whereHelperint64{field: "\"instances\".\"id\""},
+	ID:        whereHelperstring{field: "\"instances\".\"id\""},
 	Name:      whereHelperstring{field: "\"instances\".\"name\""},
 	URL:       whereHelperstring{field: "\"instances\".\"url\""},
 	CreatedAt: whereHelpertime_Time{field: "\"instances\".\"created_at\""},
@@ -197,8 +174,8 @@ type instanceL struct{}
 
 var (
 	instanceAllColumns            = []string{"id", "name", "url", "created_at", "updated_at", "deleted_at"}
-	instanceColumnsWithoutDefault = []string{"name", "url", "deleted_at"}
-	instanceColumnsWithDefault    = []string{"id", "created_at", "updated_at"}
+	instanceColumnsWithoutDefault = []string{"id", "name", "url", "deleted_at"}
+	instanceColumnsWithDefault    = []string{"created_at", "updated_at"}
 	instancePrimaryKeyColumns     = []string{"id"}
 )
 
@@ -687,13 +664,13 @@ func Instances(mods ...qm.QueryMod) instanceQuery {
 }
 
 // FindInstanceG retrieves a single record by ID.
-func FindInstanceG(ctx context.Context, iD int64, selectCols ...string) (*Instance, error) {
+func FindInstanceG(ctx context.Context, iD string, selectCols ...string) (*Instance, error) {
 	return FindInstance(ctx, boil.GetContextDB(), iD, selectCols...)
 }
 
 // FindInstance retrieves a single record by ID with an executor.
 // If selectCols is empty Find will return all columns.
-func FindInstance(ctx context.Context, exec boil.ContextExecutor, iD int64, selectCols ...string) (*Instance, error) {
+func FindInstance(ctx context.Context, exec boil.ContextExecutor, iD string, selectCols ...string) (*Instance, error) {
 	instanceObj := &Instance{}
 
 	sel := "*"
@@ -1316,12 +1293,12 @@ func (o *InstanceSlice) ReloadAll(ctx context.Context, exec boil.ContextExecutor
 }
 
 // InstanceExistsG checks if the Instance row exists.
-func InstanceExistsG(ctx context.Context, iD int64) (bool, error) {
+func InstanceExistsG(ctx context.Context, iD string) (bool, error) {
 	return InstanceExists(ctx, boil.GetContextDB(), iD)
 }
 
 // InstanceExists checks if the Instance row exists.
-func InstanceExists(ctx context.Context, exec boil.ContextExecutor, iD int64) (bool, error) {
+func InstanceExists(ctx context.Context, exec boil.ContextExecutor, iD string) (bool, error) {
 	var exists bool
 	sql := "select exists(select 1 from \"instances\" where \"id\"=$1 and \"deleted_at\" is null limit 1)"
 

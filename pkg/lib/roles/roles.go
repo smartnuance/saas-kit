@@ -2,7 +2,6 @@ package roles
 
 import (
 	"container/list"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
@@ -169,7 +168,7 @@ func CanActIn(ctx *gin.Context, targetRole string) bool {
 }
 
 // CanActFor checks if the user can act for the desired instance.
-func CanActFor(ctx *gin.Context, instanceID int) bool {
+func CanActFor(ctx *gin.Context, instanceID string) bool {
 	_, userInstance, err := Get(ctx)
 	if err != nil {
 		return false
@@ -181,7 +180,7 @@ func CanActFor(ctx *gin.Context, instanceID int) bool {
 // Get retrieves the user's role and instance to act for from context.
 // The default role is NoRole. An invalid role results in ErrInvalidRole.
 // There is no default instance. An invalid instance results in ErrInvalidInstance.
-func Get(ctx *gin.Context) (role string, instanceID int, err error) {
+func Get(ctx *gin.Context) (role string, instanceID string, err error) {
 	role = ctx.GetString(RoleKey) // corresponds to NoRole if empty
 	if !valid(role) {
 		err = ErrInvalidRole
@@ -192,7 +191,7 @@ func Get(ctx *gin.Context) (role string, instanceID int, err error) {
 		err = ErrInvalidInstance
 		return
 	}
-	instanceID = instance.(int)
+	instanceID = instance.(string)
 	return
 }
 
@@ -201,7 +200,7 @@ func Get(ctx *gin.Context) (role string, instanceID int, err error) {
 // When role parameter is missing, falls back to role specified in context.
 // When instance parameter is missing, falls back to instance specified in context.
 // Returns an error when neither parameter nor fallback was provided for role or instance.
-func FromHeaders(ctx *gin.Context) (role string, instanceID int, err error) {
+func FromHeaders(ctx *gin.Context) (role string, instanceID string, err error) {
 	role = ctx.GetHeader(RoleKey)
 	if len(role) > 0 {
 		if !valid(role) {
@@ -216,14 +215,8 @@ func FromHeaders(ctx *gin.Context) (role string, instanceID int, err error) {
 		}
 	}
 
-	_instanceID := ctx.GetHeader(InstanceKey)
-	if len(_instanceID) > 0 {
-		instanceID, err = strconv.Atoi(_instanceID)
-		if err != nil {
-			err = ErrInvalidInstance
-			return
-		}
-	} else {
+	instanceID = ctx.GetHeader(InstanceKey)
+	if len(instanceID) == 0 {
 		// if no instance is provided, fallback to instance from context
 		_, instanceID, err = Get(ctx)
 		if err != nil {

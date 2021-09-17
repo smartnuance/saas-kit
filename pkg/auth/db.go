@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/rs/xid"
 	m "github.com/smartnuance/saas-kit/pkg/auth/dbmodels"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -21,14 +22,14 @@ type DBAPI interface {
 	Rollback(tx *sql.Tx) error
 	FindUserByEmail(ctx context.Context, email string) (*m.User, error)
 	GetInstance(ctx context.Context, instanceURL string) (instance *m.Instance, err error)
-	GetProfile(ctx context.Context, userID, instanceID int64) (profile *m.Profile, err error)
-	GetUserAndProfile(ctx context.Context, userID int64, instanceURL string) (user *m.User, profile *m.Profile, err error)
-	CreateProfile(ctx context.Context, tx *sql.Tx, instanceID int64, user *m.User, role string) (profile *m.Profile, err error)
+	GetProfile(ctx context.Context, userID, instanceID string) (profile *m.Profile, err error)
+	GetUserAndProfile(ctx context.Context, userID string, instanceURL string) (user *m.User, profile *m.Profile, err error)
+	CreateProfile(ctx context.Context, tx *sql.Tx, instanceID string, user *m.User, role string) (profile *m.Profile, err error)
 	CreateUser(ctx context.Context, tx *sql.Tx, name, email string, passwordHash []byte) (user *m.User, err error)
-	DeleteUser(ctx context.Context, userID int64) error
+	DeleteUser(ctx context.Context, userID string) error
 	SaveToken(ctx context.Context, profile *m.Profile, token string, expiresAt time.Time) error
-	DeleteToken(ctx context.Context, profileID int64) (int64, error)
-	DeleteAllTokens(ctx context.Context, userID int64) (int64, error)
+	DeleteToken(ctx context.Context, profileID string) (int64, error)
+	DeleteAllTokens(ctx context.Context, userID string) (int64, error)
 }
 
 type dbAPI struct {
@@ -66,7 +67,7 @@ func (db *dbAPI) GetInstance(ctx context.Context, instanceURL string) (instance 
 	return instance, err
 }
 
-func (db *dbAPI) GetProfile(ctx context.Context, userID, instanceID int64) (profile *m.Profile, err error) {
+func (db *dbAPI) GetProfile(ctx context.Context, userID, instanceID string) (profile *m.Profile, err error) {
 	where := &m.ProfileWhere
 	profile, err = m.Profiles(where.UserID.EQ(userID), where.InstanceID.EQ(instanceID)).OneG(ctx)
 	if err == sql.ErrNoRows {
@@ -77,7 +78,7 @@ func (db *dbAPI) GetProfile(ctx context.Context, userID, instanceID int64) (prof
 	return profile, err
 }
 
-func (db *dbAPI) GetUserAndProfile(ctx context.Context, userID int64, instanceURL string) (user *m.User, profile *m.Profile, err error) {
+func (db *dbAPI) GetUserAndProfile(ctx context.Context, userID string, instanceURL string) (user *m.User, profile *m.Profile, err error) {
 	profile, err = m.Profiles(m.ProfileWhere.UserID.EQ(userID)).OneG(ctx)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -94,8 +95,9 @@ func (db *dbAPI) GetUserAndProfile(ctx context.Context, userID int64, instanceUR
 	return
 }
 
-func (db *dbAPI) CreateProfile(ctx context.Context, tx *sql.Tx, instanceID int64, user *m.User, role string) (profile *m.Profile, err error) {
+func (db *dbAPI) CreateProfile(ctx context.Context, tx *sql.Tx, instanceID string, user *m.User, role string) (profile *m.Profile, err error) {
 	profile = &m.Profile{
+		ID:         xid.New().String(),
 		InstanceID: instanceID,
 		UserID:     user.ID,
 		Role:       null.StringFrom(role),
@@ -109,6 +111,7 @@ func (db *dbAPI) CreateProfile(ctx context.Context, tx *sql.Tx, instanceID int64
 
 func (db *dbAPI) CreateUser(ctx context.Context, tx *sql.Tx, name, email string, passwordHash []byte) (user *m.User, err error) {
 	user = &m.User{
+		ID:       xid.New().String(),
 		Name:     null.StringFrom(name),
 		Email:    email,
 		Password: passwordHash,
@@ -120,7 +123,7 @@ func (db *dbAPI) CreateUser(ctx context.Context, tx *sql.Tx, name, email string,
 	return
 }
 
-func (db *dbAPI) DeleteUser(ctx context.Context, userID int64) error {
+func (db *dbAPI) DeleteUser(ctx context.Context, userID string) error {
 	_, err := m.Users(m.UserWhere.ID.EQ(userID)).DeleteAllG(ctx, false)
 	return err
 }
@@ -135,7 +138,7 @@ func (db *dbAPI) SaveToken(ctx context.Context, profile *m.Profile, token string
 	return t.InsertG(ctx, boil.Infer())
 }
 
-func (db *dbAPI) DeleteToken(ctx context.Context, profileID int64) (int64, error) {
+func (db *dbAPI) DeleteToken(ctx context.Context, profileID string) (int64, error) {
 	where := &m.TokenWhere
 	numDeleted, err := m.Tokens(
 		where.ProfileID.EQ(profileID),
@@ -143,7 +146,7 @@ func (db *dbAPI) DeleteToken(ctx context.Context, profileID int64) (int64, error
 	return numDeleted, err
 }
 
-func (db *dbAPI) DeleteAllTokens(ctx context.Context, userID int64) (int64, error) {
+func (db *dbAPI) DeleteAllTokens(ctx context.Context, userID string) (int64, error) {
 	where := &m.TokenWhere
 	numDeleted, err := m.Tokens(
 		where.UserID.EQ(userID),

@@ -100,6 +100,7 @@ API framework:
 Database interaction:
 - [sqlboiler](https://github.com/volatiletech/sqlboiler#getting-started) for generated db interaction
 - [golang-migrate](https://github.com/golang-migrate/migrate) for **clean up/down migrations**
+- [Globally Unique ID Generator]("github.com/rs/xid") that uses Mongo Object ID algorithm
 
 Token handling:
 - [jwt-go](https://github.com/golang-jwt/jwt) (v4!)

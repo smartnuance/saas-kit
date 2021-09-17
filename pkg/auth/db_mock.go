@@ -67,7 +67,7 @@ func (mr *MockDBAPIMockRecorder) Commit(arg0 interface{}) *gomock.Call {
 }
 
 // CreateProfile mocks base method.
-func (m *MockDBAPI) CreateProfile(arg0 context.Context, arg1 *sql.Tx, arg2 int64, arg3 *dbmodels.User, arg4 string) (*dbmodels.Profile, error) {
+func (m *MockDBAPI) CreateProfile(arg0 context.Context, arg1 *sql.Tx, arg2 string, arg3 *dbmodels.User, arg4 string) (*dbmodels.Profile, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateProfile", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(*dbmodels.Profile)
@@ -97,7 +97,7 @@ func (mr *MockDBAPIMockRecorder) CreateUser(arg0, arg1, arg2, arg3, arg4 interfa
 }
 
 // DeleteAllTokens mocks base method.
-func (m *MockDBAPI) DeleteAllTokens(arg0 context.Context, arg1 int64) (int64, error) {
+func (m *MockDBAPI) DeleteAllTokens(arg0 context.Context, arg1 string) (int64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteAllTokens", arg0, arg1)
 	ret0, _ := ret[0].(int64)
@@ -112,7 +112,7 @@ func (mr *MockDBAPIMockRecorder) DeleteAllTokens(arg0, arg1 interface{}) *gomock
 }
 
 // DeleteToken mocks base method.
-func (m *MockDBAPI) DeleteToken(arg0 context.Context, arg1 int64) (int64, error) {
+func (m *MockDBAPI) DeleteToken(arg0 context.Context, arg1 string) (int64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteToken", arg0, arg1)
 	ret0, _ := ret[0].(int64)
@@ -127,7 +127,7 @@ func (mr *MockDBAPIMockRecorder) DeleteToken(arg0, arg1 interface{}) *gomock.Cal
 }
 
 // DeleteUser mocks base method.
-func (m *MockDBAPI) DeleteUser(arg0 context.Context, arg1 int64) error {
+func (m *MockDBAPI) DeleteUser(arg0 context.Context, arg1 string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteUser", arg0, arg1)
 	ret0, _ := ret[0].(error)
@@ -171,7 +171,7 @@ func (mr *MockDBAPIMockRecorder) GetInstance(arg0, arg1 interface{}) *gomock.Cal
 }
 
 // GetProfile mocks base method.
-func (m *MockDBAPI) GetProfile(arg0 context.Context, arg1, arg2 int64) (*dbmodels.Profile, error) {
+func (m *MockDBAPI) GetProfile(arg0 context.Context, arg1, arg2 string) (*dbmodels.Profile, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetProfile", arg0, arg1, arg2)
 	ret0, _ := ret[0].(*dbmodels.Profile)
@@ -186,7 +186,7 @@ func (mr *MockDBAPIMockRecorder) GetProfile(arg0, arg1, arg2 interface{}) *gomoc
 }
 
 // GetUserAndProfile mocks base method.
-func (m *MockDBAPI) GetUserAndProfile(arg0 context.Context, arg1 int64, arg2 string) (*dbmodels.User, *dbmodels.Profile, error) {
+func (m *MockDBAPI) GetUserAndProfile(arg0 context.Context, arg1, arg2 string) (*dbmodels.User, *dbmodels.Profile, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUserAndProfile", arg0, arg1, arg2)
 	ret0, _ := ret[0].(*dbmodels.User)

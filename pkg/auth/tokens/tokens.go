@@ -3,7 +3,6 @@ package tokens
 import (
 	"crypto/rsa"
 	"io/ioutil"
-	"strconv"
 	"time"
 
 	jwt "github.com/golang-jwt/jwt/v4"
@@ -69,14 +68,14 @@ func Setup(env TokenEnv) (c *TokenController, err error) {
 	return
 }
 
-func (c *TokenController) GenerateAccessToken(userID, instanceID int, isUser bool, role string) (token string, err error) {
+func (c *TokenController) GenerateAccessToken(userID, instanceID string, isUser bool, role string) (token string, err error) {
 	claims := tokens.AccessTokenClaims{
 		Purpose:  tokens.AccessPurpose,
 		User:     isUser,
 		Role:     role,
 		Instance: instanceID,
 		StandardClaims: jwt.StandardClaims{
-			Subject:   strconv.Itoa(userID),
+			Subject:   userID,
 			ExpiresAt: time.Now().Add(time.Minute * 15).Unix(),
 			Issuer:    c.Issuer,
 			IssuedAt:  time.Now().Unix(),
@@ -93,14 +92,14 @@ func (c *TokenController) GenerateAccessToken(userID, instanceID int, isUser boo
 	return
 }
 
-func (c *TokenController) GenerateRefreshToken(userID, instanceID int, isUser bool) (token string, expiresAt time.Time, err error) {
+func (c *TokenController) GenerateRefreshToken(userID, instanceID string, isUser bool) (token string, expiresAt time.Time, err error) {
 	expiresAt = time.Now().Add(time.Hour * 24 * 7)
 	claims := tokens.RefreshTokenClaims{
 		Purpose:  tokens.RefreshPurpose,
 		User:     isUser,
 		Instance: instanceID,
 		StandardClaims: jwt.StandardClaims{
-			Subject:   strconv.Itoa(userID),
+			Subject:   userID,
 			ExpiresAt: expiresAt.Unix(),
 			Issuer:    c.Issuer,
 			IssuedAt:  time.Now().Unix(),

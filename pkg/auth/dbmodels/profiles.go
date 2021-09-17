@@ -24,9 +24,9 @@ import (
 
 // Profile is an object representing the database table.
 type Profile struct {
-	ID         int64       `boil:"id" json:"id" toml:"id" yaml:"id"`
-	UserID     int64       `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
-	InstanceID int64       `boil:"instance_id" json:"instance_id" toml:"instance_id" yaml:"instance_id"`
+	ID         string      `boil:"id" json:"id" toml:"id" yaml:"id"`
+	UserID     string      `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
+	InstanceID string      `boil:"instance_id" json:"instance_id" toml:"instance_id" yaml:"instance_id"`
 	Role       null.String `boil:"role" json:"role,omitempty" toml:"role" yaml:"role,omitempty"`
 	CreatedAt  time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	UpdatedAt  time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
@@ -98,17 +98,17 @@ func (w whereHelpernull_String) GTE(x null.String) qm.QueryMod {
 }
 
 var ProfileWhere = struct {
-	ID         whereHelperint64
-	UserID     whereHelperint64
-	InstanceID whereHelperint64
+	ID         whereHelperstring
+	UserID     whereHelperstring
+	InstanceID whereHelperstring
 	Role       whereHelpernull_String
 	CreatedAt  whereHelpertime_Time
 	UpdatedAt  whereHelpertime_Time
 	DeletedAt  whereHelpernull_Time
 }{
-	ID:         whereHelperint64{field: "\"profiles\".\"id\""},
-	UserID:     whereHelperint64{field: "\"profiles\".\"user_id\""},
-	InstanceID: whereHelperint64{field: "\"profiles\".\"instance_id\""},
+	ID:         whereHelperstring{field: "\"profiles\".\"id\""},
+	UserID:     whereHelperstring{field: "\"profiles\".\"user_id\""},
+	InstanceID: whereHelperstring{field: "\"profiles\".\"instance_id\""},
 	Role:       whereHelpernull_String{field: "\"profiles\".\"role\""},
 	CreatedAt:  whereHelpertime_Time{field: "\"profiles\".\"created_at\""},
 	UpdatedAt:  whereHelpertime_Time{field: "\"profiles\".\"updated_at\""},
@@ -143,8 +143,8 @@ type profileL struct{}
 
 var (
 	profileAllColumns            = []string{"id", "user_id", "instance_id", "role", "created_at", "updated_at", "deleted_at"}
-	profileColumnsWithoutDefault = []string{"user_id", "instance_id", "role", "deleted_at"}
-	profileColumnsWithDefault    = []string{"id", "created_at", "updated_at"}
+	profileColumnsWithoutDefault = []string{"id", "user_id", "instance_id", "role", "deleted_at"}
+	profileColumnsWithDefault    = []string{"created_at", "updated_at"}
 	profilePrimaryKeyColumns     = []string{"id"}
 )
 
@@ -981,13 +981,13 @@ func Profiles(mods ...qm.QueryMod) profileQuery {
 }
 
 // FindProfileG retrieves a single record by ID.
-func FindProfileG(ctx context.Context, iD int64, selectCols ...string) (*Profile, error) {
+func FindProfileG(ctx context.Context, iD string, selectCols ...string) (*Profile, error) {
 	return FindProfile(ctx, boil.GetContextDB(), iD, selectCols...)
 }
 
 // FindProfile retrieves a single record by ID with an executor.
 // If selectCols is empty Find will return all columns.
-func FindProfile(ctx context.Context, exec boil.ContextExecutor, iD int64, selectCols ...string) (*Profile, error) {
+func FindProfile(ctx context.Context, exec boil.ContextExecutor, iD string, selectCols ...string) (*Profile, error) {
 	profileObj := &Profile{}
 
 	sel := "*"
@@ -1610,12 +1610,12 @@ func (o *ProfileSlice) ReloadAll(ctx context.Context, exec boil.ContextExecutor)
 }
 
 // ProfileExistsG checks if the Profile row exists.
-func ProfileExistsG(ctx context.Context, iD int64) (bool, error) {
+func ProfileExistsG(ctx context.Context, iD string) (bool, error) {
 	return ProfileExists(ctx, boil.GetContextDB(), iD)
 }
 
 // ProfileExists checks if the Profile row exists.
-func ProfileExists(ctx context.Context, exec boil.ContextExecutor, iD int64) (bool, error) {
+func ProfileExists(ctx context.Context, exec boil.ContextExecutor, iD string) (bool, error) {
 	var exists bool
 	sql := "select exists(select 1 from \"profiles\" where \"id\"=$1 and \"deleted_at\" is null limit 1)"
 

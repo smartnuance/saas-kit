@@ -24,8 +24,8 @@ import (
 // Token is an object representing the database table.
 type Token struct {
 	ID        int64     `boil:"id" json:"id" toml:"id" yaml:"id"`
-	UserID    int64     `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
-	ProfileID int64     `boil:"profile_id" json:"profile_id" toml:"profile_id" yaml:"profile_id"`
+	UserID    string    `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
+	ProfileID string    `boil:"profile_id" json:"profile_id" toml:"profile_id" yaml:"profile_id"`
 	Token     string    `boil:"token" json:"token" toml:"token" yaml:"token"`
 	CreatedAt time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	ExpiresAt time.Time `boil:"expires_at" json:"expires_at" toml:"expires_at" yaml:"expires_at"`
@@ -68,17 +68,40 @@ var TokenTableColumns = struct {
 
 // Generated where
 
+type whereHelperint64 struct{ field string }
+
+func (w whereHelperint64) EQ(x int64) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
+func (w whereHelperint64) NEQ(x int64) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
+func (w whereHelperint64) LT(x int64) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
+func (w whereHelperint64) LTE(x int64) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
+func (w whereHelperint64) GT(x int64) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
+func (w whereHelperint64) GTE(x int64) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
+func (w whereHelperint64) IN(slice []int64) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
+}
+func (w whereHelperint64) NIN(slice []int64) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
+}
+
 var TokenWhere = struct {
 	ID        whereHelperint64
-	UserID    whereHelperint64
-	ProfileID whereHelperint64
+	UserID    whereHelperstring
+	ProfileID whereHelperstring
 	Token     whereHelperstring
 	CreatedAt whereHelpertime_Time
 	ExpiresAt whereHelpertime_Time
 }{
 	ID:        whereHelperint64{field: "\"tokens\".\"id\""},
-	UserID:    whereHelperint64{field: "\"tokens\".\"user_id\""},
-	ProfileID: whereHelperint64{field: "\"tokens\".\"profile_id\""},
+	UserID:    whereHelperstring{field: "\"tokens\".\"user_id\""},
+	ProfileID: whereHelperstring{field: "\"tokens\".\"profile_id\""},
 	Token:     whereHelperstring{field: "\"tokens\".\"token\""},
 	CreatedAt: whereHelpertime_Time{field: "\"tokens\".\"created_at\""},
 	ExpiresAt: whereHelpertime_Time{field: "\"tokens\".\"expires_at\""},

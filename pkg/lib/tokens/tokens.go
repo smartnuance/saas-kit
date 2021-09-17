@@ -23,7 +23,7 @@ type AccessTokenClaims struct {
 	Purpose  string `json:"purp"`
 	User     bool   `json:"user"`
 	Role     string `json:"role"`
-	Instance int    `json:"inst"`
+	Instance string    `json:"inst"`
 	jwt.StandardClaims
 }
 
@@ -32,7 +32,7 @@ type AccessTokenClaims struct {
 type RefreshTokenClaims struct {
 	Purpose  string `json:"purp"`
 	User     bool   `json:"user"`
-	Instance int    `json:"inst"`
+	Instance string    `json:"inst"`
 	jwt.StandardClaims
 }
 

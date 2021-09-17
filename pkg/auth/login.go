@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"strconv"
 	"time"
 
 	"github.com/pkg/errors"
@@ -40,7 +39,7 @@ func (s *Service) Login(ctx *gin.Context) (accessToken, refreshToken string, err
 	}
 
 	var expiresAt time.Time
-	refreshToken, expiresAt, err = s.TokenAPI.GenerateRefreshToken(int(user.ID), int(instance.ID), true)
+	refreshToken, expiresAt, err = s.TokenAPI.GenerateRefreshToken(user.ID, instance.ID, true)
 	if err != nil {
 		return
 	}
@@ -57,7 +56,7 @@ func (s *Service) Login(ctx *gin.Context) (accessToken, refreshToken string, err
 	} else {
 		role = roles.NoRole
 	}
-	accessToken, err = s.TokenAPI.GenerateAccessToken(int(user.ID), int(instance.ID), true, role)
+	accessToken, err = s.TokenAPI.GenerateAccessToken(user.ID, instance.ID, true, role)
 	if err != nil {
 		return
 	}
@@ -100,12 +99,8 @@ func (s *Service) Refresh(ctx *gin.Context) (string, error) {
 		return "", errors.WithStack(ErrTokenInvalid)
 	}
 
-	userID, err := strconv.Atoi(claims.Subject)
-	if err != nil {
-		return "", errors.WithStack(ErrInvalidUserID)
-	}
-
-	profile, err := s.DBAPI.GetProfile(ctx, int64(userID), int64(claims.Instance))
+	userID := claims.Subject
+	profile, err := s.DBAPI.GetProfile(ctx, userID, claims.Instance)
 	if err != nil {
 		return "", errors.WithStack(ErrProfileDoesNotExist)
 	}
@@ -120,13 +115,9 @@ func (s *Service) Refresh(ctx *gin.Context) (string, error) {
 }
 
 func (s *Service) Revoke(ctx *gin.Context) error {
-	_userID := ctx.Param("user_id")
-	if len(_userID) == 0 {
+	userID := ctx.Param("user_id")
+	if len(userID) == 0 {
 		return errors.WithStack(ErrMissingUserID)
-	}
-	userID, err := strconv.Atoi(_userID)
-	if err != nil {
-		return errors.WithStack(ErrInvalidUserID)
 	}
 
 	_, instanceID, err := roles.FromHeaders(ctx)
@@ -139,7 +130,7 @@ func (s *Service) Revoke(ctx *gin.Context) error {
 		return errors.WithStack(ErrUnauthorized)
 	}
 
-	numDeleted, err := s.DBAPI.DeleteAllTokens(ctx, int64(userID))
+	numDeleted, err := s.DBAPI.DeleteAllTokens(ctx, userID)
 	if err != nil {
 		return err
 	}
@@ -154,7 +145,6 @@ var (
 	ErrMissingCredentials   = errors.New("missing credentials, email and password have to be provided")
 	ErrInvalidCredentials   = errors.New("invalid credentials, email/password combination wrong")
 	ErrMissingUserID        = errors.New("missing user id")
-	ErrInvalidUserID        = errors.New("invalid user id provided")
 	ErrMissingRefreshToken  = errors.New("missing refresh token in JSON body")
 	ErrTokenInvalid         = errors.New("token invalid")
 	ErrTokenNotFound        = errors.New("token not found")

@@ -19,6 +19,7 @@ import (
 	"github.com/golang-migrate/migrate/v4/source/httpfs"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+	m "github.com/smartnuance/saas-kit/pkg/auth/dbmodels"
 	"github.com/smartnuance/saas-kit/pkg/auth/tokens"
 	"github.com/smartnuance/saas-kit/pkg/lib"
 )
@@ -60,7 +61,7 @@ var clearDBFlag bool
 var userName string
 var userEmail string
 var userPassword string
-var userInstanceID int
+var userInstanceURL string
 
 func Main() (authService Service, err error) {
 	// Common steps for all command options
@@ -84,7 +85,7 @@ func Main() (authService Service, err error) {
 	userCommand.StringVar(&userName, "name", "", "name of user to add")
 	userCommand.StringVar(&userEmail, "email", "", "email of user to add")
 	userCommand.StringVar(&userPassword, "password", "", "password of user to add")
-	userCommand.IntVar(&userInstanceID, "instance", 1, "instance of user to add a default profile for")
+	userCommand.StringVar(&userInstanceURL, "instance", "smartnuance.com", "instance URL for which to add user's default profile")
 	flag.Parse()
 
 	// Check if a subcommand has been provided
@@ -133,7 +134,14 @@ func Main() (authService Service, err error) {
 
 			r := httptest.NewRecorder()
 			ctx, _ := gin.CreateTestContext(r)
-			_, err = authService.signup(ctx, userInstanceID, SignupBody{Name: userName, Email: userEmail, Password: userPassword}, "super admin")
+
+			var instance *m.Instance
+			instance, err = authService.DBAPI.GetInstance(ctx, userInstanceURL)
+			if err != nil {
+				return
+			}
+
+			_, err = authService.signup(ctx, instance.ID, SignupBody{Name: userName, Email: userEmail, Password: userPassword}, "super admin")
 			if err != nil {
 				return
 			}

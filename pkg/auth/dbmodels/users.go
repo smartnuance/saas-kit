@@ -24,7 +24,7 @@ import (
 
 // User is an object representing the database table.
 type User struct {
-	ID          int64       `boil:"id" json:"id" toml:"id" yaml:"id"`
+	ID          string      `boil:"id" json:"id" toml:"id" yaml:"id"`
 	Name        null.String `boil:"name" json:"name,omitempty" toml:"name" yaml:"name,omitempty"`
 	Email       string      `boil:"email" json:"email" toml:"email" yaml:"email"`
 	Password    []byte      `boil:"password" json:"password" toml:"password" yaml:"password"`
@@ -89,7 +89,7 @@ func (w whereHelper__byte) GT(x []byte) qm.QueryMod  { return qmhelper.Where(w.f
 func (w whereHelper__byte) GTE(x []byte) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
 
 var UserWhere = struct {
-	ID          whereHelperint64
+	ID          whereHelperstring
 	Name        whereHelpernull_String
 	Email       whereHelperstring
 	Password    whereHelper__byte
@@ -98,7 +98,7 @@ var UserWhere = struct {
 	UpdatedAt   whereHelpertime_Time
 	DeletedAt   whereHelpernull_Time
 }{
-	ID:          whereHelperint64{field: "\"users\".\"id\""},
+	ID:          whereHelperstring{field: "\"users\".\"id\""},
 	Name:        whereHelpernull_String{field: "\"users\".\"name\""},
 	Email:       whereHelperstring{field: "\"users\".\"email\""},
 	Password:    whereHelper__byte{field: "\"users\".\"password\""},
@@ -133,8 +133,8 @@ type userL struct{}
 
 var (
 	userAllColumns            = []string{"id", "name", "email", "password", "activated_at", "created_at", "updated_at", "deleted_at"}
-	userColumnsWithoutDefault = []string{"name", "email", "password", "activated_at", "deleted_at"}
-	userColumnsWithDefault    = []string{"id", "created_at", "updated_at"}
+	userColumnsWithoutDefault = []string{"id", "name", "email", "password", "activated_at", "deleted_at"}
+	userColumnsWithDefault    = []string{"created_at", "updated_at"}
 	userPrimaryKeyColumns     = []string{"id"}
 )
 
@@ -804,13 +804,13 @@ func Users(mods ...qm.QueryMod) userQuery {
 }
 
 // FindUserG retrieves a single record by ID.
-func FindUserG(ctx context.Context, iD int64, selectCols ...string) (*User, error) {
+func FindUserG(ctx context.Context, iD string, selectCols ...string) (*User, error) {
 	return FindUser(ctx, boil.GetContextDB(), iD, selectCols...)
 }
 
 // FindUser retrieves a single record by ID with an executor.
 // If selectCols is empty Find will return all columns.
-func FindUser(ctx context.Context, exec boil.ContextExecutor, iD int64, selectCols ...string) (*User, error) {
+func FindUser(ctx context.Context, exec boil.ContextExecutor, iD string, selectCols ...string) (*User, error) {
 	userObj := &User{}
 
 	sel := "*"
@@ -1433,12 +1433,12 @@ func (o *UserSlice) ReloadAll(ctx context.Context, exec boil.ContextExecutor) er
 }
 
 // UserExistsG checks if the User row exists.
-func UserExistsG(ctx context.Context, iD int64) (bool, error) {
+func UserExistsG(ctx context.Context, iD string) (bool, error) {
 	return UserExists(ctx, boil.GetContextDB(), iD)
 }
 
 // UserExists checks if the User row exists.
-func UserExists(ctx context.Context, exec boil.ContextExecutor, iD int64) (bool, error) {
+func UserExists(ctx context.Context, exec boil.ContextExecutor, iD string) (bool, error) {
 	var exists bool
 	sql := "select exists(select 1 from \"users\" where \"id\"=$1 and \"deleted_at\" is null limit 1)"
 

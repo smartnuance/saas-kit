@@ -19,7 +19,7 @@ type SignupBody struct {
 	Password string `json:"password"`
 }
 
-func (s *Service) Signup(ctx *gin.Context) (userID int, err error) {
+func (s *Service) Signup(ctx *gin.Context) (userID string, err error) {
 	var body SignupBody
 	err = ctx.ShouldBind(&body)
 	if err != nil {
@@ -27,7 +27,7 @@ func (s *Service) Signup(ctx *gin.Context) (userID int, err error) {
 	}
 
 	var role string
-	var instanceID int
+	var instanceID string
 	role, instanceID, err = roles.FromHeaders(ctx)
 	if err != nil {
 		return
@@ -36,8 +36,8 @@ func (s *Service) Signup(ctx *gin.Context) (userID int, err error) {
 	return s.signup(ctx, instanceID, body, role)
 }
 
-func (s *Service) signup(ctx *gin.Context, instanceID int, body SignupBody, role string) (userID int, err error) {
-	log.Debug().Msgf("Signup user %s with email %s to %d with role %s", body.Name, body.Email, instanceID, role)
+func (s *Service) signup(ctx *gin.Context, instanceID string, body SignupBody, role string) (userID string, err error) {
+	log.Debug().Msgf("Signup user %s with email %s to %s with role %s", body.Name, body.Email, instanceID, role)
 	if len(body.Email) == 0 {
 		err = ErrInvalidEmail
 		return
@@ -65,7 +65,7 @@ func (s *Service) signup(ctx *gin.Context, instanceID int, body SignupBody, role
 		return
 	}
 
-	_, err = s.DBAPI.CreateProfile(ctx, tx, int64(instanceID), user, role)
+	_, err = s.DBAPI.CreateProfile(ctx, tx, instanceID, user, role)
 	if err != nil {
 		return
 	}
@@ -79,7 +79,7 @@ func (s *Service) signup(ctx *gin.Context, instanceID int, body SignupBody, role
 		return
 	}
 
-	return int(user.ID), nil
+	return user.ID, nil
 }
 
 func hashAndSaltPassword(password string) ([]byte, error) {

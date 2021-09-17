@@ -7,6 +7,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/maxatome/go-testdeep/helpers/tdsuite"
 	"github.com/maxatome/go-testdeep/td"
+	"github.com/rs/xid"
 	m "github.com/smartnuance/saas-kit/pkg/auth/dbmodels"
 	"github.com/volatiletech/null/v8"
 )
@@ -26,13 +27,16 @@ func (s MySuite) TestSignup(assert, require *td.T) {
 	ctrl := gomock.NewController(require.TB)
 	mock := NewMockDBAPI(ctrl)
 
+	userID := xid.New().String()
+	instanceID := xid.New().String()
+
 	mock.
 		EXPECT().
 		BeginTx(gomock.Any()).
 		Return(nil, nil)
 
 	user := &m.User{
-		ID:    1,
+		ID:    userID,
 		Name:  null.StringFrom("Yanis"),
 		Email: "yanis@example.com",
 	}
@@ -41,11 +45,11 @@ func (s MySuite) TestSignup(assert, require *td.T) {
 		Return(user, nil)
 
 	mock.EXPECT().
-		CreateProfile(gomock.Any(), gomock.Any(), gomock.Eq(int64(2)), gomock.Eq(user), gomock.Eq("teacher")).
+		CreateProfile(gomock.Any(), gomock.Any(), gomock.Eq(instanceID), gomock.Eq(user), gomock.Eq("teacher")).
 		Return(&m.Profile{
-			ID:         2,
-			UserID:     1,
-			InstanceID: 2,
+			ID:         xid.New().String(),
+			UserID:     user.ID,
+			InstanceID: instanceID,
 			Role:       null.StringFrom("teacher"),
 		}, nil)
 
@@ -60,9 +64,11 @@ func (s MySuite) TestSignup(assert, require *td.T) {
 	ctx := &gin.Context{}
 
 	// when
-	userID, err := service.signup(ctx, 2, SignupBody{Name: "Yanis", Email: "yanis@example.com", Password: "test"}, "teacher")
+	userID, err := service.signup(ctx, instanceID, SignupBody{Name: "Yanis", Email: "yanis@example.com", Password: "test"}, "teacher")
+
+	// then
 	assert.CmpNoError(err)
-	assert.CmpLax(userID, 1)
+	assert.CmpLax(userID, user.ID)
 }
 
 func TestMySuite(t *testing.T) {
