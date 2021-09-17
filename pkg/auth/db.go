@@ -28,6 +28,7 @@ type DBAPI interface {
 	CreateUser(ctx context.Context, tx *sql.Tx, name, email string, passwordHash []byte) (user *m.User, err error)
 	DeleteUser(ctx context.Context, userID string) error
 	SaveToken(ctx context.Context, profile *m.Profile, token string, expiresAt time.Time) error
+	HasToken(ctx context.Context, userID, profileID, token string) (bool, error)
 	DeleteToken(ctx context.Context, profileID string) (int64, error)
 	DeleteAllTokens(ctx context.Context, userID string) (int64, error)
 }
@@ -136,6 +137,15 @@ func (db *dbAPI) SaveToken(ctx context.Context, profile *m.Profile, token string
 		ExpiresAt: expiresAt,
 	}
 	return t.InsertG(ctx, boil.Infer())
+}
+
+func (db *dbAPI) HasToken(ctx context.Context, userID, profileID, token string) (bool, error) {
+	where := &m.TokenWhere
+	n, err := m.Tokens(where.UserID.EQ(userID), where.ProfileID.EQ(profileID), where.Token.EQ(token)).CountG(ctx)
+	if err != nil {
+		return false, err
+	}
+	return n != 0, nil
 }
 
 func (db *dbAPI) DeleteToken(ctx context.Context, profileID string) (int64, error) {

@@ -8,6 +8,7 @@ import (
 )
 
 const (
+	UserKey     = "user"
 	RoleKey     = "role"
 	InstanceKey = "instance"
 )
@@ -145,20 +146,30 @@ func CanSwitchTo(userRole string, targetRole string) bool {
 // The user's role defined in context is checked against the rules defining if switching is allowed.
 // The temporary role is set on the context under the "role" key, overwriting the original role.
 func SwitchTo(ctx *gin.Context, targetRole string) error {
-	role, _, err := Get(ctx)
+	_, role, _, err := Get(ctx)
 	if err != nil {
 		return err
 	}
 	if !CanSwitchTo(role, targetRole) {
 		return ErrSwitchNotAllowed
 	}
-	ctx.Set("role", targetRole)
+	ctx.Set(RoleKey, targetRole)
 	return nil
+}
+
+// CanActAs checks if the user can act as a desired user.
+func CanActAs(ctx *gin.Context, targetUserID string) bool {
+	userID, _, _, err := Get(ctx)
+	if err != nil {
+		return false
+	}
+
+	return userID == targetUserID
 }
 
 // CanActIn checks if the user can act in the desired targetRole implicitly.
 func CanActIn(ctx *gin.Context, targetRole string) bool {
-	role, _, err := Get(ctx)
+	_, role, _, err := Get(ctx)
 	if err != nil {
 		return false
 	}
@@ -169,7 +180,7 @@ func CanActIn(ctx *gin.Context, targetRole string) bool {
 
 // CanActFor checks if the user can act for the desired instance.
 func CanActFor(ctx *gin.Context, instanceID string) bool {
-	_, userInstance, err := Get(ctx)
+	_, _, userInstance, err := Get(ctx)
 	if err != nil {
 		return false
 	}
@@ -177,21 +188,28 @@ func CanActFor(ctx *gin.Context, instanceID string) bool {
 	return userInstance == instanceID
 }
 
-// Get retrieves the user's role and instance to act for from context.
+// Get retrieves the user, his role and the instance to act for from context.
+// There is no default user. When no user is registerd in context, this results in ErrMissingUser.
 // The default role is NoRole. An invalid role results in ErrInvalidRole.
-// There is no default instance. An invalid instance results in ErrInvalidInstance.
-func Get(ctx *gin.Context) (role string, instanceID string, err error) {
+// There is no default instance. An invalid instance results in ErrMissingInstance.
+func Get(ctx *gin.Context) (userID, role, instanceID string, err error) {
+	userID_, ok := ctx.Get(UserKey) // should exist
+	if !ok {
+		err = ErrMissingUser
+		return
+	}
+	userID = userID_.(string)
 	role = ctx.GetString(RoleKey) // corresponds to NoRole if empty
 	if !valid(role) {
 		err = ErrInvalidRole
 		return
 	}
-	instance, ok := ctx.Get(InstanceKey) // should never be empty
+	instanceID_, ok := ctx.Get(InstanceKey) // should exist
 	if !ok {
-		err = ErrInvalidInstance
+		err = ErrMissingInstance
 		return
 	}
-	instanceID = instance.(string)
+	instanceID = instanceID_.(string)
 	return
 }
 
@@ -200,7 +218,7 @@ func Get(ctx *gin.Context) (role string, instanceID string, err error) {
 // When role parameter is missing, falls back to role specified in context.
 // When instance parameter is missing, falls back to instance specified in context.
 // Returns an error when neither parameter nor fallback was provided for role or instance.
-func FromHeaders(ctx *gin.Context) (role string, instanceID string, err error) {
+func FromHeaders(ctx *gin.Context) (role, instanceID string, err error) {
 	role = ctx.GetHeader(RoleKey)
 	if len(role) > 0 {
 		if !valid(role) {
@@ -209,7 +227,7 @@ func FromHeaders(ctx *gin.Context) (role string, instanceID string, err error) {
 		}
 	} else {
 		// if no instance is provided, fallback to role from context
-		role, _, err = Get(ctx)
+		_, role, _, err = Get(ctx)
 		if err != nil {
 			return
 		}
@@ -218,7 +236,7 @@ func FromHeaders(ctx *gin.Context) (role string, instanceID string, err error) {
 	instanceID = ctx.GetHeader(InstanceKey)
 	if len(instanceID) == 0 {
 		// if no instance is provided, fallback to instance from context
-		_, instanceID, err = Get(ctx)
+		_, _, instanceID, err = Get(ctx)
 		if err != nil {
 			return
 		}
@@ -227,6 +245,7 @@ func FromHeaders(ctx *gin.Context) (role string, instanceID string, err error) {
 }
 
 var (
+	ErrMissingUser      = errors.New("missing user")
 	ErrMissingRole      = errors.New("missing role")
 	ErrInvalidRole      = errors.New("invalid role provided")
 	ErrMissingInstance  = errors.New("missing instance")

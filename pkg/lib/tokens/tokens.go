@@ -4,6 +4,7 @@ import (
 	"crypto/rsa"
 
 	"github.com/pkg/errors"
+	"github.com/smartnuance/saas-kit/pkg/lib/roles"
 
 	"fmt"
 	"net/http"
@@ -21,9 +22,8 @@ const (
 // AccessTokenClaims contain temporary authorization information.
 type AccessTokenClaims struct {
 	Purpose  string `json:"purp"`
-	User     bool   `json:"user"`
 	Role     string `json:"role"`
-	Instance string    `json:"inst"`
+	Instance string `json:"inst"`
 	jwt.StandardClaims
 }
 
@@ -31,8 +31,7 @@ type AccessTokenClaims struct {
 // i.e. identify the right profile to load role and user meta information from.
 type RefreshTokenClaims struct {
 	Purpose  string `json:"purp"`
-	User     bool   `json:"user"`
-	Instance string    `json:"inst"`
+	Instance string `json:"inst"`
 	jwt.StandardClaims
 }
 
@@ -55,9 +54,9 @@ func AuthorizeJWT(validationKey *rsa.PublicKey, issuer, audience string) gin.Han
 			return
 		}
 
-		ctx.Set("user", claims.User)
-		ctx.Set("role", claims.Role)
-		ctx.Set("instance", claims.Instance)
+		ctx.Set(roles.UserKey, claims.Subject)
+		ctx.Set(roles.RoleKey, claims.Role)
+		ctx.Set(roles.InstanceKey, claims.Instance)
 	}
 }
 

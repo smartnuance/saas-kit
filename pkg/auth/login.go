@@ -39,7 +39,7 @@ func (s *Service) Login(ctx *gin.Context) (accessToken, refreshToken string, err
 	}
 
 	var expiresAt time.Time
-	refreshToken, expiresAt, err = s.TokenAPI.GenerateRefreshToken(user.ID, instance.ID, true)
+	refreshToken, expiresAt, err = s.TokenAPI.GenerateRefreshToken(user.ID, instance.ID)
 	if err != nil {
 		return
 	}
@@ -56,7 +56,7 @@ func (s *Service) Login(ctx *gin.Context) (accessToken, refreshToken string, err
 	} else {
 		role = roles.NoRole
 	}
-	accessToken, err = s.TokenAPI.GenerateAccessToken(user.ID, instance.ID, true, role)
+	accessToken, err = s.TokenAPI.GenerateAccessToken(user.ID, instance.ID, role)
 	if err != nil {
 		return
 	}
@@ -96,7 +96,7 @@ func (s *Service) Refresh(ctx *gin.Context) (string, error) {
 	var claims tokens.RefreshTokenClaims
 	err = tokens.CheckRefreshToken(body.RefreshToken, &claims, s.TokenAPI.ValidationKey, s.Issuer, s.Audience)
 	if err != nil {
-		return "", errors.WithStack(ErrTokenInvalid)
+		return "", errors.WithStack(errors.Wrap(err, ErrTokenInvalid.Error()))
 	}
 
 	userID := claims.Subject
@@ -104,6 +104,16 @@ func (s *Service) Refresh(ctx *gin.Context) (string, error) {
 	if err != nil {
 		return "", errors.WithStack(ErrProfileDoesNotExist)
 	}
+
+	// check if revoked in the meanwhile
+	ok, err := s.DBAPI.HasToken(ctx, userID, profile.ID, body.RefreshToken)
+	if err != nil {
+		return "", errors.WithStack(err)
+	}
+	if !ok {
+		return "", errors.WithStack(ErrTokenRevoked)
+	}
+
 	var role string
 	if profile.Role.Valid {
 		role = profile.Role.String
@@ -111,31 +121,105 @@ func (s *Service) Refresh(ctx *gin.Context) (string, error) {
 		role = roles.NoRole
 	}
 
-	return s.TokenAPI.GenerateAccessToken(userID, claims.Instance, true, role)
+	return s.TokenAPI.GenerateAccessToken(userID, claims.Instance, role)
+}
+
+// RevokeBody describes the user/instance to revoke tokens for
+type RevokeBody struct {
+	Email       string `json:"email"`
+	InstanceURL string `json:"url"`
 }
 
 func (s *Service) Revoke(ctx *gin.Context) error {
-	userID := ctx.Param("user_id")
-	if len(userID) == 0 {
-		return errors.WithStack(ErrMissingUserID)
-	}
-
-	_, instanceID, err := roles.FromHeaders(ctx)
+	var body RevokeBody
+	err := ctx.ShouldBind(&body)
 	if err != nil {
 		return err
+	}
+
+	var userID string
+	if len(body.Email) > 0 {
+		user, err := s.DBAPI.FindUserByEmail(ctx, body.Email)
+		if err != nil {
+			return err
+		}
+		userID = user.ID
+	} else {
+		userID, _, _, err = roles.Get(ctx)
+		if err != nil {
+			return err
+		}
+	}
+
+	var instanceID string
+	if len(body.InstanceURL) > 0 {
+		instance, err := s.DBAPI.GetInstance(ctx, body.InstanceURL)
+		if err != nil {
+			return err
+		}
+		instanceID = instance.ID
+	} else {
+		// fallback to default instance from headers
+		_, instanceID, err = roles.FromHeaders(ctx)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Check permission to revoke token for potentially different user
-	if !(roles.CanActFor(ctx, instanceID) || roles.CanActIn(ctx, roles.RoleSuperAdmin)) {
+	if !(roles.CanActAs(ctx, userID) ||
+		(roles.CanActFor(ctx, instanceID) && roles.CanActIn(ctx, roles.RoleInstanceAdmin)) ||
+		roles.CanActIn(ctx, roles.RoleSuperAdmin)) {
 		return errors.WithStack(ErrUnauthorized)
 	}
 
-	numDeleted, err := s.DBAPI.DeleteAllTokens(ctx, userID)
+	profile, err := s.DBAPI.GetProfile(ctx, userID, instanceID)
+	if err != nil {
+		return errors.WithStack(ErrProfileDoesNotExist)
+	}
+
+	_, err = s.DBAPI.DeleteToken(ctx, profile.ID)
 	if err != nil {
 		return err
 	}
-	if numDeleted == 0 {
-		return errors.WithStack(ErrTokenNotFound)
+	return nil
+}
+
+// RevokeAllBody describes the user to revoke all tokens for
+type RevokeAllBody struct {
+	Email string `json:"email"`
+}
+
+func (s *Service) RevokeAll(ctx *gin.Context) error {
+	var body RevokeAllBody
+	err := ctx.ShouldBind(&body)
+	if err != nil {
+		return err
+	}
+
+	var userID string
+	if len(body.Email) > 0 {
+		user, err := s.DBAPI.FindUserByEmail(ctx, body.Email)
+		if err != nil {
+			return err
+		}
+		userID = user.ID
+	} else {
+		userID, _, _, err = roles.Get(ctx)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Check permission to revoke token for potentially different user
+	if !(roles.CanActAs(ctx, userID) ||
+		roles.CanActIn(ctx, roles.RoleSuperAdmin)) {
+		return errors.WithStack(ErrUnauthorized)
+	}
+
+	_, err = s.DBAPI.DeleteAllTokens(ctx, userID)
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -144,8 +228,9 @@ var (
 	ErrUnauthorized         = errors.New("role insufficient to act on desired instances")
 	ErrMissingCredentials   = errors.New("missing credentials, email and password have to be provided")
 	ErrInvalidCredentials   = errors.New("invalid credentials, email/password combination wrong")
-	ErrMissingUserID        = errors.New("missing user id")
+	ErrMissingRevokeEmail   = errors.New("missing user id")
 	ErrMissingRefreshToken  = errors.New("missing refresh token in JSON body")
+	ErrTokenRevoked         = errors.New("refresh token was revoked and is no longer valid")
 	ErrTokenInvalid         = errors.New("token invalid")
 	ErrTokenNotFound        = errors.New("token not found")
 	ErrUserDoesNotExist     = errors.New("user does not exist")

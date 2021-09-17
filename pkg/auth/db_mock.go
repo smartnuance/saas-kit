@@ -201,6 +201,21 @@ func (mr *MockDBAPIMockRecorder) GetUserAndProfile(arg0, arg1, arg2 interface{})
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserAndProfile", reflect.TypeOf((*MockDBAPI)(nil).GetUserAndProfile), arg0, arg1, arg2)
 }
 
+// HasToken mocks base method.
+func (m *MockDBAPI) HasToken(arg0 context.Context, arg1, arg2, arg3 string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HasToken", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// HasToken indicates an expected call of HasToken.
+func (mr *MockDBAPIMockRecorder) HasToken(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasToken", reflect.TypeOf((*MockDBAPI)(nil).HasToken), arg0, arg1, arg2, arg3)
+}
+
 // Rollback mocks base method.
 func (m *MockDBAPI) Rollback(arg0 *sql.Tx) error {
 	m.ctrl.T.Helper()

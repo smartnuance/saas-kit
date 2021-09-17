@@ -40,8 +40,11 @@ func router(s *Service) *gin.Engine {
 	// with authorization middleware
 	tokenAPI := api.Group("/revoke", tokens.AuthorizeJWT(s.TokenAPI.ValidationKey, s.Issuer, s.Audience))
 	{
-		tokenAPI.DELETE("/:user_id", func(ctx *gin.Context) {
+		tokenAPI.DELETE("/", func(ctx *gin.Context) {
 			RevokeHandler(ctx, s)
+		})
+		tokenAPI.DELETE("/all", func(ctx *gin.Context) {
+			RevokeAllHandler(ctx, s)
 		})
 	}
 	// userAPI := api.Group("/user", tokens.AuthorizeJWT(s.TokenAPI.ValidationKey))
@@ -93,9 +96,24 @@ var RefreshHandler = func(ctx *gin.Context, s *Service) {
 	}
 }
 
-// RevokeHandler refreshes a user's access token.
+// RevokeHandler revokes a user's tokens for a specific instance or falls back to the authorization tokens instance.
 var RevokeHandler = func(ctx *gin.Context, s *Service) {
 	err := s.Revoke(ctx)
+	if err != nil {
+		log.Error().Stack().Err(err).Msg("")
+		if err == ErrTokenNotFound {
+			ctx.Status(http.StatusNotModified)
+			return
+		}
+		ctx.AbortWithStatus(http.StatusUnauthorized)
+	} else {
+		ctx.Status(http.StatusOK)
+	}
+}
+
+// RevokeAllHandler revokes a user's tokens for a specific instance or falls back to the authorization tokens instance.
+var RevokeAllHandler = func(ctx *gin.Context, s *Service) {
+	err := s.RevokeAll(ctx)
 	if err != nil {
 		log.Error().Stack().Err(err).Msg("")
 		if err == ErrTokenNotFound {
