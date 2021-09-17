@@ -13,11 +13,12 @@ func Example_switchRole() {
 	// Create dummy context
 	r := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(r)
+	ctx.Set("user", "user-guid")
 	ctx.Set("role", "super admin")
-	ctx.Set("instance", 9)
+	ctx.Set("instance", "instance-guid")
 
 	// Check permission to revoke token for potentially different user
-	if !roles.CanActFor(ctx, 9) {
+	if !roles.CanActFor(ctx, "instance-guid") {
 		fmt.Println("instance unauthorized")
 		return
 	}

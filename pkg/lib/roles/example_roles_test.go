@@ -13,11 +13,12 @@ func Example_successfulCheck() {
 	// Create dummy context
 	r := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(r)
+	ctx.Set("user", "user-guid")
 	ctx.Set("role", "teacher")
-	ctx.Set("instance", 9)
+	ctx.Set("instance", "instance-guid")
 
 	// Check permission to revoke token for potentially different user
-	if !(roles.CanActFor(ctx, 9) && roles.CanActIn(ctx, roles.RoleTeacher)) {
+	if !(roles.CanActFor(ctx, "instance-guid") && roles.CanActIn(ctx, roles.RoleTeacher)) {
 		fmt.Println("unauthorized")
 		return
 	}
