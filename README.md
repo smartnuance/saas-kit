@@ -33,63 +33,59 @@ Create a local postgres instance or use the provided `docker-compose.yml` file t
 
 > docker-compose --env-file .env.dev up
 
-To interact with database, we use a schema first approach with [sqlboiler](https://github.com/volatiletech/sqlboiler#getting-started). It generates type-safe code to interact with the DB.
-
-### Development tools
-
-All tools necessary for development like installing code generators is done via `go:generate` commands at the top of `cmd/dev/main.go`:
-
-> go generate ./cmd/dev
-
-(a subset of those tools are installed in CI build step of `Earthfile`)
-
-For developers's convenience all generation commands are collected via `go:generate` at the top of each service's `run.go`, e.g. for the auth service
-
-> go generate ./pkg/auth
-
-### Migrate database
-
-To start from an empty database (and test down migrations):
-
-> go run ./cmd/auth migrate -down
-
-Just migrate service without running it afterwards:
-
-> go run ./cmd/auth migrate
-
-When database is on newest version, we have to generated git-versioned DB models by
-
-> go generate ./pkg/auth/db.go
 
 ### Run service(s)
 
-Run all sevices by separate go routines:
-
-> go run ./cmd/dev
-
-Run single service:
+Run single service
+(migrations are automatically applied during startup):
 
 > go run ./cmd/auth
 
-(up migrations are applied during startup)
 
-### Build service(s)
+Run all sevices by separate go routines
+(migrations are not applied!):
 
-To include build information we use the [`govvv`](github.com/ahmetb/govvv) utility:
+> go run ./cmd/dev
 
-> go install github.com/ahmetb/govvv@latest
 
-Then
+### Create some necessary data
 
-> govvv build -pkg github.com/smartnuance/saas-kit/pkg/auth -o ./bin/ ./cmd/auth
+Load fixtures from yaml file with a default instance:
 
-To create reproducable builds, you can use [EARTHLY](https://docs.earthly.dev):
+> go run ./cmd/auth fixture ./pkg/auth/fixtures/instances.yml
 
-> earthly --build-arg service=auth +build
+Create super user:
 
-With either way the resulting runnable is executed by:
+> go run ./cmd/auth adduser -name=Simon -email=simon@smartnuance.com -password=f00bartest -instance=smartnuance.com
 
-> ./bin/auth
+Use exposed endpoint to signup user:
+
+> http PUT :8080/signup name=Simon email=simon@smartnuance.com password=admin
+
+Test login and save refresh/access tokens:
+
+> RES=$(http POST :8080/login email=simon@smartnuance.com password=f00bartest url=smartnuance.com -v -b)
+
+> RT=$(echo $RES | jq -r '.refreshToken') 
+
+> AT=$(echo $RES | jq -r '.accessToken')
+
+
+Refresh token:
+
+> http -v POST :8080/refresh refreshToken=$RT
+
+Revoke token:
+
+> http -v DELETE :8080/revoke/ Authorization:"Bearer $AT"
+
+For a while, I can still use the access token, for example to rerun the idem-potent revoke:
+
+> http -v DELETE :8080/revoke/ Authorization:"Bearer $AT"
+
+But if we try to use the revoked refresh token in a refresh call, this will fail:
+
+> http -v POST :8080/refresh refreshToken=$RT
 
 
 ## Packages used
@@ -121,6 +117,54 @@ Testing:
 - [go-testdep](https://github.com/maxatome/go-testdeep)
 
 # Contribute
+
+## Development tools
+
+All tools necessary for development like installing code generators is done via `go:generate` commands at the top of `cmd/dev/main.go`:
+
+> go generate ./cmd/dev
+
+(a subset of those tools are installed in CI build step of `Earthfile`)
+
+For developers's convenience all generation commands are collected via `go:generate` at the top of each service's `run.go`, e.g. for the auth service
+
+> go generate ./pkg/auth
+
+## Migrate database
+
+To interact with database, we use a schema first approach with [sqlboiler](https://github.com/volatiletech/sqlboiler#getting-started). It generates type-safe code to interact with the DB.
+
+To start from an empty database (and test down migrations):
+
+> go run ./cmd/auth migrate -down
+
+Just migrate service without running it afterwards:
+
+> go run ./cmd/auth migrate
+
+When database is on newest version, we have to generated git-versioned DB models by
+
+> go generate ./pkg/auth/db.go
+
+
+## Build service(s)
+
+To include build information we use the [`govvv`](github.com/ahmetb/govvv) utility:
+
+> go install github.com/ahmetb/govvv@latest
+
+Then
+
+> govvv build -pkg github.com/smartnuance/saas-kit/pkg/auth -o ./bin/ ./cmd/auth
+
+To create reproducable builds, you can use [EARTHLY](https://docs.earthly.dev):
+
+> earthly --build-arg service=auth +build
+
+With either way the resulting runnable is executed by:
+
+> ./bin/auth
+
 
 ## Configure linter
 
