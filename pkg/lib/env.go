@@ -26,7 +26,8 @@ type DatabaseEnv struct {
 	Port     string
 	User     string
 	Password string
-	DBName   string
+	DB       string
+	Schema   string
 }
 
 func LoadDatabaseEnv(envs map[string]string) DatabaseEnv {
@@ -35,12 +36,16 @@ func LoadDatabaseEnv(envs map[string]string) DatabaseEnv {
 		Port:     envs["DB_PORT"],
 		User:     envs["DB_USER"],
 		Password: envs["DB_PASSWORD"],
-		DBName:   envs["DB_NAME"],
+		DB:       envs["DB_NAME"],
+		Schema:   envs["DB_SCHEMA"],
 	}
 }
 
 func SetupDatabase(env DatabaseEnv) (db *sql.DB, err error) {
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable", env.Host, env.User, env.Password, env.DBName, env.Port)
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable", env.Host, env.User, env.Password, env.DB, env.Port)
+	if env.Schema != "" {
+		dsn += fmt.Sprintf(" search_path=%s", env.Schema)
+	}
 	db, err = sql.Open("postgres", dsn)
 	if err != nil {
 		err = errors.Wrap(err, "failed to connect database at "+dsn)
@@ -50,7 +55,7 @@ func SetupDatabase(env DatabaseEnv) (db *sql.DB, err error) {
 	return
 }
 
-func EnvMux() (envs map[string]string, err error) {
+func EnvMux(serviceName string) (envs map[string]string, err error) {
 	env := os.Getenv("SAAS_KIT_ENV")
 	if env == "" {
 		env = string(DEV)
@@ -71,6 +76,20 @@ func EnvMux() (envs map[string]string, err error) {
 
 	for k, v := range envOverrides {
 		// environment-specific values take precedence
+		envs[k] = v
+	}
+
+	if serviceName != "" {
+		p = ".env." + serviceName
+		envOverrides, err = godotenv.Read(p)
+		if err != nil {
+			err = errors.Wrap(err, "error loading env file from "+p)
+			return
+		}
+	}
+
+	for k, v := range envOverrides {
+		// service-specific values take precedence
 		envs[k] = v
 	}
 

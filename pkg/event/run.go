@@ -1,4 +1,4 @@
-package auth
+package event
 
 import (
 	"context"
@@ -7,7 +7,6 @@ import (
 	"flag"
 	"io/ioutil"
 	"net/http"
-	"net/http/httptest"
 	"os"
 	"strings"
 	"time"
@@ -19,7 +18,6 @@ import (
 	"github.com/golang-migrate/migrate/v4/source/httpfs"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
-	m "github.com/smartnuance/saas-kit/pkg/auth/dbmodels"
 	"github.com/smartnuance/saas-kit/pkg/auth/tokens"
 	"github.com/smartnuance/saas-kit/pkg/lib"
 )
@@ -27,7 +25,7 @@ import (
 //go:embed migrations/*
 var migrationDir embed.FS
 
-const ServiceName = "auth"
+const ServiceName = "event"
 
 // Build Variables picked up by govvv
 // go get github.com/ahmetb/govvv
@@ -58,10 +56,6 @@ type Service struct {
 var migrateDownFlag bool
 var fakeMigrationVersion int
 var clearDBFlag bool
-var userName string
-var userEmail string
-var userPassword string
-var userInstanceURL string
 
 func Main() (authService Service, err error) {
 	// Common steps for all command options
@@ -81,11 +75,6 @@ func Main() (authService Service, err error) {
 	migrateCommand.IntVar(&fakeMigrationVersion, "fake", -1, "fakes DB version to specific version without actually migrating")
 	migrateCommand.BoolVar(&clearDBFlag, "clear", false, "clear DB")
 	fixtureCommand := flag.NewFlagSet("fixture", flag.ExitOnError)
-	userCommand := flag.NewFlagSet("adduser", flag.ExitOnError)
-	userCommand.StringVar(&userName, "name", "", "name of user to add")
-	userCommand.StringVar(&userEmail, "email", "", "email of user to add")
-	userCommand.StringVar(&userPassword, "password", "", "password of user to add")
-	userCommand.StringVar(&userInstanceURL, "instance", "smartnuance.com", "instance URL for which to add user's default profile")
 	flag.Parse()
 
 	// Check if a subcommand has been provided
@@ -126,25 +115,6 @@ func Main() (authService Service, err error) {
 			if err != nil {
 				return
 			}
-		case "adduser":
-			err = userCommand.Parse(os.Args[2:])
-			if err != nil {
-				return
-			}
-
-			r := httptest.NewRecorder()
-			ctx, _ := gin.CreateTestContext(r)
-
-			var instance *m.Instance
-			instance, err = authService.DBAPI.GetInstance(ctx, userInstanceURL)
-			if err != nil {
-				return
-			}
-
-			_, err = authService.signup(ctx, instance.ID, SignupBody{Name: userName, Email: userEmail, Password: userPassword}, "super admin")
-			if err != nil {
-				return
-			}
 		default:
 			err = errors.Errorf("invalid command: %s", os.Args[1])
 			return
@@ -182,7 +152,7 @@ func (env Env) Setup() (s Service, err error) {
 
 	lib.SetupLogger(ServiceName, Version, env.release)
 
-	log.Info().Str("GitCommit", GitCommit).Str("schema", env.DatabaseEnv.Schema).Msg("Setup service")
+	log.Info().Str("GitCommit", GitCommit).Msg("Setup service")
 
 	s.DB, err = lib.SetupDatabase(env.DatabaseEnv)
 	if err != nil {

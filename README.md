@@ -33,6 +33,10 @@ Create a local postgres instance or use the provided `docker-compose.yml` file t
 
 > docker-compose --env-file .env.dev up
 
+Initialize separate database schemas, one for each service (in production you have service-local databases with only one schema):
+
+> go run ./cmd/dev init
+
 
 ### Run service(s)
 
@@ -137,6 +141,12 @@ To interact with database, we use a schema first approach with [sqlboiler](https
 To start from an empty database (and test down migrations):
 
 > go run ./cmd/auth migrate -down
+
+Or if you messed the database up and want to start from scratch, you can reinit the database (**data will be lost!**):
+
+> go run ./cmd/dev deinit
+
+> go run ./cmd/dev init
 
 Just migrate service without running it afterwards:
 

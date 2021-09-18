@@ -11,6 +11,6 @@ add-global-variants = true
   port   = 5433
   user   = "admin"
   pass   = "admin"
-  schema = "auth"
+  schema = "event"
   sslmode = "disable"
   blacklist = ["schema_migrations"]
