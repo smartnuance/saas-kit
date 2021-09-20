@@ -36,7 +36,7 @@ func router(s *Service) *gin.Engine {
 }
 
 // CreateWorkshopHandler creates a new workshop.
-var CreateWorkshopHandler = func(ctx *gin.Context, s *Service) {
+func CreateWorkshopHandler(ctx *gin.Context, s *Service) {
 	workshop, err := s.CreateWorkshop(ctx)
 	if err != nil {
 		log.Error().Stack().Err(err).Msg("")

@@ -57,7 +57,7 @@ func router(s *Service) *gin.Engine {
 }
 
 // SignupHandler creates a new user.
-var SignupHandler = func(ctx *gin.Context, s *Service) {
+func SignupHandler(ctx *gin.Context, s *Service) {
 	userID, err := s.Signup(ctx)
 	if err != nil {
 		log.Error().Stack().Err(err).Msg("")
@@ -68,7 +68,7 @@ var SignupHandler = func(ctx *gin.Context, s *Service) {
 }
 
 // LoginHandler logs a user in and returs a fresh set of tokens.
-var LoginHandler = func(ctx *gin.Context, s *Service) {
+func LoginHandler(ctx *gin.Context, s *Service) {
 	accessToken, refreshToken, err := s.Login(ctx)
 	if err != nil {
 		log.Error().Stack().Err(err).Msg("")
@@ -82,7 +82,7 @@ var LoginHandler = func(ctx *gin.Context, s *Service) {
 }
 
 // RefreshHandler refreshes a user's access token.
-var RefreshHandler = func(ctx *gin.Context, s *Service) {
+func RefreshHandler(ctx *gin.Context, s *Service) {
 	accessToken, err := s.Refresh(ctx)
 	if err != nil {
 		log.Error().Stack().Err(err).Msg("")
@@ -97,7 +97,7 @@ var RefreshHandler = func(ctx *gin.Context, s *Service) {
 }
 
 // RevokeHandler revokes a user's tokens for a specific instance or falls back to the authorization tokens instance.
-var RevokeHandler = func(ctx *gin.Context, s *Service) {
+func RevokeHandler(ctx *gin.Context, s *Service) {
 	err := s.Revoke(ctx)
 	if err != nil {
 		log.Error().Stack().Err(err).Msg("")
@@ -112,7 +112,7 @@ var RevokeHandler = func(ctx *gin.Context, s *Service) {
 }
 
 // RevokeAllHandler revokes a user's tokens for a specific instance or falls back to the authorization tokens instance.
-var RevokeAllHandler = func(ctx *gin.Context, s *Service) {
+func RevokeAllHandler(ctx *gin.Context, s *Service) {
 	err := s.RevokeAll(ctx)
 	if err != nil {
 		log.Error().Stack().Err(err).Msg("")
