@@ -168,7 +168,7 @@ func Load() (env Env, err error) {
 		return
 	}
 
-	env.port = envs["HTTP_PORT"]
+	env.port = envs[strings.ToUpper(ServiceName)+"_SERVICE_PORT"]
 	env.release = lib.Stage(envs["SAAS_KIT_ENV"]) == lib.PROD
 
 	env.DatabaseEnv = lib.LoadDatabaseEnv(envs)
@@ -182,7 +182,7 @@ func (env Env) Setup() (s Service, err error) {
 
 	lib.SetupLogger(ServiceName, Version, env.release)
 
-	log.Info().Str("GitCommit", GitCommit).Str("schema", env.DatabaseEnv.Schema).Msg("Setup service")
+	log.Info().Str("port", s.port).Str("gitCommit", GitCommit).Str("schema", env.DatabaseEnv.Schema).Msg("setup service")
 
 	s.DB, err = lib.SetupDatabase(env.DatabaseEnv)
 	if err != nil {

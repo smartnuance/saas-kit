@@ -64,11 +64,11 @@ Create super user:
 
 Use exposed endpoint to signup user:
 
-> http PUT :8080/signup name=Simon email=simon@smartnuance.com password=admin
+> http PUT :8801/signup name=Simon email=simon@smartnuance.com password=admin
 
 Test login and save refresh/access tokens:
 
-> RES=$(http POST :8080/login email=simon@smartnuance.com password=f00bartest url=smartnuance.com -v -b)
+> RES=$(http POST :8801/login email=simon@smartnuance.com password=f00bartest url=smartnuance.com -v -b)
 
 > RT=$(echo $RES | jq -r '.refreshToken') 
 
@@ -77,19 +77,19 @@ Test login and save refresh/access tokens:
 
 Refresh token:
 
-> http -v POST :8080/refresh refreshToken=$RT
+> http -v POST :8801/refresh refreshToken=$RT
 
 Revoke token:
 
-> http -v DELETE :8080/revoke/ Authorization:"Bearer $AT"
+> http -v DELETE :8801/revoke/ Authorization:"Bearer $AT"
 
 For a while, I can still use the access token, for example to rerun the idem-potent revoke:
 
-> http -v DELETE :8080/revoke/ Authorization:"Bearer $AT"
+> http -v DELETE :8801/revoke/ Authorization:"Bearer $AT"
 
 But if we try to use the revoked refresh token in a refresh call, this will fail:
 
-> http -v POST :8080/refresh refreshToken=$RT
+> http -v POST :8801/refresh refreshToken=$RT
 
 
 ## Packages used

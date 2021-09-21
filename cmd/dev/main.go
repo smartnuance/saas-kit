@@ -68,10 +68,6 @@ func runAll() (err error) {
 			return
 		}
 
-		// here we might need to adjust some env values for running services as go routines
-		env.Port = "8080"
-		env.Schema = "auth"
-
 		authService, err := env.Setup()
 		if err != nil {
 			return
@@ -79,7 +75,6 @@ func runAll() (err error) {
 
 		err = lib.RunInterruptible(authService.Run)
 		wg.Done()
-		return
 	}()
 
 	wg.Add(1)
@@ -89,9 +84,14 @@ func runAll() (err error) {
 			return
 		}
 
-		// here we might need to adjust some env values for running services as go routines
-		env.Port = "8081"
-		env.Schema = "events"
+		eventService, err := env.Setup()
+		if err != nil {
+			return
+		}
+
+		err = lib.RunInterruptible(eventService.Run)
+		wg.Done()
+	}()
 
 		eventsService, err := env.Setup()
 		if err != nil {

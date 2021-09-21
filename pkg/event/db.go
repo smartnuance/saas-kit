@@ -52,7 +52,7 @@ func (db *dbAPI) CreateWorkshop(ctx context.Context, body *CreateWorkshopBody, e
 		Ends:    null.TimeFrom(body.Ends),
 		EventID: eventID,
 	}
-	err = workshop.UpsertG(ctx, true, boil.None().Cols, boil.Infer(), boil.Infer())
+	err = workshop.Upsert(ctx, db.DB, true, boil.None().Cols, boil.Infer(), boil.Infer())
 	if err != nil {
 		return
 	}

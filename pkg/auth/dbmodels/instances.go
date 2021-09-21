@@ -144,12 +144,12 @@ var InstanceWhere = struct {
 	UpdatedAt whereHelpertime_Time
 	DeletedAt whereHelpernull_Time
 }{
-	ID:        whereHelperstring{field: "\"instances\".\"id\""},
-	Name:      whereHelperstring{field: "\"instances\".\"name\""},
-	URL:       whereHelperstring{field: "\"instances\".\"url\""},
-	CreatedAt: whereHelpertime_Time{field: "\"instances\".\"created_at\""},
-	UpdatedAt: whereHelpertime_Time{field: "\"instances\".\"updated_at\""},
-	DeletedAt: whereHelpernull_Time{field: "\"instances\".\"deleted_at\""},
+	ID:        whereHelperstring{field: "\"auth\".\"instances\".\"id\""},
+	Name:      whereHelperstring{field: "\"auth\".\"instances\".\"name\""},
+	URL:       whereHelperstring{field: "\"auth\".\"instances\".\"url\""},
+	CreatedAt: whereHelpertime_Time{field: "\"auth\".\"instances\".\"created_at\""},
+	UpdatedAt: whereHelpertime_Time{field: "\"auth\".\"instances\".\"updated_at\""},
+	DeletedAt: whereHelpernull_Time{field: "\"auth\".\"instances\".\"deleted_at\""},
 }
 
 // InstanceRels is where relationship names are stored.
@@ -382,11 +382,6 @@ func AddInstanceHook(hookPoint boil.HookPoint, instanceHook InstanceHook) {
 	}
 }
 
-// OneG returns a single instance record from the query using the global executor.
-func (q instanceQuery) OneG(ctx context.Context) (*Instance, error) {
-	return q.One(ctx, boil.GetContextDB())
-}
-
 // One returns a single instance record from the query.
 func (q instanceQuery) One(ctx context.Context, exec boil.ContextExecutor) (*Instance, error) {
 	o := &Instance{}
@@ -406,11 +401,6 @@ func (q instanceQuery) One(ctx context.Context, exec boil.ContextExecutor) (*Ins
 	}
 
 	return o, nil
-}
-
-// AllG returns all Instance records from the query using the global executor.
-func (q instanceQuery) AllG(ctx context.Context) (InstanceSlice, error) {
-	return q.All(ctx, boil.GetContextDB())
 }
 
 // All returns all Instance records from the query.
@@ -433,11 +423,6 @@ func (q instanceQuery) All(ctx context.Context, exec boil.ContextExecutor) (Inst
 	return o, nil
 }
 
-// CountG returns the count of all Instance records in the query, and panics on error.
-func (q instanceQuery) CountG(ctx context.Context) (int64, error) {
-	return q.Count(ctx, boil.GetContextDB())
-}
-
 // Count returns the count of all Instance records in the query.
 func (q instanceQuery) Count(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
 	var count int64
@@ -451,11 +436,6 @@ func (q instanceQuery) Count(ctx context.Context, exec boil.ContextExecutor) (in
 	}
 
 	return count, nil
-}
-
-// ExistsG checks if the row exists in the table, and panics on error.
-func (q instanceQuery) ExistsG(ctx context.Context) (bool, error) {
-	return q.Exists(ctx, boil.GetContextDB())
 }
 
 // Exists checks if the row exists in the table.
@@ -482,15 +462,15 @@ func (o *Instance) Profiles(mods ...qm.QueryMod) profileQuery {
 	}
 
 	queryMods = append(queryMods,
-		qm.Where("\"profiles\".\"instance_id\"=?", o.ID),
-		qmhelper.WhereIsNull("\"profiles\".\"deleted_at\""),
+		qm.Where("\"auth\".\"profiles\".\"instance_id\"=?", o.ID),
+		qmhelper.WhereIsNull("\"auth\".\"profiles\".\"deleted_at\""),
 	)
 
 	query := Profiles(queryMods...)
-	queries.SetFrom(query.Query, "\"profiles\"")
+	queries.SetFrom(query.Query, "\"auth\".\"profiles\"")
 
 	if len(queries.GetSelect(query.Query)) == 0 {
-		queries.SetSelect(query.Query, []string{"\"profiles\".*"})
+		queries.SetSelect(query.Query, []string{"\"auth\".\"profiles\".*"})
 	}
 
 	return query
@@ -536,9 +516,9 @@ func (instanceL) LoadProfiles(ctx context.Context, e boil.ContextExecutor, singu
 	}
 
 	query := NewQuery(
-		qm.From(`profiles`),
-		qm.WhereIn(`profiles.instance_id in ?`, args...),
-		qmhelper.WhereIsNull(`profiles.deleted_at`),
+		qm.From(`auth.profiles`),
+		qm.WhereIn(`auth.profiles.instance_id in ?`, args...),
+		qmhelper.WhereIsNull(`auth.profiles.deleted_at`),
 	)
 	if mods != nil {
 		mods.Apply(query)
@@ -595,15 +575,6 @@ func (instanceL) LoadProfiles(ctx context.Context, e boil.ContextExecutor, singu
 	return nil
 }
 
-// AddProfilesG adds the given related objects to the existing relationships
-// of the instance, optionally inserting them as new records.
-// Appends related to o.R.Profiles.
-// Sets related.R.Instance appropriately.
-// Uses the global database handle.
-func (o *Instance) AddProfilesG(ctx context.Context, insert bool, related ...*Profile) error {
-	return o.AddProfiles(ctx, boil.GetContextDB(), insert, related...)
-}
-
 // AddProfiles adds the given related objects to the existing relationships
 // of the instance, optionally inserting them as new records.
 // Appends related to o.R.Profiles.
@@ -618,7 +589,7 @@ func (o *Instance) AddProfiles(ctx context.Context, exec boil.ContextExecutor, i
 			}
 		} else {
 			updateQuery := fmt.Sprintf(
-				"UPDATE \"profiles\" SET %s WHERE %s",
+				"UPDATE \"auth\".\"profiles\" SET %s WHERE %s",
 				strmangle.SetParamNames("\"", "\"", 1, []string{"instance_id"}),
 				strmangle.WhereClause("\"", "\"", 2, profilePrimaryKeyColumns),
 			)
@@ -659,13 +630,8 @@ func (o *Instance) AddProfiles(ctx context.Context, exec boil.ContextExecutor, i
 
 // Instances retrieves all the records using an executor.
 func Instances(mods ...qm.QueryMod) instanceQuery {
-	mods = append(mods, qm.From("\"instances\""), qmhelper.WhereIsNull("\"instances\".\"deleted_at\""))
+	mods = append(mods, qm.From("\"auth\".\"instances\""), qmhelper.WhereIsNull("\"auth\".\"instances\".\"deleted_at\""))
 	return instanceQuery{NewQuery(mods...)}
-}
-
-// FindInstanceG retrieves a single record by ID.
-func FindInstanceG(ctx context.Context, iD string, selectCols ...string) (*Instance, error) {
-	return FindInstance(ctx, boil.GetContextDB(), iD, selectCols...)
 }
 
 // FindInstance retrieves a single record by ID with an executor.
@@ -678,7 +644,7 @@ func FindInstance(ctx context.Context, exec boil.ContextExecutor, iD string, sel
 		sel = strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, selectCols), ",")
 	}
 	query := fmt.Sprintf(
-		"select %s from \"instances\" where \"id\"=$1 and \"deleted_at\" is null", sel,
+		"select %s from \"auth\".\"instances\" where \"id\"=$1 and \"deleted_at\" is null", sel,
 	)
 
 	q := queries.Raw(query, iD)
@@ -696,11 +662,6 @@ func FindInstance(ctx context.Context, exec boil.ContextExecutor, iD string, sel
 	}
 
 	return instanceObj, nil
-}
-
-// InsertG a single record. See Insert for whitelist behavior description.
-func (o *Instance) InsertG(ctx context.Context, columns boil.Columns) error {
-	return o.Insert(ctx, boil.GetContextDB(), columns)
 }
 
 // Insert a single record using an executor.
@@ -750,9 +711,9 @@ func (o *Instance) Insert(ctx context.Context, exec boil.ContextExecutor, column
 			return err
 		}
 		if len(wl) != 0 {
-			cache.query = fmt.Sprintf("INSERT INTO \"instances\" (\"%s\") %%sVALUES (%s)%%s", strings.Join(wl, "\",\""), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
+			cache.query = fmt.Sprintf("INSERT INTO \"auth\".\"instances\" (\"%s\") %%sVALUES (%s)%%s", strings.Join(wl, "\",\""), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
 		} else {
-			cache.query = "INSERT INTO \"instances\" %sDEFAULT VALUES%s"
+			cache.query = "INSERT INTO \"auth\".\"instances\" %sDEFAULT VALUES%s"
 		}
 
 		var queryOutput, queryReturning string
@@ -792,12 +753,6 @@ func (o *Instance) Insert(ctx context.Context, exec boil.ContextExecutor, column
 	return o.doAfterInsertHooks(ctx, exec)
 }
 
-// UpdateG a single Instance record using the global executor.
-// See Update for more documentation.
-func (o *Instance) UpdateG(ctx context.Context, columns boil.Columns) (int64, error) {
-	return o.Update(ctx, boil.GetContextDB(), columns)
-}
-
 // Update uses an executor to update the Instance.
 // See boil.Columns.UpdateColumnSet documentation to understand column list inference for updates.
 // Update does not automatically update the record in case of default values. Use .Reload() to refresh the records.
@@ -830,7 +785,7 @@ func (o *Instance) Update(ctx context.Context, exec boil.ContextExecutor, column
 			return 0, errors.New("dbmodels: unable to update instances, could not build whitelist")
 		}
 
-		cache.query = fmt.Sprintf("UPDATE \"instances\" SET %s WHERE %s",
+		cache.query = fmt.Sprintf("UPDATE \"auth\".\"instances\" SET %s WHERE %s",
 			strmangle.SetParamNames("\"", "\"", 1, wl),
 			strmangle.WhereClause("\"", "\"", len(wl)+1, instancePrimaryKeyColumns),
 		)
@@ -867,11 +822,6 @@ func (o *Instance) Update(ctx context.Context, exec boil.ContextExecutor, column
 	return rowsAff, o.doAfterUpdateHooks(ctx, exec)
 }
 
-// UpdateAllG updates all rows with the specified column values.
-func (q instanceQuery) UpdateAllG(ctx context.Context, cols M) (int64, error) {
-	return q.UpdateAll(ctx, boil.GetContextDB(), cols)
-}
-
 // UpdateAll updates all rows with the specified column values.
 func (q instanceQuery) UpdateAll(ctx context.Context, exec boil.ContextExecutor, cols M) (int64, error) {
 	queries.SetUpdate(q.Query, cols)
@@ -887,11 +837,6 @@ func (q instanceQuery) UpdateAll(ctx context.Context, exec boil.ContextExecutor,
 	}
 
 	return rowsAff, nil
-}
-
-// UpdateAllG updates all rows with the specified column values.
-func (o InstanceSlice) UpdateAllG(ctx context.Context, cols M) (int64, error) {
-	return o.UpdateAll(ctx, boil.GetContextDB(), cols)
 }
 
 // UpdateAll updates all rows with the specified column values, using an executor.
@@ -921,7 +866,7 @@ func (o InstanceSlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor,
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := fmt.Sprintf("UPDATE \"instances\" SET %s WHERE %s",
+	sql := fmt.Sprintf("UPDATE \"auth\".\"instances\" SET %s WHERE %s",
 		strmangle.SetParamNames("\"", "\"", 1, colNames),
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), len(colNames)+1, instancePrimaryKeyColumns, len(o)))
 
@@ -940,11 +885,6 @@ func (o InstanceSlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor,
 		return 0, errors.Wrap(err, "dbmodels: unable to retrieve rows affected all in update all instance")
 	}
 	return rowsAff, nil
-}
-
-// UpsertG attempts an insert, and does an update or ignore on conflict.
-func (o *Instance) UpsertG(ctx context.Context, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns boil.Columns) error {
-	return o.Upsert(ctx, boil.GetContextDB(), updateOnConflict, conflictColumns, updateColumns, insertColumns)
 }
 
 // Upsert attempts an insert using an executor, and does an update or ignore on conflict.
@@ -1023,7 +963,7 @@ func (o *Instance) Upsert(ctx context.Context, exec boil.ContextExecutor, update
 			conflict = make([]string, len(instancePrimaryKeyColumns))
 			copy(conflict, instancePrimaryKeyColumns)
 		}
-		cache.query = buildUpsertQueryPostgres(dialect, "\"instances\"", updateOnConflict, ret, update, conflict, insert)
+		cache.query = buildUpsertQueryPostgres(dialect, "\"auth\".\"instances\"", updateOnConflict, ret, update, conflict, insert)
 
 		cache.valueMapping, err = queries.BindMapping(instanceType, instanceMapping, insert)
 		if err != nil {
@@ -1070,12 +1010,6 @@ func (o *Instance) Upsert(ctx context.Context, exec boil.ContextExecutor, update
 	return o.doAfterUpsertHooks(ctx, exec)
 }
 
-// DeleteG deletes a single Instance record.
-// DeleteG will match against the primary key column to find the record to delete.
-func (o *Instance) DeleteG(ctx context.Context, hardDelete bool) (int64, error) {
-	return o.Delete(ctx, boil.GetContextDB(), hardDelete)
-}
-
 // Delete deletes a single Instance record with an executor.
 // Delete will match against the primary key column to find the record to delete.
 func (o *Instance) Delete(ctx context.Context, exec boil.ContextExecutor, hardDelete bool) (int64, error) {
@@ -1093,12 +1027,12 @@ func (o *Instance) Delete(ctx context.Context, exec boil.ContextExecutor, hardDe
 	)
 	if hardDelete {
 		args = queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), instancePrimaryKeyMapping)
-		sql = "DELETE FROM \"instances\" WHERE \"id\"=$1"
+		sql = "DELETE FROM \"auth\".\"instances\" WHERE \"id\"=$1"
 	} else {
 		currTime := time.Now().In(boil.GetLocation())
 		o.DeletedAt = null.TimeFrom(currTime)
 		wl := []string{"deleted_at"}
-		sql = fmt.Sprintf("UPDATE \"instances\" SET %s WHERE \"id\"=$2",
+		sql = fmt.Sprintf("UPDATE \"auth\".\"instances\" SET %s WHERE \"id\"=$2",
 			strmangle.SetParamNames("\"", "\"", 1, wl),
 		)
 		valueMapping, err := queries.BindMapping(instanceType, instanceMapping, append(wl, instancePrimaryKeyColumns...))
@@ -1130,10 +1064,6 @@ func (o *Instance) Delete(ctx context.Context, exec boil.ContextExecutor, hardDe
 	return rowsAff, nil
 }
 
-func (q instanceQuery) DeleteAllG(ctx context.Context, hardDelete bool) (int64, error) {
-	return q.DeleteAll(ctx, boil.GetContextDB(), hardDelete)
-}
-
 // DeleteAll deletes all matching rows.
 func (q instanceQuery) DeleteAll(ctx context.Context, exec boil.ContextExecutor, hardDelete bool) (int64, error) {
 	if q.Query == nil {
@@ -1160,11 +1090,6 @@ func (q instanceQuery) DeleteAll(ctx context.Context, exec boil.ContextExecutor,
 	return rowsAff, nil
 }
 
-// DeleteAllG deletes all rows in the slice.
-func (o InstanceSlice) DeleteAllG(ctx context.Context, hardDelete bool) (int64, error) {
-	return o.DeleteAll(ctx, boil.GetContextDB(), hardDelete)
-}
-
 // DeleteAll deletes all rows in the slice, using an executor.
 func (o InstanceSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor, hardDelete bool) (int64, error) {
 	if len(o) == 0 {
@@ -1188,7 +1113,7 @@ func (o InstanceSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor,
 			pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), instancePrimaryKeyMapping)
 			args = append(args, pkeyArgs...)
 		}
-		sql = "DELETE FROM \"instances\" WHERE " +
+		sql = "DELETE FROM \"auth\".\"instances\" WHERE " +
 			strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, instancePrimaryKeyColumns, len(o))
 	} else {
 		currTime := time.Now().In(boil.GetLocation())
@@ -1198,7 +1123,7 @@ func (o InstanceSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor,
 			obj.DeletedAt = null.TimeFrom(currTime)
 		}
 		wl := []string{"deleted_at"}
-		sql = fmt.Sprintf("UPDATE \"instances\" SET %s WHERE "+
+		sql = fmt.Sprintf("UPDATE \"auth\".\"instances\" SET %s WHERE "+
 			strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 2, instancePrimaryKeyColumns, len(o)),
 			strmangle.SetParamNames("\"", "\"", 1, wl),
 		)
@@ -1231,15 +1156,6 @@ func (o InstanceSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor,
 	return rowsAff, nil
 }
 
-// ReloadG refetches the object from the database using the primary keys.
-func (o *Instance) ReloadG(ctx context.Context) error {
-	if o == nil {
-		return errors.New("dbmodels: no Instance provided for reload")
-	}
-
-	return o.Reload(ctx, boil.GetContextDB())
-}
-
 // Reload refetches the object from the database
 // using the primary keys with an executor.
 func (o *Instance) Reload(ctx context.Context, exec boil.ContextExecutor) error {
@@ -1250,16 +1166,6 @@ func (o *Instance) Reload(ctx context.Context, exec boil.ContextExecutor) error 
 
 	*o = *ret
 	return nil
-}
-
-// ReloadAllG refetches every row with matching primary key column values
-// and overwrites the original object slice with the newly updated slice.
-func (o *InstanceSlice) ReloadAllG(ctx context.Context) error {
-	if o == nil {
-		return errors.New("dbmodels: empty InstanceSlice provided for reload all")
-	}
-
-	return o.ReloadAll(ctx, boil.GetContextDB())
 }
 
 // ReloadAll refetches every row with matching primary key column values
@@ -1276,7 +1182,7 @@ func (o *InstanceSlice) ReloadAll(ctx context.Context, exec boil.ContextExecutor
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := "SELECT \"instances\".* FROM \"instances\" WHERE " +
+	sql := "SELECT \"auth\".\"instances\".* FROM \"auth\".\"instances\" WHERE " +
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, instancePrimaryKeyColumns, len(*o)) +
 		"and \"deleted_at\" is null"
 
@@ -1292,15 +1198,10 @@ func (o *InstanceSlice) ReloadAll(ctx context.Context, exec boil.ContextExecutor
 	return nil
 }
 
-// InstanceExistsG checks if the Instance row exists.
-func InstanceExistsG(ctx context.Context, iD string) (bool, error) {
-	return InstanceExists(ctx, boil.GetContextDB(), iD)
-}
-
 // InstanceExists checks if the Instance row exists.
 func InstanceExists(ctx context.Context, exec boil.ContextExecutor, iD string) (bool, error) {
 	var exists bool
-	sql := "select exists(select 1 from \"instances\" where \"id\"=$1 and \"deleted_at\" is null limit 1)"
+	sql := "select exists(select 1 from \"auth\".\"instances\" where \"id\"=$1 and \"deleted_at\" is null limit 1)"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)

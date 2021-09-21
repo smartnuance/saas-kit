@@ -106,13 +106,13 @@ var ProfileWhere = struct {
 	UpdatedAt  whereHelpertime_Time
 	DeletedAt  whereHelpernull_Time
 }{
-	ID:         whereHelperstring{field: "\"profiles\".\"id\""},
-	UserID:     whereHelperstring{field: "\"profiles\".\"user_id\""},
-	InstanceID: whereHelperstring{field: "\"profiles\".\"instance_id\""},
-	Role:       whereHelpernull_String{field: "\"profiles\".\"role\""},
-	CreatedAt:  whereHelpertime_Time{field: "\"profiles\".\"created_at\""},
-	UpdatedAt:  whereHelpertime_Time{field: "\"profiles\".\"updated_at\""},
-	DeletedAt:  whereHelpernull_Time{field: "\"profiles\".\"deleted_at\""},
+	ID:         whereHelperstring{field: "\"auth\".\"profiles\".\"id\""},
+	UserID:     whereHelperstring{field: "\"auth\".\"profiles\".\"user_id\""},
+	InstanceID: whereHelperstring{field: "\"auth\".\"profiles\".\"instance_id\""},
+	Role:       whereHelpernull_String{field: "\"auth\".\"profiles\".\"role\""},
+	CreatedAt:  whereHelpertime_Time{field: "\"auth\".\"profiles\".\"created_at\""},
+	UpdatedAt:  whereHelpertime_Time{field: "\"auth\".\"profiles\".\"updated_at\""},
+	DeletedAt:  whereHelpernull_Time{field: "\"auth\".\"profiles\".\"deleted_at\""},
 }
 
 // ProfileRels is where relationship names are stored.
@@ -351,11 +351,6 @@ func AddProfileHook(hookPoint boil.HookPoint, profileHook ProfileHook) {
 	}
 }
 
-// OneG returns a single profile record from the query using the global executor.
-func (q profileQuery) OneG(ctx context.Context) (*Profile, error) {
-	return q.One(ctx, boil.GetContextDB())
-}
-
 // One returns a single profile record from the query.
 func (q profileQuery) One(ctx context.Context, exec boil.ContextExecutor) (*Profile, error) {
 	o := &Profile{}
@@ -375,11 +370,6 @@ func (q profileQuery) One(ctx context.Context, exec boil.ContextExecutor) (*Prof
 	}
 
 	return o, nil
-}
-
-// AllG returns all Profile records from the query using the global executor.
-func (q profileQuery) AllG(ctx context.Context) (ProfileSlice, error) {
-	return q.All(ctx, boil.GetContextDB())
 }
 
 // All returns all Profile records from the query.
@@ -402,11 +392,6 @@ func (q profileQuery) All(ctx context.Context, exec boil.ContextExecutor) (Profi
 	return o, nil
 }
 
-// CountG returns the count of all Profile records in the query, and panics on error.
-func (q profileQuery) CountG(ctx context.Context) (int64, error) {
-	return q.Count(ctx, boil.GetContextDB())
-}
-
 // Count returns the count of all Profile records in the query.
 func (q profileQuery) Count(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
 	var count int64
@@ -420,11 +405,6 @@ func (q profileQuery) Count(ctx context.Context, exec boil.ContextExecutor) (int
 	}
 
 	return count, nil
-}
-
-// ExistsG checks if the row exists in the table, and panics on error.
-func (q profileQuery) ExistsG(ctx context.Context) (bool, error) {
-	return q.Exists(ctx, boil.GetContextDB())
 }
 
 // Exists checks if the row exists in the table.
@@ -453,7 +433,7 @@ func (o *Profile) Instance(mods ...qm.QueryMod) instanceQuery {
 	queryMods = append(queryMods, mods...)
 
 	query := Instances(queryMods...)
-	queries.SetFrom(query.Query, "\"instances\"")
+	queries.SetFrom(query.Query, "\"auth\".\"instances\"")
 
 	return query
 }
@@ -468,7 +448,7 @@ func (o *Profile) User(mods ...qm.QueryMod) userQuery {
 	queryMods = append(queryMods, mods...)
 
 	query := Users(queryMods...)
-	queries.SetFrom(query.Query, "\"users\"")
+	queries.SetFrom(query.Query, "\"auth\".\"users\"")
 
 	return query
 }
@@ -481,14 +461,14 @@ func (o *Profile) Tokens(mods ...qm.QueryMod) tokenQuery {
 	}
 
 	queryMods = append(queryMods,
-		qm.Where("\"tokens\".\"profile_id\"=?", o.ID),
+		qm.Where("\"auth\".\"tokens\".\"profile_id\"=?", o.ID),
 	)
 
 	query := Tokens(queryMods...)
-	queries.SetFrom(query.Query, "\"tokens\"")
+	queries.SetFrom(query.Query, "\"auth\".\"tokens\"")
 
 	if len(queries.GetSelect(query.Query)) == 0 {
-		queries.SetSelect(query.Query, []string{"\"tokens\".*"})
+		queries.SetSelect(query.Query, []string{"\"auth\".\"tokens\".*"})
 	}
 
 	return query
@@ -536,9 +516,9 @@ func (profileL) LoadInstance(ctx context.Context, e boil.ContextExecutor, singul
 	}
 
 	query := NewQuery(
-		qm.From(`instances`),
-		qm.WhereIn(`instances.id in ?`, args...),
-		qmhelper.WhereIsNull(`instances.deleted_at`),
+		qm.From(`auth.instances`),
+		qm.WhereIn(`auth.instances.id in ?`, args...),
+		qmhelper.WhereIsNull(`auth.instances.deleted_at`),
 	)
 	if mods != nil {
 		mods.Apply(query)
@@ -641,9 +621,9 @@ func (profileL) LoadUser(ctx context.Context, e boil.ContextExecutor, singular b
 	}
 
 	query := NewQuery(
-		qm.From(`users`),
-		qm.WhereIn(`users.id in ?`, args...),
-		qmhelper.WhereIsNull(`users.deleted_at`),
+		qm.From(`auth.users`),
+		qm.WhereIn(`auth.users.id in ?`, args...),
+		qmhelper.WhereIsNull(`auth.users.deleted_at`),
 	)
 	if mods != nil {
 		mods.Apply(query)
@@ -744,8 +724,8 @@ func (profileL) LoadTokens(ctx context.Context, e boil.ContextExecutor, singular
 	}
 
 	query := NewQuery(
-		qm.From(`tokens`),
-		qm.WhereIn(`tokens.profile_id in ?`, args...),
+		qm.From(`auth.tokens`),
+		qm.WhereIn(`auth.tokens.profile_id in ?`, args...),
 	)
 	if mods != nil {
 		mods.Apply(query)
@@ -802,14 +782,6 @@ func (profileL) LoadTokens(ctx context.Context, e boil.ContextExecutor, singular
 	return nil
 }
 
-// SetInstanceG of the profile to the related item.
-// Sets o.R.Instance to related.
-// Adds o to related.R.Profiles.
-// Uses the global database handle.
-func (o *Profile) SetInstanceG(ctx context.Context, insert bool, related *Instance) error {
-	return o.SetInstance(ctx, boil.GetContextDB(), insert, related)
-}
-
 // SetInstance of the profile to the related item.
 // Sets o.R.Instance to related.
 // Adds o to related.R.Profiles.
@@ -822,7 +794,7 @@ func (o *Profile) SetInstance(ctx context.Context, exec boil.ContextExecutor, in
 	}
 
 	updateQuery := fmt.Sprintf(
-		"UPDATE \"profiles\" SET %s WHERE %s",
+		"UPDATE \"auth\".\"profiles\" SET %s WHERE %s",
 		strmangle.SetParamNames("\"", "\"", 1, []string{"instance_id"}),
 		strmangle.WhereClause("\"", "\"", 2, profilePrimaryKeyColumns),
 	)
@@ -857,14 +829,6 @@ func (o *Profile) SetInstance(ctx context.Context, exec boil.ContextExecutor, in
 	return nil
 }
 
-// SetUserG of the profile to the related item.
-// Sets o.R.User to related.
-// Adds o to related.R.Profiles.
-// Uses the global database handle.
-func (o *Profile) SetUserG(ctx context.Context, insert bool, related *User) error {
-	return o.SetUser(ctx, boil.GetContextDB(), insert, related)
-}
-
 // SetUser of the profile to the related item.
 // Sets o.R.User to related.
 // Adds o to related.R.Profiles.
@@ -877,7 +841,7 @@ func (o *Profile) SetUser(ctx context.Context, exec boil.ContextExecutor, insert
 	}
 
 	updateQuery := fmt.Sprintf(
-		"UPDATE \"profiles\" SET %s WHERE %s",
+		"UPDATE \"auth\".\"profiles\" SET %s WHERE %s",
 		strmangle.SetParamNames("\"", "\"", 1, []string{"user_id"}),
 		strmangle.WhereClause("\"", "\"", 2, profilePrimaryKeyColumns),
 	)
@@ -912,15 +876,6 @@ func (o *Profile) SetUser(ctx context.Context, exec boil.ContextExecutor, insert
 	return nil
 }
 
-// AddTokensG adds the given related objects to the existing relationships
-// of the profile, optionally inserting them as new records.
-// Appends related to o.R.Tokens.
-// Sets related.R.Profile appropriately.
-// Uses the global database handle.
-func (o *Profile) AddTokensG(ctx context.Context, insert bool, related ...*Token) error {
-	return o.AddTokens(ctx, boil.GetContextDB(), insert, related...)
-}
-
 // AddTokens adds the given related objects to the existing relationships
 // of the profile, optionally inserting them as new records.
 // Appends related to o.R.Tokens.
@@ -935,7 +890,7 @@ func (o *Profile) AddTokens(ctx context.Context, exec boil.ContextExecutor, inse
 			}
 		} else {
 			updateQuery := fmt.Sprintf(
-				"UPDATE \"tokens\" SET %s WHERE %s",
+				"UPDATE \"auth\".\"tokens\" SET %s WHERE %s",
 				strmangle.SetParamNames("\"", "\"", 1, []string{"profile_id"}),
 				strmangle.WhereClause("\"", "\"", 2, tokenPrimaryKeyColumns),
 			)
@@ -976,13 +931,8 @@ func (o *Profile) AddTokens(ctx context.Context, exec boil.ContextExecutor, inse
 
 // Profiles retrieves all the records using an executor.
 func Profiles(mods ...qm.QueryMod) profileQuery {
-	mods = append(mods, qm.From("\"profiles\""), qmhelper.WhereIsNull("\"profiles\".\"deleted_at\""))
+	mods = append(mods, qm.From("\"auth\".\"profiles\""), qmhelper.WhereIsNull("\"auth\".\"profiles\".\"deleted_at\""))
 	return profileQuery{NewQuery(mods...)}
-}
-
-// FindProfileG retrieves a single record by ID.
-func FindProfileG(ctx context.Context, iD string, selectCols ...string) (*Profile, error) {
-	return FindProfile(ctx, boil.GetContextDB(), iD, selectCols...)
 }
 
 // FindProfile retrieves a single record by ID with an executor.
@@ -995,7 +945,7 @@ func FindProfile(ctx context.Context, exec boil.ContextExecutor, iD string, sele
 		sel = strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, selectCols), ",")
 	}
 	query := fmt.Sprintf(
-		"select %s from \"profiles\" where \"id\"=$1 and \"deleted_at\" is null", sel,
+		"select %s from \"auth\".\"profiles\" where \"id\"=$1 and \"deleted_at\" is null", sel,
 	)
 
 	q := queries.Raw(query, iD)
@@ -1013,11 +963,6 @@ func FindProfile(ctx context.Context, exec boil.ContextExecutor, iD string, sele
 	}
 
 	return profileObj, nil
-}
-
-// InsertG a single record. See Insert for whitelist behavior description.
-func (o *Profile) InsertG(ctx context.Context, columns boil.Columns) error {
-	return o.Insert(ctx, boil.GetContextDB(), columns)
 }
 
 // Insert a single record using an executor.
@@ -1067,9 +1012,9 @@ func (o *Profile) Insert(ctx context.Context, exec boil.ContextExecutor, columns
 			return err
 		}
 		if len(wl) != 0 {
-			cache.query = fmt.Sprintf("INSERT INTO \"profiles\" (\"%s\") %%sVALUES (%s)%%s", strings.Join(wl, "\",\""), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
+			cache.query = fmt.Sprintf("INSERT INTO \"auth\".\"profiles\" (\"%s\") %%sVALUES (%s)%%s", strings.Join(wl, "\",\""), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
 		} else {
-			cache.query = "INSERT INTO \"profiles\" %sDEFAULT VALUES%s"
+			cache.query = "INSERT INTO \"auth\".\"profiles\" %sDEFAULT VALUES%s"
 		}
 
 		var queryOutput, queryReturning string
@@ -1109,12 +1054,6 @@ func (o *Profile) Insert(ctx context.Context, exec boil.ContextExecutor, columns
 	return o.doAfterInsertHooks(ctx, exec)
 }
 
-// UpdateG a single Profile record using the global executor.
-// See Update for more documentation.
-func (o *Profile) UpdateG(ctx context.Context, columns boil.Columns) (int64, error) {
-	return o.Update(ctx, boil.GetContextDB(), columns)
-}
-
 // Update uses an executor to update the Profile.
 // See boil.Columns.UpdateColumnSet documentation to understand column list inference for updates.
 // Update does not automatically update the record in case of default values. Use .Reload() to refresh the records.
@@ -1147,7 +1086,7 @@ func (o *Profile) Update(ctx context.Context, exec boil.ContextExecutor, columns
 			return 0, errors.New("dbmodels: unable to update profiles, could not build whitelist")
 		}
 
-		cache.query = fmt.Sprintf("UPDATE \"profiles\" SET %s WHERE %s",
+		cache.query = fmt.Sprintf("UPDATE \"auth\".\"profiles\" SET %s WHERE %s",
 			strmangle.SetParamNames("\"", "\"", 1, wl),
 			strmangle.WhereClause("\"", "\"", len(wl)+1, profilePrimaryKeyColumns),
 		)
@@ -1184,11 +1123,6 @@ func (o *Profile) Update(ctx context.Context, exec boil.ContextExecutor, columns
 	return rowsAff, o.doAfterUpdateHooks(ctx, exec)
 }
 
-// UpdateAllG updates all rows with the specified column values.
-func (q profileQuery) UpdateAllG(ctx context.Context, cols M) (int64, error) {
-	return q.UpdateAll(ctx, boil.GetContextDB(), cols)
-}
-
 // UpdateAll updates all rows with the specified column values.
 func (q profileQuery) UpdateAll(ctx context.Context, exec boil.ContextExecutor, cols M) (int64, error) {
 	queries.SetUpdate(q.Query, cols)
@@ -1204,11 +1138,6 @@ func (q profileQuery) UpdateAll(ctx context.Context, exec boil.ContextExecutor, 
 	}
 
 	return rowsAff, nil
-}
-
-// UpdateAllG updates all rows with the specified column values.
-func (o ProfileSlice) UpdateAllG(ctx context.Context, cols M) (int64, error) {
-	return o.UpdateAll(ctx, boil.GetContextDB(), cols)
 }
 
 // UpdateAll updates all rows with the specified column values, using an executor.
@@ -1238,7 +1167,7 @@ func (o ProfileSlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor, 
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := fmt.Sprintf("UPDATE \"profiles\" SET %s WHERE %s",
+	sql := fmt.Sprintf("UPDATE \"auth\".\"profiles\" SET %s WHERE %s",
 		strmangle.SetParamNames("\"", "\"", 1, colNames),
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), len(colNames)+1, profilePrimaryKeyColumns, len(o)))
 
@@ -1257,11 +1186,6 @@ func (o ProfileSlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor, 
 		return 0, errors.Wrap(err, "dbmodels: unable to retrieve rows affected all in update all profile")
 	}
 	return rowsAff, nil
-}
-
-// UpsertG attempts an insert, and does an update or ignore on conflict.
-func (o *Profile) UpsertG(ctx context.Context, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns boil.Columns) error {
-	return o.Upsert(ctx, boil.GetContextDB(), updateOnConflict, conflictColumns, updateColumns, insertColumns)
 }
 
 // Upsert attempts an insert using an executor, and does an update or ignore on conflict.
@@ -1340,7 +1264,7 @@ func (o *Profile) Upsert(ctx context.Context, exec boil.ContextExecutor, updateO
 			conflict = make([]string, len(profilePrimaryKeyColumns))
 			copy(conflict, profilePrimaryKeyColumns)
 		}
-		cache.query = buildUpsertQueryPostgres(dialect, "\"profiles\"", updateOnConflict, ret, update, conflict, insert)
+		cache.query = buildUpsertQueryPostgres(dialect, "\"auth\".\"profiles\"", updateOnConflict, ret, update, conflict, insert)
 
 		cache.valueMapping, err = queries.BindMapping(profileType, profileMapping, insert)
 		if err != nil {
@@ -1387,12 +1311,6 @@ func (o *Profile) Upsert(ctx context.Context, exec boil.ContextExecutor, updateO
 	return o.doAfterUpsertHooks(ctx, exec)
 }
 
-// DeleteG deletes a single Profile record.
-// DeleteG will match against the primary key column to find the record to delete.
-func (o *Profile) DeleteG(ctx context.Context, hardDelete bool) (int64, error) {
-	return o.Delete(ctx, boil.GetContextDB(), hardDelete)
-}
-
 // Delete deletes a single Profile record with an executor.
 // Delete will match against the primary key column to find the record to delete.
 func (o *Profile) Delete(ctx context.Context, exec boil.ContextExecutor, hardDelete bool) (int64, error) {
@@ -1410,12 +1328,12 @@ func (o *Profile) Delete(ctx context.Context, exec boil.ContextExecutor, hardDel
 	)
 	if hardDelete {
 		args = queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), profilePrimaryKeyMapping)
-		sql = "DELETE FROM \"profiles\" WHERE \"id\"=$1"
+		sql = "DELETE FROM \"auth\".\"profiles\" WHERE \"id\"=$1"
 	} else {
 		currTime := time.Now().In(boil.GetLocation())
 		o.DeletedAt = null.TimeFrom(currTime)
 		wl := []string{"deleted_at"}
-		sql = fmt.Sprintf("UPDATE \"profiles\" SET %s WHERE \"id\"=$2",
+		sql = fmt.Sprintf("UPDATE \"auth\".\"profiles\" SET %s WHERE \"id\"=$2",
 			strmangle.SetParamNames("\"", "\"", 1, wl),
 		)
 		valueMapping, err := queries.BindMapping(profileType, profileMapping, append(wl, profilePrimaryKeyColumns...))
@@ -1447,10 +1365,6 @@ func (o *Profile) Delete(ctx context.Context, exec boil.ContextExecutor, hardDel
 	return rowsAff, nil
 }
 
-func (q profileQuery) DeleteAllG(ctx context.Context, hardDelete bool) (int64, error) {
-	return q.DeleteAll(ctx, boil.GetContextDB(), hardDelete)
-}
-
 // DeleteAll deletes all matching rows.
 func (q profileQuery) DeleteAll(ctx context.Context, exec boil.ContextExecutor, hardDelete bool) (int64, error) {
 	if q.Query == nil {
@@ -1477,11 +1391,6 @@ func (q profileQuery) DeleteAll(ctx context.Context, exec boil.ContextExecutor, 
 	return rowsAff, nil
 }
 
-// DeleteAllG deletes all rows in the slice.
-func (o ProfileSlice) DeleteAllG(ctx context.Context, hardDelete bool) (int64, error) {
-	return o.DeleteAll(ctx, boil.GetContextDB(), hardDelete)
-}
-
 // DeleteAll deletes all rows in the slice, using an executor.
 func (o ProfileSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor, hardDelete bool) (int64, error) {
 	if len(o) == 0 {
@@ -1505,7 +1414,7 @@ func (o ProfileSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor, 
 			pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), profilePrimaryKeyMapping)
 			args = append(args, pkeyArgs...)
 		}
-		sql = "DELETE FROM \"profiles\" WHERE " +
+		sql = "DELETE FROM \"auth\".\"profiles\" WHERE " +
 			strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, profilePrimaryKeyColumns, len(o))
 	} else {
 		currTime := time.Now().In(boil.GetLocation())
@@ -1515,7 +1424,7 @@ func (o ProfileSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor, 
 			obj.DeletedAt = null.TimeFrom(currTime)
 		}
 		wl := []string{"deleted_at"}
-		sql = fmt.Sprintf("UPDATE \"profiles\" SET %s WHERE "+
+		sql = fmt.Sprintf("UPDATE \"auth\".\"profiles\" SET %s WHERE "+
 			strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 2, profilePrimaryKeyColumns, len(o)),
 			strmangle.SetParamNames("\"", "\"", 1, wl),
 		)
@@ -1548,15 +1457,6 @@ func (o ProfileSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor, 
 	return rowsAff, nil
 }
 
-// ReloadG refetches the object from the database using the primary keys.
-func (o *Profile) ReloadG(ctx context.Context) error {
-	if o == nil {
-		return errors.New("dbmodels: no Profile provided for reload")
-	}
-
-	return o.Reload(ctx, boil.GetContextDB())
-}
-
 // Reload refetches the object from the database
 // using the primary keys with an executor.
 func (o *Profile) Reload(ctx context.Context, exec boil.ContextExecutor) error {
@@ -1567,16 +1467,6 @@ func (o *Profile) Reload(ctx context.Context, exec boil.ContextExecutor) error {
 
 	*o = *ret
 	return nil
-}
-
-// ReloadAllG refetches every row with matching primary key column values
-// and overwrites the original object slice with the newly updated slice.
-func (o *ProfileSlice) ReloadAllG(ctx context.Context) error {
-	if o == nil {
-		return errors.New("dbmodels: empty ProfileSlice provided for reload all")
-	}
-
-	return o.ReloadAll(ctx, boil.GetContextDB())
 }
 
 // ReloadAll refetches every row with matching primary key column values
@@ -1593,7 +1483,7 @@ func (o *ProfileSlice) ReloadAll(ctx context.Context, exec boil.ContextExecutor)
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := "SELECT \"profiles\".* FROM \"profiles\" WHERE " +
+	sql := "SELECT \"auth\".\"profiles\".* FROM \"auth\".\"profiles\" WHERE " +
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, profilePrimaryKeyColumns, len(*o)) +
 		"and \"deleted_at\" is null"
 
@@ -1609,15 +1499,10 @@ func (o *ProfileSlice) ReloadAll(ctx context.Context, exec boil.ContextExecutor)
 	return nil
 }
 
-// ProfileExistsG checks if the Profile row exists.
-func ProfileExistsG(ctx context.Context, iD string) (bool, error) {
-	return ProfileExists(ctx, boil.GetContextDB(), iD)
-}
-
 // ProfileExists checks if the Profile row exists.
 func ProfileExists(ctx context.Context, exec boil.ContextExecutor, iD string) (bool, error) {
 	var exists bool
-	sql := "select exists(select 1 from \"profiles\" where \"id\"=$1 and \"deleted_at\" is null limit 1)"
+	sql := "select exists(select 1 from \"auth\".\"profiles\" where \"id\"=$1 and \"deleted_at\" is null limit 1)"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)

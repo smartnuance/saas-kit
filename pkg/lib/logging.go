@@ -20,5 +20,5 @@ func SetupLogger(service, version string, releaseMode bool) {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 
 	// Add global default fields
-	log.Logger = log.With().Str("Service", service).Str("Version", version).Logger()
+	log.Logger = log.With().Str("service", service).Str("version", version).Logger()
 }

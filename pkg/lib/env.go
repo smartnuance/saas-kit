@@ -10,7 +10,6 @@ import (
 	"fmt"
 
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
 type Stage string
@@ -51,7 +50,6 @@ func SetupDatabase(env DatabaseEnv) (db *sql.DB, err error) {
 		err = errors.Wrap(err, "failed to connect database at "+dsn)
 		return
 	}
-	boil.SetDB(db)
 	return
 }
 

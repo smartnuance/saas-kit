@@ -337,11 +337,6 @@ func AddWorkshopHook(hookPoint boil.HookPoint, workshopHook WorkshopHook) {
 	}
 }
 
-// OneG returns a single workshop record from the query using the global executor.
-func (q workshopQuery) OneG(ctx context.Context) (*Workshop, error) {
-	return q.One(ctx, boil.GetContextDB())
-}
-
 // One returns a single workshop record from the query.
 func (q workshopQuery) One(ctx context.Context, exec boil.ContextExecutor) (*Workshop, error) {
 	o := &Workshop{}
@@ -361,11 +356,6 @@ func (q workshopQuery) One(ctx context.Context, exec boil.ContextExecutor) (*Wor
 	}
 
 	return o, nil
-}
-
-// AllG returns all Workshop records from the query using the global executor.
-func (q workshopQuery) AllG(ctx context.Context) (WorkshopSlice, error) {
-	return q.All(ctx, boil.GetContextDB())
 }
 
 // All returns all Workshop records from the query.
@@ -388,11 +378,6 @@ func (q workshopQuery) All(ctx context.Context, exec boil.ContextExecutor) (Work
 	return o, nil
 }
 
-// CountG returns the count of all Workshop records in the query, and panics on error.
-func (q workshopQuery) CountG(ctx context.Context) (int64, error) {
-	return q.Count(ctx, boil.GetContextDB())
-}
-
 // Count returns the count of all Workshop records in the query.
 func (q workshopQuery) Count(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
 	var count int64
@@ -406,11 +391,6 @@ func (q workshopQuery) Count(ctx context.Context, exec boil.ContextExecutor) (in
 	}
 
 	return count, nil
-}
-
-// ExistsG checks if the row exists in the table, and panics on error.
-func (q workshopQuery) ExistsG(ctx context.Context) (bool, error) {
-	return q.Exists(ctx, boil.GetContextDB())
 }
 
 // Exists checks if the row exists in the table.
@@ -549,14 +529,6 @@ func (workshopL) LoadEvent(ctx context.Context, e boil.ContextExecutor, singular
 	return nil
 }
 
-// SetEventG of the workshop to the related item.
-// Sets o.R.Event to related.
-// Adds o to related.R.Workshops.
-// Uses the global database handle.
-func (o *Workshop) SetEventG(ctx context.Context, insert bool, related *Event) error {
-	return o.SetEvent(ctx, boil.GetContextDB(), insert, related)
-}
-
 // SetEvent of the workshop to the related item.
 // Sets o.R.Event to related.
 // Adds o to related.R.Workshops.
@@ -610,11 +582,6 @@ func Workshops(mods ...qm.QueryMod) workshopQuery {
 	return workshopQuery{NewQuery(mods...)}
 }
 
-// FindWorkshopG retrieves a single record by ID.
-func FindWorkshopG(ctx context.Context, iD string, selectCols ...string) (*Workshop, error) {
-	return FindWorkshop(ctx, boil.GetContextDB(), iD, selectCols...)
-}
-
 // FindWorkshop retrieves a single record by ID with an executor.
 // If selectCols is empty Find will return all columns.
 func FindWorkshop(ctx context.Context, exec boil.ContextExecutor, iD string, selectCols ...string) (*Workshop, error) {
@@ -643,11 +610,6 @@ func FindWorkshop(ctx context.Context, exec boil.ContextExecutor, iD string, sel
 	}
 
 	return workshopObj, nil
-}
-
-// InsertG a single record. See Insert for whitelist behavior description.
-func (o *Workshop) InsertG(ctx context.Context, columns boil.Columns) error {
-	return o.Insert(ctx, boil.GetContextDB(), columns)
 }
 
 // Insert a single record using an executor.
@@ -739,12 +701,6 @@ func (o *Workshop) Insert(ctx context.Context, exec boil.ContextExecutor, column
 	return o.doAfterInsertHooks(ctx, exec)
 }
 
-// UpdateG a single Workshop record using the global executor.
-// See Update for more documentation.
-func (o *Workshop) UpdateG(ctx context.Context, columns boil.Columns) (int64, error) {
-	return o.Update(ctx, boil.GetContextDB(), columns)
-}
-
 // Update uses an executor to update the Workshop.
 // See boil.Columns.UpdateColumnSet documentation to understand column list inference for updates.
 // Update does not automatically update the record in case of default values. Use .Reload() to refresh the records.
@@ -814,11 +770,6 @@ func (o *Workshop) Update(ctx context.Context, exec boil.ContextExecutor, column
 	return rowsAff, o.doAfterUpdateHooks(ctx, exec)
 }
 
-// UpdateAllG updates all rows with the specified column values.
-func (q workshopQuery) UpdateAllG(ctx context.Context, cols M) (int64, error) {
-	return q.UpdateAll(ctx, boil.GetContextDB(), cols)
-}
-
 // UpdateAll updates all rows with the specified column values.
 func (q workshopQuery) UpdateAll(ctx context.Context, exec boil.ContextExecutor, cols M) (int64, error) {
 	queries.SetUpdate(q.Query, cols)
@@ -834,11 +785,6 @@ func (q workshopQuery) UpdateAll(ctx context.Context, exec boil.ContextExecutor,
 	}
 
 	return rowsAff, nil
-}
-
-// UpdateAllG updates all rows with the specified column values.
-func (o WorkshopSlice) UpdateAllG(ctx context.Context, cols M) (int64, error) {
-	return o.UpdateAll(ctx, boil.GetContextDB(), cols)
 }
 
 // UpdateAll updates all rows with the specified column values, using an executor.
@@ -887,11 +833,6 @@ func (o WorkshopSlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor,
 		return 0, errors.Wrap(err, "dbmodels: unable to retrieve rows affected all in update all workshop")
 	}
 	return rowsAff, nil
-}
-
-// UpsertG attempts an insert, and does an update or ignore on conflict.
-func (o *Workshop) UpsertG(ctx context.Context, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns boil.Columns) error {
-	return o.Upsert(ctx, boil.GetContextDB(), updateOnConflict, conflictColumns, updateColumns, insertColumns)
 }
 
 // Upsert attempts an insert using an executor, and does an update or ignore on conflict.
@@ -1017,12 +958,6 @@ func (o *Workshop) Upsert(ctx context.Context, exec boil.ContextExecutor, update
 	return o.doAfterUpsertHooks(ctx, exec)
 }
 
-// DeleteG deletes a single Workshop record.
-// DeleteG will match against the primary key column to find the record to delete.
-func (o *Workshop) DeleteG(ctx context.Context, hardDelete bool) (int64, error) {
-	return o.Delete(ctx, boil.GetContextDB(), hardDelete)
-}
-
 // Delete deletes a single Workshop record with an executor.
 // Delete will match against the primary key column to find the record to delete.
 func (o *Workshop) Delete(ctx context.Context, exec boil.ContextExecutor, hardDelete bool) (int64, error) {
@@ -1077,10 +1012,6 @@ func (o *Workshop) Delete(ctx context.Context, exec boil.ContextExecutor, hardDe
 	return rowsAff, nil
 }
 
-func (q workshopQuery) DeleteAllG(ctx context.Context, hardDelete bool) (int64, error) {
-	return q.DeleteAll(ctx, boil.GetContextDB(), hardDelete)
-}
-
 // DeleteAll deletes all matching rows.
 func (q workshopQuery) DeleteAll(ctx context.Context, exec boil.ContextExecutor, hardDelete bool) (int64, error) {
 	if q.Query == nil {
@@ -1105,11 +1036,6 @@ func (q workshopQuery) DeleteAll(ctx context.Context, exec boil.ContextExecutor,
 	}
 
 	return rowsAff, nil
-}
-
-// DeleteAllG deletes all rows in the slice.
-func (o WorkshopSlice) DeleteAllG(ctx context.Context, hardDelete bool) (int64, error) {
-	return o.DeleteAll(ctx, boil.GetContextDB(), hardDelete)
 }
 
 // DeleteAll deletes all rows in the slice, using an executor.
@@ -1178,15 +1104,6 @@ func (o WorkshopSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor,
 	return rowsAff, nil
 }
 
-// ReloadG refetches the object from the database using the primary keys.
-func (o *Workshop) ReloadG(ctx context.Context) error {
-	if o == nil {
-		return errors.New("dbmodels: no Workshop provided for reload")
-	}
-
-	return o.Reload(ctx, boil.GetContextDB())
-}
-
 // Reload refetches the object from the database
 // using the primary keys with an executor.
 func (o *Workshop) Reload(ctx context.Context, exec boil.ContextExecutor) error {
@@ -1197,16 +1114,6 @@ func (o *Workshop) Reload(ctx context.Context, exec boil.ContextExecutor) error 
 
 	*o = *ret
 	return nil
-}
-
-// ReloadAllG refetches every row with matching primary key column values
-// and overwrites the original object slice with the newly updated slice.
-func (o *WorkshopSlice) ReloadAllG(ctx context.Context) error {
-	if o == nil {
-		return errors.New("dbmodels: empty WorkshopSlice provided for reload all")
-	}
-
-	return o.ReloadAll(ctx, boil.GetContextDB())
 }
 
 // ReloadAll refetches every row with matching primary key column values
@@ -1237,11 +1144,6 @@ func (o *WorkshopSlice) ReloadAll(ctx context.Context, exec boil.ContextExecutor
 	*o = slice
 
 	return nil
-}
-
-// WorkshopExistsG checks if the Workshop row exists.
-func WorkshopExistsG(ctx context.Context, iD string) (bool, error) {
-	return WorkshopExists(ctx, boil.GetContextDB(), iD)
 }
 
 // WorkshopExists checks if the Workshop row exists.

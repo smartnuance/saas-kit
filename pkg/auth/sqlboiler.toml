@@ -3,7 +3,6 @@ wipe     = true
 no-tests = true
 pkgname = "dbmodels"
 add-soft-deletes = true
-add-global-variants = true
 
 [psql]
   dbname = "saaskit"

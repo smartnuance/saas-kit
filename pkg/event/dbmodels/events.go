@@ -471,11 +471,6 @@ func AddEventHook(hookPoint boil.HookPoint, eventHook EventHook) {
 	}
 }
 
-// OneG returns a single event record from the query using the global executor.
-func (q eventQuery) OneG(ctx context.Context) (*Event, error) {
-	return q.One(ctx, boil.GetContextDB())
-}
-
 // One returns a single event record from the query.
 func (q eventQuery) One(ctx context.Context, exec boil.ContextExecutor) (*Event, error) {
 	o := &Event{}
@@ -495,11 +490,6 @@ func (q eventQuery) One(ctx context.Context, exec boil.ContextExecutor) (*Event,
 	}
 
 	return o, nil
-}
-
-// AllG returns all Event records from the query using the global executor.
-func (q eventQuery) AllG(ctx context.Context) (EventSlice, error) {
-	return q.All(ctx, boil.GetContextDB())
 }
 
 // All returns all Event records from the query.
@@ -522,11 +512,6 @@ func (q eventQuery) All(ctx context.Context, exec boil.ContextExecutor) (EventSl
 	return o, nil
 }
 
-// CountG returns the count of all Event records in the query, and panics on error.
-func (q eventQuery) CountG(ctx context.Context) (int64, error) {
-	return q.Count(ctx, boil.GetContextDB())
-}
-
 // Count returns the count of all Event records in the query.
 func (q eventQuery) Count(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
 	var count int64
@@ -540,11 +525,6 @@ func (q eventQuery) Count(ctx context.Context, exec boil.ContextExecutor) (int64
 	}
 
 	return count, nil
-}
-
-// ExistsG checks if the row exists in the table, and panics on error.
-func (q eventQuery) ExistsG(ctx context.Context) (bool, error) {
-	return q.Exists(ctx, boil.GetContextDB())
 }
 
 // Exists checks if the row exists in the table.
@@ -684,15 +664,6 @@ func (eventL) LoadWorkshops(ctx context.Context, e boil.ContextExecutor, singula
 	return nil
 }
 
-// AddWorkshopsG adds the given related objects to the existing relationships
-// of the event, optionally inserting them as new records.
-// Appends related to o.R.Workshops.
-// Sets related.R.Event appropriately.
-// Uses the global database handle.
-func (o *Event) AddWorkshopsG(ctx context.Context, insert bool, related ...*Workshop) error {
-	return o.AddWorkshops(ctx, boil.GetContextDB(), insert, related...)
-}
-
 // AddWorkshops adds the given related objects to the existing relationships
 // of the event, optionally inserting them as new records.
 // Appends related to o.R.Workshops.
@@ -752,11 +723,6 @@ func Events(mods ...qm.QueryMod) eventQuery {
 	return eventQuery{NewQuery(mods...)}
 }
 
-// FindEventG retrieves a single record by ID.
-func FindEventG(ctx context.Context, iD string, selectCols ...string) (*Event, error) {
-	return FindEvent(ctx, boil.GetContextDB(), iD, selectCols...)
-}
-
 // FindEvent retrieves a single record by ID with an executor.
 // If selectCols is empty Find will return all columns.
 func FindEvent(ctx context.Context, exec boil.ContextExecutor, iD string, selectCols ...string) (*Event, error) {
@@ -785,11 +751,6 @@ func FindEvent(ctx context.Context, exec boil.ContextExecutor, iD string, select
 	}
 
 	return eventObj, nil
-}
-
-// InsertG a single record. See Insert for whitelist behavior description.
-func (o *Event) InsertG(ctx context.Context, columns boil.Columns) error {
-	return o.Insert(ctx, boil.GetContextDB(), columns)
 }
 
 // Insert a single record using an executor.
@@ -881,12 +842,6 @@ func (o *Event) Insert(ctx context.Context, exec boil.ContextExecutor, columns b
 	return o.doAfterInsertHooks(ctx, exec)
 }
 
-// UpdateG a single Event record using the global executor.
-// See Update for more documentation.
-func (o *Event) UpdateG(ctx context.Context, columns boil.Columns) (int64, error) {
-	return o.Update(ctx, boil.GetContextDB(), columns)
-}
-
 // Update uses an executor to update the Event.
 // See boil.Columns.UpdateColumnSet documentation to understand column list inference for updates.
 // Update does not automatically update the record in case of default values. Use .Reload() to refresh the records.
@@ -956,11 +911,6 @@ func (o *Event) Update(ctx context.Context, exec boil.ContextExecutor, columns b
 	return rowsAff, o.doAfterUpdateHooks(ctx, exec)
 }
 
-// UpdateAllG updates all rows with the specified column values.
-func (q eventQuery) UpdateAllG(ctx context.Context, cols M) (int64, error) {
-	return q.UpdateAll(ctx, boil.GetContextDB(), cols)
-}
-
 // UpdateAll updates all rows with the specified column values.
 func (q eventQuery) UpdateAll(ctx context.Context, exec boil.ContextExecutor, cols M) (int64, error) {
 	queries.SetUpdate(q.Query, cols)
@@ -976,11 +926,6 @@ func (q eventQuery) UpdateAll(ctx context.Context, exec boil.ContextExecutor, co
 	}
 
 	return rowsAff, nil
-}
-
-// UpdateAllG updates all rows with the specified column values.
-func (o EventSlice) UpdateAllG(ctx context.Context, cols M) (int64, error) {
-	return o.UpdateAll(ctx, boil.GetContextDB(), cols)
 }
 
 // UpdateAll updates all rows with the specified column values, using an executor.
@@ -1029,11 +974,6 @@ func (o EventSlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor, co
 		return 0, errors.Wrap(err, "dbmodels: unable to retrieve rows affected all in update all event")
 	}
 	return rowsAff, nil
-}
-
-// UpsertG attempts an insert, and does an update or ignore on conflict.
-func (o *Event) UpsertG(ctx context.Context, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns boil.Columns) error {
-	return o.Upsert(ctx, boil.GetContextDB(), updateOnConflict, conflictColumns, updateColumns, insertColumns)
 }
 
 // Upsert attempts an insert using an executor, and does an update or ignore on conflict.
@@ -1159,12 +1099,6 @@ func (o *Event) Upsert(ctx context.Context, exec boil.ContextExecutor, updateOnC
 	return o.doAfterUpsertHooks(ctx, exec)
 }
 
-// DeleteG deletes a single Event record.
-// DeleteG will match against the primary key column to find the record to delete.
-func (o *Event) DeleteG(ctx context.Context, hardDelete bool) (int64, error) {
-	return o.Delete(ctx, boil.GetContextDB(), hardDelete)
-}
-
 // Delete deletes a single Event record with an executor.
 // Delete will match against the primary key column to find the record to delete.
 func (o *Event) Delete(ctx context.Context, exec boil.ContextExecutor, hardDelete bool) (int64, error) {
@@ -1219,10 +1153,6 @@ func (o *Event) Delete(ctx context.Context, exec boil.ContextExecutor, hardDelet
 	return rowsAff, nil
 }
 
-func (q eventQuery) DeleteAllG(ctx context.Context, hardDelete bool) (int64, error) {
-	return q.DeleteAll(ctx, boil.GetContextDB(), hardDelete)
-}
-
 // DeleteAll deletes all matching rows.
 func (q eventQuery) DeleteAll(ctx context.Context, exec boil.ContextExecutor, hardDelete bool) (int64, error) {
 	if q.Query == nil {
@@ -1247,11 +1177,6 @@ func (q eventQuery) DeleteAll(ctx context.Context, exec boil.ContextExecutor, ha
 	}
 
 	return rowsAff, nil
-}
-
-// DeleteAllG deletes all rows in the slice.
-func (o EventSlice) DeleteAllG(ctx context.Context, hardDelete bool) (int64, error) {
-	return o.DeleteAll(ctx, boil.GetContextDB(), hardDelete)
 }
 
 // DeleteAll deletes all rows in the slice, using an executor.
@@ -1320,15 +1245,6 @@ func (o EventSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor, ha
 	return rowsAff, nil
 }
 
-// ReloadG refetches the object from the database using the primary keys.
-func (o *Event) ReloadG(ctx context.Context) error {
-	if o == nil {
-		return errors.New("dbmodels: no Event provided for reload")
-	}
-
-	return o.Reload(ctx, boil.GetContextDB())
-}
-
 // Reload refetches the object from the database
 // using the primary keys with an executor.
 func (o *Event) Reload(ctx context.Context, exec boil.ContextExecutor) error {
@@ -1339,16 +1255,6 @@ func (o *Event) Reload(ctx context.Context, exec boil.ContextExecutor) error {
 
 	*o = *ret
 	return nil
-}
-
-// ReloadAllG refetches every row with matching primary key column values
-// and overwrites the original object slice with the newly updated slice.
-func (o *EventSlice) ReloadAllG(ctx context.Context) error {
-	if o == nil {
-		return errors.New("dbmodels: empty EventSlice provided for reload all")
-	}
-
-	return o.ReloadAll(ctx, boil.GetContextDB())
 }
 
 // ReloadAll refetches every row with matching primary key column values
@@ -1379,11 +1285,6 @@ func (o *EventSlice) ReloadAll(ctx context.Context, exec boil.ContextExecutor) e
 	*o = slice
 
 	return nil
-}
-
-// EventExistsG checks if the Event row exists.
-func EventExistsG(ctx context.Context, iD string) (bool, error) {
-	return EventExists(ctx, boil.GetContextDB(), iD)
 }
 
 // EventExists checks if the Event row exists.

@@ -99,12 +99,12 @@ var TokenWhere = struct {
 	CreatedAt whereHelpertime_Time
 	ExpiresAt whereHelpertime_Time
 }{
-	ID:        whereHelperint64{field: "\"tokens\".\"id\""},
-	UserID:    whereHelperstring{field: "\"tokens\".\"user_id\""},
-	ProfileID: whereHelperstring{field: "\"tokens\".\"profile_id\""},
-	Token:     whereHelperstring{field: "\"tokens\".\"token\""},
-	CreatedAt: whereHelpertime_Time{field: "\"tokens\".\"created_at\""},
-	ExpiresAt: whereHelpertime_Time{field: "\"tokens\".\"expires_at\""},
+	ID:        whereHelperint64{field: "\"auth\".\"tokens\".\"id\""},
+	UserID:    whereHelperstring{field: "\"auth\".\"tokens\".\"user_id\""},
+	ProfileID: whereHelperstring{field: "\"auth\".\"tokens\".\"profile_id\""},
+	Token:     whereHelperstring{field: "\"auth\".\"tokens\".\"token\""},
+	CreatedAt: whereHelpertime_Time{field: "\"auth\".\"tokens\".\"created_at\""},
+	ExpiresAt: whereHelpertime_Time{field: "\"auth\".\"tokens\".\"expires_at\""},
 }
 
 // TokenRels is where relationship names are stored.
@@ -340,11 +340,6 @@ func AddTokenHook(hookPoint boil.HookPoint, tokenHook TokenHook) {
 	}
 }
 
-// OneG returns a single token record from the query using the global executor.
-func (q tokenQuery) OneG(ctx context.Context) (*Token, error) {
-	return q.One(ctx, boil.GetContextDB())
-}
-
 // One returns a single token record from the query.
 func (q tokenQuery) One(ctx context.Context, exec boil.ContextExecutor) (*Token, error) {
 	o := &Token{}
@@ -364,11 +359,6 @@ func (q tokenQuery) One(ctx context.Context, exec boil.ContextExecutor) (*Token,
 	}
 
 	return o, nil
-}
-
-// AllG returns all Token records from the query using the global executor.
-func (q tokenQuery) AllG(ctx context.Context) (TokenSlice, error) {
-	return q.All(ctx, boil.GetContextDB())
 }
 
 // All returns all Token records from the query.
@@ -391,11 +381,6 @@ func (q tokenQuery) All(ctx context.Context, exec boil.ContextExecutor) (TokenSl
 	return o, nil
 }
 
-// CountG returns the count of all Token records in the query, and panics on error.
-func (q tokenQuery) CountG(ctx context.Context) (int64, error) {
-	return q.Count(ctx, boil.GetContextDB())
-}
-
 // Count returns the count of all Token records in the query.
 func (q tokenQuery) Count(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
 	var count int64
@@ -409,11 +394,6 @@ func (q tokenQuery) Count(ctx context.Context, exec boil.ContextExecutor) (int64
 	}
 
 	return count, nil
-}
-
-// ExistsG checks if the row exists in the table, and panics on error.
-func (q tokenQuery) ExistsG(ctx context.Context) (bool, error) {
-	return q.Exists(ctx, boil.GetContextDB())
 }
 
 // Exists checks if the row exists in the table.
@@ -442,7 +422,7 @@ func (o *Token) Profile(mods ...qm.QueryMod) profileQuery {
 	queryMods = append(queryMods, mods...)
 
 	query := Profiles(queryMods...)
-	queries.SetFrom(query.Query, "\"profiles\"")
+	queries.SetFrom(query.Query, "\"auth\".\"profiles\"")
 
 	return query
 }
@@ -457,7 +437,7 @@ func (o *Token) User(mods ...qm.QueryMod) userQuery {
 	queryMods = append(queryMods, mods...)
 
 	query := Users(queryMods...)
-	queries.SetFrom(query.Query, "\"users\"")
+	queries.SetFrom(query.Query, "\"auth\".\"users\"")
 
 	return query
 }
@@ -504,9 +484,9 @@ func (tokenL) LoadProfile(ctx context.Context, e boil.ContextExecutor, singular 
 	}
 
 	query := NewQuery(
-		qm.From(`profiles`),
-		qm.WhereIn(`profiles.id in ?`, args...),
-		qmhelper.WhereIsNull(`profiles.deleted_at`),
+		qm.From(`auth.profiles`),
+		qm.WhereIn(`auth.profiles.id in ?`, args...),
+		qmhelper.WhereIsNull(`auth.profiles.deleted_at`),
 	)
 	if mods != nil {
 		mods.Apply(query)
@@ -609,9 +589,9 @@ func (tokenL) LoadUser(ctx context.Context, e boil.ContextExecutor, singular boo
 	}
 
 	query := NewQuery(
-		qm.From(`users`),
-		qm.WhereIn(`users.id in ?`, args...),
-		qmhelper.WhereIsNull(`users.deleted_at`),
+		qm.From(`auth.users`),
+		qm.WhereIn(`auth.users.id in ?`, args...),
+		qmhelper.WhereIsNull(`auth.users.deleted_at`),
 	)
 	if mods != nil {
 		mods.Apply(query)
@@ -672,14 +652,6 @@ func (tokenL) LoadUser(ctx context.Context, e boil.ContextExecutor, singular boo
 	return nil
 }
 
-// SetProfileG of the token to the related item.
-// Sets o.R.Profile to related.
-// Adds o to related.R.Tokens.
-// Uses the global database handle.
-func (o *Token) SetProfileG(ctx context.Context, insert bool, related *Profile) error {
-	return o.SetProfile(ctx, boil.GetContextDB(), insert, related)
-}
-
 // SetProfile of the token to the related item.
 // Sets o.R.Profile to related.
 // Adds o to related.R.Tokens.
@@ -692,7 +664,7 @@ func (o *Token) SetProfile(ctx context.Context, exec boil.ContextExecutor, inser
 	}
 
 	updateQuery := fmt.Sprintf(
-		"UPDATE \"tokens\" SET %s WHERE %s",
+		"UPDATE \"auth\".\"tokens\" SET %s WHERE %s",
 		strmangle.SetParamNames("\"", "\"", 1, []string{"profile_id"}),
 		strmangle.WhereClause("\"", "\"", 2, tokenPrimaryKeyColumns),
 	)
@@ -727,14 +699,6 @@ func (o *Token) SetProfile(ctx context.Context, exec boil.ContextExecutor, inser
 	return nil
 }
 
-// SetUserG of the token to the related item.
-// Sets o.R.User to related.
-// Adds o to related.R.Tokens.
-// Uses the global database handle.
-func (o *Token) SetUserG(ctx context.Context, insert bool, related *User) error {
-	return o.SetUser(ctx, boil.GetContextDB(), insert, related)
-}
-
 // SetUser of the token to the related item.
 // Sets o.R.User to related.
 // Adds o to related.R.Tokens.
@@ -747,7 +711,7 @@ func (o *Token) SetUser(ctx context.Context, exec boil.ContextExecutor, insert b
 	}
 
 	updateQuery := fmt.Sprintf(
-		"UPDATE \"tokens\" SET %s WHERE %s",
+		"UPDATE \"auth\".\"tokens\" SET %s WHERE %s",
 		strmangle.SetParamNames("\"", "\"", 1, []string{"user_id"}),
 		strmangle.WhereClause("\"", "\"", 2, tokenPrimaryKeyColumns),
 	)
@@ -784,13 +748,8 @@ func (o *Token) SetUser(ctx context.Context, exec boil.ContextExecutor, insert b
 
 // Tokens retrieves all the records using an executor.
 func Tokens(mods ...qm.QueryMod) tokenQuery {
-	mods = append(mods, qm.From("\"tokens\""))
+	mods = append(mods, qm.From("\"auth\".\"tokens\""))
 	return tokenQuery{NewQuery(mods...)}
-}
-
-// FindTokenG retrieves a single record by ID.
-func FindTokenG(ctx context.Context, iD int64, selectCols ...string) (*Token, error) {
-	return FindToken(ctx, boil.GetContextDB(), iD, selectCols...)
 }
 
 // FindToken retrieves a single record by ID with an executor.
@@ -803,7 +762,7 @@ func FindToken(ctx context.Context, exec boil.ContextExecutor, iD int64, selectC
 		sel = strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, selectCols), ",")
 	}
 	query := fmt.Sprintf(
-		"select %s from \"tokens\" where \"id\"=$1", sel,
+		"select %s from \"auth\".\"tokens\" where \"id\"=$1", sel,
 	)
 
 	q := queries.Raw(query, iD)
@@ -821,11 +780,6 @@ func FindToken(ctx context.Context, exec boil.ContextExecutor, iD int64, selectC
 	}
 
 	return tokenObj, nil
-}
-
-// InsertG a single record. See Insert for whitelist behavior description.
-func (o *Token) InsertG(ctx context.Context, columns boil.Columns) error {
-	return o.Insert(ctx, boil.GetContextDB(), columns)
 }
 
 // Insert a single record using an executor.
@@ -872,9 +826,9 @@ func (o *Token) Insert(ctx context.Context, exec boil.ContextExecutor, columns b
 			return err
 		}
 		if len(wl) != 0 {
-			cache.query = fmt.Sprintf("INSERT INTO \"tokens\" (\"%s\") %%sVALUES (%s)%%s", strings.Join(wl, "\",\""), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
+			cache.query = fmt.Sprintf("INSERT INTO \"auth\".\"tokens\" (\"%s\") %%sVALUES (%s)%%s", strings.Join(wl, "\",\""), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
 		} else {
-			cache.query = "INSERT INTO \"tokens\" %sDEFAULT VALUES%s"
+			cache.query = "INSERT INTO \"auth\".\"tokens\" %sDEFAULT VALUES%s"
 		}
 
 		var queryOutput, queryReturning string
@@ -914,12 +868,6 @@ func (o *Token) Insert(ctx context.Context, exec boil.ContextExecutor, columns b
 	return o.doAfterInsertHooks(ctx, exec)
 }
 
-// UpdateG a single Token record using the global executor.
-// See Update for more documentation.
-func (o *Token) UpdateG(ctx context.Context, columns boil.Columns) (int64, error) {
-	return o.Update(ctx, boil.GetContextDB(), columns)
-}
-
 // Update uses an executor to update the Token.
 // See boil.Columns.UpdateColumnSet documentation to understand column list inference for updates.
 // Update does not automatically update the record in case of default values. Use .Reload() to refresh the records.
@@ -946,7 +894,7 @@ func (o *Token) Update(ctx context.Context, exec boil.ContextExecutor, columns b
 			return 0, errors.New("dbmodels: unable to update tokens, could not build whitelist")
 		}
 
-		cache.query = fmt.Sprintf("UPDATE \"tokens\" SET %s WHERE %s",
+		cache.query = fmt.Sprintf("UPDATE \"auth\".\"tokens\" SET %s WHERE %s",
 			strmangle.SetParamNames("\"", "\"", 1, wl),
 			strmangle.WhereClause("\"", "\"", len(wl)+1, tokenPrimaryKeyColumns),
 		)
@@ -983,11 +931,6 @@ func (o *Token) Update(ctx context.Context, exec boil.ContextExecutor, columns b
 	return rowsAff, o.doAfterUpdateHooks(ctx, exec)
 }
 
-// UpdateAllG updates all rows with the specified column values.
-func (q tokenQuery) UpdateAllG(ctx context.Context, cols M) (int64, error) {
-	return q.UpdateAll(ctx, boil.GetContextDB(), cols)
-}
-
 // UpdateAll updates all rows with the specified column values.
 func (q tokenQuery) UpdateAll(ctx context.Context, exec boil.ContextExecutor, cols M) (int64, error) {
 	queries.SetUpdate(q.Query, cols)
@@ -1003,11 +946,6 @@ func (q tokenQuery) UpdateAll(ctx context.Context, exec boil.ContextExecutor, co
 	}
 
 	return rowsAff, nil
-}
-
-// UpdateAllG updates all rows with the specified column values.
-func (o TokenSlice) UpdateAllG(ctx context.Context, cols M) (int64, error) {
-	return o.UpdateAll(ctx, boil.GetContextDB(), cols)
 }
 
 // UpdateAll updates all rows with the specified column values, using an executor.
@@ -1037,7 +975,7 @@ func (o TokenSlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor, co
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := fmt.Sprintf("UPDATE \"tokens\" SET %s WHERE %s",
+	sql := fmt.Sprintf("UPDATE \"auth\".\"tokens\" SET %s WHERE %s",
 		strmangle.SetParamNames("\"", "\"", 1, colNames),
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), len(colNames)+1, tokenPrimaryKeyColumns, len(o)))
 
@@ -1056,11 +994,6 @@ func (o TokenSlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor, co
 		return 0, errors.Wrap(err, "dbmodels: unable to retrieve rows affected all in update all token")
 	}
 	return rowsAff, nil
-}
-
-// UpsertG attempts an insert, and does an update or ignore on conflict.
-func (o *Token) UpsertG(ctx context.Context, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns boil.Columns) error {
-	return o.Upsert(ctx, boil.GetContextDB(), updateOnConflict, conflictColumns, updateColumns, insertColumns)
 }
 
 // Upsert attempts an insert using an executor, and does an update or ignore on conflict.
@@ -1138,7 +1071,7 @@ func (o *Token) Upsert(ctx context.Context, exec boil.ContextExecutor, updateOnC
 			conflict = make([]string, len(tokenPrimaryKeyColumns))
 			copy(conflict, tokenPrimaryKeyColumns)
 		}
-		cache.query = buildUpsertQueryPostgres(dialect, "\"tokens\"", updateOnConflict, ret, update, conflict, insert)
+		cache.query = buildUpsertQueryPostgres(dialect, "\"auth\".\"tokens\"", updateOnConflict, ret, update, conflict, insert)
 
 		cache.valueMapping, err = queries.BindMapping(tokenType, tokenMapping, insert)
 		if err != nil {
@@ -1185,12 +1118,6 @@ func (o *Token) Upsert(ctx context.Context, exec boil.ContextExecutor, updateOnC
 	return o.doAfterUpsertHooks(ctx, exec)
 }
 
-// DeleteG deletes a single Token record.
-// DeleteG will match against the primary key column to find the record to delete.
-func (o *Token) DeleteG(ctx context.Context) (int64, error) {
-	return o.Delete(ctx, boil.GetContextDB())
-}
-
 // Delete deletes a single Token record with an executor.
 // Delete will match against the primary key column to find the record to delete.
 func (o *Token) Delete(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
@@ -1203,7 +1130,7 @@ func (o *Token) Delete(ctx context.Context, exec boil.ContextExecutor) (int64, e
 	}
 
 	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), tokenPrimaryKeyMapping)
-	sql := "DELETE FROM \"tokens\" WHERE \"id\"=$1"
+	sql := "DELETE FROM \"auth\".\"tokens\" WHERE \"id\"=$1"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -1227,10 +1154,6 @@ func (o *Token) Delete(ctx context.Context, exec boil.ContextExecutor) (int64, e
 	return rowsAff, nil
 }
 
-func (q tokenQuery) DeleteAllG(ctx context.Context) (int64, error) {
-	return q.DeleteAll(ctx, boil.GetContextDB())
-}
-
 // DeleteAll deletes all matching rows.
 func (q tokenQuery) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
 	if q.Query == nil {
@@ -1250,11 +1173,6 @@ func (q tokenQuery) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (i
 	}
 
 	return rowsAff, nil
-}
-
-// DeleteAllG deletes all rows in the slice.
-func (o TokenSlice) DeleteAllG(ctx context.Context) (int64, error) {
-	return o.DeleteAll(ctx, boil.GetContextDB())
 }
 
 // DeleteAll deletes all rows in the slice, using an executor.
@@ -1277,7 +1195,7 @@ func (o TokenSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (i
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := "DELETE FROM \"tokens\" WHERE " +
+	sql := "DELETE FROM \"auth\".\"tokens\" WHERE " +
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, tokenPrimaryKeyColumns, len(o))
 
 	if boil.IsDebug(ctx) {
@@ -1306,15 +1224,6 @@ func (o TokenSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (i
 	return rowsAff, nil
 }
 
-// ReloadG refetches the object from the database using the primary keys.
-func (o *Token) ReloadG(ctx context.Context) error {
-	if o == nil {
-		return errors.New("dbmodels: no Token provided for reload")
-	}
-
-	return o.Reload(ctx, boil.GetContextDB())
-}
-
 // Reload refetches the object from the database
 // using the primary keys with an executor.
 func (o *Token) Reload(ctx context.Context, exec boil.ContextExecutor) error {
@@ -1325,16 +1234,6 @@ func (o *Token) Reload(ctx context.Context, exec boil.ContextExecutor) error {
 
 	*o = *ret
 	return nil
-}
-
-// ReloadAllG refetches every row with matching primary key column values
-// and overwrites the original object slice with the newly updated slice.
-func (o *TokenSlice) ReloadAllG(ctx context.Context) error {
-	if o == nil {
-		return errors.New("dbmodels: empty TokenSlice provided for reload all")
-	}
-
-	return o.ReloadAll(ctx, boil.GetContextDB())
 }
 
 // ReloadAll refetches every row with matching primary key column values
@@ -1351,7 +1250,7 @@ func (o *TokenSlice) ReloadAll(ctx context.Context, exec boil.ContextExecutor) e
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := "SELECT \"tokens\".* FROM \"tokens\" WHERE " +
+	sql := "SELECT \"auth\".\"tokens\".* FROM \"auth\".\"tokens\" WHERE " +
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, tokenPrimaryKeyColumns, len(*o))
 
 	q := queries.Raw(sql, args...)
@@ -1366,15 +1265,10 @@ func (o *TokenSlice) ReloadAll(ctx context.Context, exec boil.ContextExecutor) e
 	return nil
 }
 
-// TokenExistsG checks if the Token row exists.
-func TokenExistsG(ctx context.Context, iD int64) (bool, error) {
-	return TokenExists(ctx, boil.GetContextDB(), iD)
-}
-
 // TokenExists checks if the Token row exists.
 func TokenExists(ctx context.Context, exec boil.ContextExecutor, iD int64) (bool, error) {
 	var exists bool
-	sql := "select exists(select 1 from \"tokens\" where \"id\"=$1 limit 1)"
+	sql := "select exists(select 1 from \"auth\".\"tokens\" where \"id\"=$1 limit 1)"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
