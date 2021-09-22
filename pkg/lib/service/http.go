@@ -35,14 +35,14 @@ func (s *HTTPServer) Serve(ctx context.Context) (err error) {
 	}()
 
 	<-ctx.Done()
-	log.Info().Msg("gracefully shutdown service...")
+	log.Info().Msg("graceful shutdown...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
 		log.Error().Stack().Err(err).Msg("error during shutdown")
 	}
-	log.Info().Msg("...shutdown done")
+	log.Info().Msg("...graceful shutdown done")
 
 	return
 }

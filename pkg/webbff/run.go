@@ -71,7 +71,7 @@ func (env Env) Setup() (s Service, err error) {
 
 	lib.SetupLogger(ServiceName, Version, env.release)
 
-	log.Info().Str("port", s.HTTPServer.Port).Str("gitCommit", GitCommit).Msg("setup service")
+	log.Info().Str("port", s.HTTPServer.Port).Str("gitCommit", GitCommit).Msg("setup")
 
 	s.HTTPServer = service.SetupHTTP(env.HTTPEnv, router(&s))
 
