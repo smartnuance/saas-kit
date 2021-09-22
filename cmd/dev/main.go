@@ -22,9 +22,6 @@ import (
 //go:embed migrations/*
 var migrationDir embed.FS
 
-var deinitFlag bool
-var initFlag bool
-
 func Main() (err error) {
 	initCommand := flag.NewFlagSet("init", flag.ExitOnError)
 	deinitCommand := flag.NewFlagSet("deinit", flag.ExitOnError)
@@ -60,59 +57,83 @@ func Main() (err error) {
 	}
 }
 
-func runAll() (err error) {
+func runAll() error {
 	var wg sync.WaitGroup
+
+	errs := make(chan error, 1)
 
 	wg.Add(1)
 	go func() {
+		defer wg.Done()
+
 		env, err := auth.Load()
 		if err != nil {
+			errs <- err
 			return
 		}
 
 		authService, err := env.Setup()
 		if err != nil {
+			errs <- err
 			return
 		}
 
 		err = lib.RunInterruptible(authService.Run)
-		wg.Done()
+		if err != nil {
+			errs <- err
+			return
+		}
 	}()
 
 	wg.Add(1)
 	go func() {
+		defer wg.Done()
+
 		env, err := event.Load()
 		if err != nil {
+			errs <- err
 			return
 		}
 
 		eventService, err := env.Setup()
 		if err != nil {
+			errs <- err
 			return
 		}
 
 		err = lib.RunInterruptible(eventService.Run)
-		wg.Done()
+		if err != nil {
+			errs <- err
+			return
+		}
 	}()
 
 	wg.Add(1)
 	go func() {
+		defer wg.Done()
+
 		env, err := webbff.Load()
 		if err != nil {
+			errs <- err
 			return
 		}
 
 		webbffService, err := env.Setup()
 		if err != nil {
+			errs <- err
 			return
 		}
 
 		err = lib.RunInterruptible(webbffService.Run)
-		wg.Done()
+		if err != nil {
+			errs <- err
+			return
+		}
 	}()
 
 	wg.Wait()
-	return nil
+	close(errs)
+	return <-errs
 }
 
 func execSQL(script string) error {
@@ -124,6 +145,9 @@ func execSQL(script string) error {
 	databaseEnv := service.LoadDBEnv(envs)
 
 	db, err := service.SetupDB(databaseEnv, embed.FS{})
+	if err != nil {
+		return err
+	}
 
 	c, err := migrationDir.ReadFile("migrations/" + script)
 	if err != nil {

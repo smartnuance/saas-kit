@@ -14,14 +14,6 @@ import (
 
 type MySuite struct{}
 
-type Mock struct {
-	recorder []string
-}
-
-func (mock Mock) record(s string) {
-	mock.recorder = append(mock.recorder, s)
-}
-
 func (s MySuite) TestSignup(assert, require *td.T) {
 	// given
 	ctrl := gomock.NewController(require.TB)

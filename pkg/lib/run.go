@@ -13,7 +13,7 @@ func RunInterruptible(f func(ctx context.Context) error) error {
 
 	// Wait for interrupt/kill signal to gracefully shutdown the server with a timeout
 	quit := make(chan os.Signal, 2)
-	signal.Notify(quit, os.Interrupt, os.Kill)
+	signal.Notify(quit, os.Interrupt)
 
 	defer func() {
 		signal.Stop(quit)

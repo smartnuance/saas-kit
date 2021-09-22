@@ -28,9 +28,9 @@ func (s *Service) CreateWorkshop(ctx *gin.Context) (workshop *m.Workshop, err er
 	}
 
 	eventID := body.EventID
-	if eventID == "" {
-		// create event here
-	}
+	// if eventID == "" {
+	// 	// create event here
+	// }
 
 	workshop, err = s.DBAPI.CreateWorkshop(ctx, &body, eventID)
 	return
