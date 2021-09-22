@@ -15,6 +15,7 @@ import (
 	"github.com/smartnuance/saas-kit/pkg/auth"
 	"github.com/smartnuance/saas-kit/pkg/event"
 	"github.com/smartnuance/saas-kit/pkg/lib"
+	"github.com/smartnuance/saas-kit/pkg/lib/service"
 	"github.com/smartnuance/saas-kit/pkg/webbff"
 )
 
@@ -120,9 +121,9 @@ func execSQL(script string) error {
 		return err
 	}
 
-	databaseEnv := lib.LoadDatabaseEnv(envs)
+	databaseEnv := service.LoadDBEnv(envs)
 
-	db, err := lib.SetupDatabase(databaseEnv)
+	db, err := service.SetupDB(databaseEnv, embed.FS{})
 
 	c, err := migrationDir.ReadFile("migrations/" + script)
 	if err != nil {

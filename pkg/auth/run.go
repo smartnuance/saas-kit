@@ -2,26 +2,21 @@ package auth
 
 import (
 	"context"
-	"database/sql"
 	"embed"
 	"flag"
 	"io/ioutil"
-	"net/http"
 	"net/http/httptest"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/RichardKnop/go-fixtures"
 	"github.com/gin-gonic/gin"
-	"github.com/golang-migrate/migrate/v4"
-	migrateDriver "github.com/golang-migrate/migrate/v4/database/postgres"
-	"github.com/golang-migrate/migrate/v4/source/httpfs"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	m "github.com/smartnuance/saas-kit/pkg/auth/dbmodels"
 	"github.com/smartnuance/saas-kit/pkg/auth/tokens"
 	"github.com/smartnuance/saas-kit/pkg/lib"
+	"github.com/smartnuance/saas-kit/pkg/lib/service"
 )
 
 //go:embed migrations/*
@@ -38,9 +33,9 @@ var (
 
 // Env is a hierarchical environment configuration for the authentication service and it's API handlers.
 type Env struct {
-	lib.DatabaseEnv
+	service.DBEnv
 	tokens.TokenEnv
-	port         string
+	service.HTTPEnv
 	AllowOrigins []string
 	release      bool
 }
@@ -49,8 +44,9 @@ type Env struct {
 // This struct holds hierarchically structured state that is shared between requests.
 type Service struct {
 	Env
-	DB           *sql.DB
-	DBAPI        DBAPI
+	service.DBConn
+	DBAPI DBAPI
+	service.HTTPServer
 	TokenAPI     *tokens.TokenController
 	AllowOrigins map[string]struct{}
 }
@@ -168,10 +164,10 @@ func Load() (env Env, err error) {
 		return
 	}
 
-	env.port = envs[strings.ToUpper(ServiceName)+"_SERVICE_PORT"]
+	env.HTTPEnv.Port = envs[strings.ToUpper(ServiceName)+"_SERVICE_PORT"]
 	env.release = lib.Stage(envs["SAAS_KIT_ENV"]) == lib.PROD
 
-	env.DatabaseEnv = lib.LoadDatabaseEnv(envs)
+	env.DBEnv = service.LoadDBEnv(envs)
 	env.TokenEnv = tokens.Load(envs, ServiceName)
 	env.AllowOrigins = strings.Split(envs["ALLOW_ORIGINS"], ",")
 	return
@@ -182,9 +178,9 @@ func (env Env) Setup() (s Service, err error) {
 
 	lib.SetupLogger(ServiceName, Version, env.release)
 
-	log.Info().Str("port", s.port).Str("gitCommit", GitCommit).Str("schema", env.DatabaseEnv.Schema).Msg("setup service")
+	log.Info().Str("port", s.HTTPServer.Port).Str("gitCommit", GitCommit).Str("schema", env.DBEnv.Schema).Msg("setup service")
 
-	s.DB, err = lib.SetupDatabase(env.DatabaseEnv)
+	s.DBConn, err = service.SetupDB(env.DBEnv, migrationDir)
 	if err != nil {
 		return
 	}
@@ -194,6 +190,8 @@ func (env Env) Setup() (s Service, err error) {
 	if err != nil {
 		return
 	}
+
+	s.HTTPServer = service.SetupHTTP(env.HTTPEnv, router(&s))
 
 	s.AllowOrigins = map[string]struct{}{}
 	for _, o := range env.AllowOrigins {
@@ -207,105 +205,6 @@ func (env Env) Setup() (s Service, err error) {
 	return
 }
 
-func (s *Service) migrator() (*migrate.Migrate, error) {
-	driver, err := migrateDriver.WithInstance(s.DB, &migrateDriver.Config{})
-	if err != nil {
-		return nil, err
-	}
-
-	src, err := httpfs.New(http.FS(migrationDir), "migrations")
-	if err != nil {
-		return nil, err
-	}
-	migrator, err := migrate.NewWithInstance("httpfs", src, s.Env.DB, driver)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to migrate database "+s.Env.DB)
-	}
-	return migrator, nil
-}
-
-// Migrate migrates the DB up to the newest version
-// Uses the DB instance of the service.
-func (s *Service) Migrate() error {
-	migrator, err := s.migrator()
-	if err != nil {
-		return err
-	}
-	err = migrator.Up()
-	// ignore error happing on no change to database necessary
-	if err == migrate.ErrNoChange {
-		return nil
-	}
-	return err
-}
-
-// ClearDB migrates the DB down to an empty database.
-// Uses the DB instance of the service.
-func (s *Service) ClearDB() error {
-	migrator, err := s.migrator()
-	if err != nil {
-		return err
-	}
-	err = migrator.Drop()
-	// ignore error happing on no change to database necessary
-	if err != migrate.ErrNoChange {
-		return err
-	}
-	return nil
-}
-
-// MigrateDown migrates the DB down to an empty database.
-// Uses the DB instance of the service.
-func (s *Service) MigrateDown() error {
-	migrator, err := s.migrator()
-	if err != nil {
-		return err
-	}
-	err = migrator.Down()
-	// ignore error happing on no change to database necessary
-	if err != migrate.ErrNoChange {
-		return err
-	}
-	return nil
-}
-
-// FakeMigration fakes a specific version without migrating.
-// Uses the DB instance of the service.
-func (s *Service) FakeMigration(version int) error {
-	migrator, err := s.migrator()
-	if err != nil {
-		return err
-	}
-	err = migrator.Force(version)
-	// ignore error happing on no change to database necessary
-	if err != migrate.ErrNoChange {
-		return err
-	}
-	return nil
-}
-
 func (s *Service) Run(ctx context.Context) (err error) {
-	srv := &http.Server{
-		Addr:    ":" + s.port,
-		Handler: router(s),
-	}
-
-	go func() {
-		// service connections
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Error().Err(err)
-		}
-	}()
-
-	<-ctx.Done()
-	log.Info().Msg("gracefully shutdown service...")
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if err := srv.Shutdown(ctx); err != nil {
-		log.Error().Stack().Err(err).Msg("error during shutdown")
-	}
-	log.Info().Msg("...shutdown done")
-
-	return
+	return s.Serve(ctx)
 }

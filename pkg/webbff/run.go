@@ -2,13 +2,12 @@ package webbff
 
 import (
 	"context"
-	"net/http"
 	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 	"github.com/smartnuance/saas-kit/pkg/lib"
+	"github.com/smartnuance/saas-kit/pkg/lib/service"
 )
 
 const ServiceName = "webbff"
@@ -22,7 +21,7 @@ var (
 
 // Env is a hierarchical environment configuration for the authentication service and it's API handlers.
 type Env struct {
-	port                string
+	service.HTTPEnv
 	authServiceAddress  string
 	eventServiceAddress string
 	AllowOrigins        []string
@@ -33,6 +32,7 @@ type Env struct {
 // This struct holds hierarchically structured state that is shared between requests.
 type Service struct {
 	Env
+	service.HTTPServer
 	AllowOrigins map[string]struct{}
 }
 
@@ -57,7 +57,7 @@ func Load() (env Env, err error) {
 		return
 	}
 
-	env.port = envs[strings.ToUpper(ServiceName)+"_SERVICE_PORT"]
+	env.Port = envs[strings.ToUpper(ServiceName)+"_SERVICE_PORT"]
 	env.authServiceAddress = envs["AUTH_SERVICE_HOST"] + ":" + envs["AUTH_SERVICE_PORT"]
 	env.eventServiceAddress = envs["EVENT_SERVICE_HOST"] + ":" + envs["EVENT_SERVICE_PORT"]
 	env.release = lib.Stage(envs["SAAS_KIT_ENV"]) == lib.PROD
@@ -71,7 +71,9 @@ func (env Env) Setup() (s Service, err error) {
 
 	lib.SetupLogger(ServiceName, Version, env.release)
 
-	log.Info().Str("port", s.port).Str("gitCommit", GitCommit).Msg("setup service")
+	log.Info().Str("port", s.HTTPServer.Port).Str("gitCommit", GitCommit).Msg("setup service")
+
+	s.HTTPServer = service.SetupHTTP(env.HTTPEnv, router(&s))
 
 	s.AllowOrigins = map[string]struct{}{}
 	for _, o := range env.AllowOrigins {
@@ -86,27 +88,5 @@ func (env Env) Setup() (s Service, err error) {
 }
 
 func (s *Service) Run(ctx context.Context) (err error) {
-	srv := &http.Server{
-		Addr:    ":" + s.port,
-		Handler: router(s),
-	}
-
-	go func() {
-		// service connections
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Error().Err(err)
-		}
-	}()
-
-	<-ctx.Done()
-	log.Info().Msg("gracefully shutdown service...")
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if err := srv.Shutdown(ctx); err != nil {
-		log.Error().Stack().Err(err).Msg("error during shutdown")
-	}
-	log.Info().Msg("...shutdown done")
-
-	return
+	return s.Serve(ctx)
 }
