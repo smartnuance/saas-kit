@@ -15,6 +15,7 @@ import (
 	"github.com/smartnuance/saas-kit/pkg/auth"
 	"github.com/smartnuance/saas-kit/pkg/event"
 	"github.com/smartnuance/saas-kit/pkg/lib"
+	"github.com/smartnuance/saas-kit/pkg/webbff"
 )
 
 //go:embed migrations/*
@@ -93,14 +94,20 @@ func runAll() (err error) {
 		wg.Done()
 	}()
 
-		eventsService, err := env.Setup()
+	wg.Add(1)
+	go func() {
+		env, err := webbff.Load()
 		if err != nil {
 			return
 		}
 
-		err = lib.RunInterruptible(eventsService.Run)
+		webbffService, err := env.Setup()
+		if err != nil {
+			return
+		}
+
+		err = lib.RunInterruptible(webbffService.Run)
 		wg.Done()
-		return
 	}()
 
 	wg.Wait()
