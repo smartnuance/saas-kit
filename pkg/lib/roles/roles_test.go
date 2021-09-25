@@ -17,13 +17,13 @@ func (s MySuite) Test_initRoles(assert, require *td.T) {
 	tests := []struct {
 		name           string
 		inheritedRoles map[string][]inheritedRole
-		expClosure     closureMap
+		impClosure     closureMap
 		expSwitchRoles closureMap
 	}{
 		{
 			name:           "default",
 			inheritedRoles: inheritedRoles,
-			expClosure: closureMap{
+			impClosure: closureMap{
 				"event organizer": {
 					"event organizer": true,
 					"teacher":         true,
@@ -62,7 +62,7 @@ func (s MySuite) Test_initRoles(assert, require *td.T) {
 		assert.Run(test.name, func(t *td.T) {
 			c, s := initRoles(test.inheritedRoles)
 
-			t.CmpDeeply(c, test.expClosure)
+			t.CmpDeeply(c, test.impClosure)
 			t.CmpDeeply(s, test.expSwitchRoles)
 		})
 	}
