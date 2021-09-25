@@ -1,13 +1,19 @@
 package roles
 
 import (
-	"reflect"
 	"testing"
 
-	"github.com/smartnuance/saas-kit/pkg/lib"
+	"github.com/maxatome/go-testdeep/helpers/tdsuite"
+	"github.com/maxatome/go-testdeep/td"
 )
 
-func Test_initRoles(t *testing.T) {
+func TestMySuite(t *testing.T) {
+	tdsuite.Run(t, MySuite{})
+}
+
+type MySuite struct{}
+
+func (s MySuite) Test_initRoles(assert, require *td.T) {
 	tests := []struct {
 		name           string
 		inheritedRoles map[string][]inheritedRole
@@ -52,15 +58,12 @@ func Test_initRoles(t *testing.T) {
 			},
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c, s := initRoles(tt.inheritedRoles)
-			if !reflect.DeepEqual(c, tt.expClosure) {
-				t.Errorf("got = \n%s;\nwant \n%s", lib.PP(c), lib.PP(tt.expClosure))
-			}
-			if !reflect.DeepEqual(s, tt.expSwitchRoles) {
-				t.Errorf("got = \n%s;\nwant \n%s", lib.PP(s), lib.PP(tt.expSwitchRoles))
-			}
+	for _, test := range tests {
+		assert.Run(test.name, func(t *td.T) {
+			c, s := initRoles(test.inheritedRoles)
+
+			t.CmpDeeply(c, test.expClosure)
+			t.CmpDeeply(s, test.expSwitchRoles)
 		})
 	}
 }

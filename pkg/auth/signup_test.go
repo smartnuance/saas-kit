@@ -12,9 +12,13 @@ import (
 	"github.com/volatiletech/null/v8"
 )
 
+func TestMySuite(t *testing.T) {
+	tdsuite.Run(t, MySuite{})
+}
+
 type MySuite struct{}
 
-func (s MySuite) TestSignup(assert, require *td.T) {
+func (s MySuite) Test_signup(assert, require *td.T) {
 	// given
 	ctrl := gomock.NewController(require.TB)
 	mock := NewMockDBAPI(ctrl)
@@ -61,8 +65,4 @@ func (s MySuite) TestSignup(assert, require *td.T) {
 	// then
 	assert.CmpNoError(err)
 	assert.CmpLax(userID, user.ID)
-}
-
-func TestMySuite(t *testing.T) {
-	tdsuite.Run(t, MySuite{})
 }
