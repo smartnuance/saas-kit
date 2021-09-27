@@ -28,7 +28,7 @@ func (s *Service) Signup(ctx *gin.Context) (userID string, err error) {
 
 	var role string
 	var instanceID string
-	role, instanceID, err = roles.FromHeaders(ctx)
+	role, instanceID, err = roles.ApplyHeaders(ctx)
 	if err != nil {
 		return
 	}

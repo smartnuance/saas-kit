@@ -28,7 +28,7 @@ func (s *Service) Revoke(ctx *gin.Context) error {
 		}
 		userID = user.ID
 	} else {
-		userID, _, _, err = roles.Get(ctx)
+		userID, _, _, err = roles.From(ctx)
 		if err != nil {
 			return err
 		}
@@ -43,7 +43,7 @@ func (s *Service) Revoke(ctx *gin.Context) error {
 		instanceID = instance.ID
 	} else {
 		// fallback to default instance from headers
-		_, instanceID, err = roles.FromHeaders(ctx)
+		_, instanceID, err = roles.ApplyHeaders(ctx)
 		if err != nil {
 			return err
 		}
@@ -51,8 +51,7 @@ func (s *Service) Revoke(ctx *gin.Context) error {
 
 	// Check permission to revoke token for potentially different user
 	if !(roles.CanActAs(ctx, userID) ||
-		(roles.CanActFor(ctx, instanceID) && roles.CanActIn(ctx, roles.RoleInstanceAdmin)) ||
-		roles.CanActIn(ctx, roles.RoleSuperAdmin)) {
+		(roles.CanActFor(ctx, instanceID) && roles.CanActIn(ctx, roles.RoleInstanceAdmin))) {
 		return errors.WithStack(ErrUnauthorized)
 	}
 
@@ -88,7 +87,7 @@ func (s *Service) RevokeAll(ctx *gin.Context) error {
 		}
 		userID = user.ID
 	} else {
-		userID, _, _, err = roles.Get(ctx)
+		userID, _, _, err = roles.From(ctx)
 		if err != nil {
 			return err
 		}
