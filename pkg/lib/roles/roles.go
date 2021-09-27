@@ -28,101 +28,104 @@ var Roles = []string{
 	NoRole,
 }
 
-// inheritedRole builds a DAG of role inheritance with transitive permission propagation.
-type inheritedRole struct {
+// edge builds a DAG of role inheritance with transitive permission propagation.
+type edge struct {
 	// Role is the role to inherit permissions from.
 	Role string
-	// ExplicitSwitch defines if the user has to explicitly switch to inherited role to receive its permissions.
-	ExplicitSwitch bool
+	// SwitchRequired defines if the user has to explicitly switch to inherited role to receive its permissions.
+	SwitchRequired bool
 }
 
-// inheritedRoles describes the role inheritance DAG.
-// All roles implicitly inherit from RoleAnonymous without stating it here. RoleAnonymous makes the inheritance DAG rooted.
-var inheritedRoles = map[string][]inheritedRole{
+// dag represents a DAG.
+type dag map[string][]edge
+
+// inheritanceDAG describes the role inheritance DAG.
+// All roles implicitly inherit from NoRole without stating it here. NoRole makes the inheritance DAG rooted.
+var inheritanceDAG = dag{
 	RoleSuperAdmin: {
-		inheritedRole{
+		edge{
 			Role:           RoleInstanceAdmin,
-			ExplicitSwitch: true,
+			SwitchRequired: true,
 		},
 	},
 	RoleInstanceAdmin: {
-		inheritedRole{
+		edge{
 			Role:           RoleEventOrganizer,
-			ExplicitSwitch: false,
+			SwitchRequired: false,
 		},
 	},
 	RoleEventOrganizer: {
-		inheritedRole{
+		edge{
 			Role:           RoleTeacher,
-			ExplicitSwitch: false,
+			SwitchRequired: false,
 		},
 	},
 }
 
-type closureMap map[string]map[string]bool
+type closure map[string]map[string]bool
 
-// implicitRolesClosure lists the transitive closure of each role's implicitly inherited roles.
+// inheritanceClosure lists the transitive closure of each role's inherited roles.
 // The map's structure is
-//   current role -> ancestor role -> (if ancestor is in closure)
-var implicitRolesClosure = closureMap{}
+//   current role -> inherited role -> (true if inherited is in closure)
+var inheritanceClosure = closure{}
 
-// switchRoles lists each role's ancestor roles allowed to switch to.
+// switchRoles lists each role's inherited roles allowed to switch to.
 // The map's structure is
-//   current role -> ancestor role -> (if current role can switch to ancestor role)
-var switchRoles = closureMap{}
+//   current role -> inherited role -> (true if current role can switch to inherited role)
+var switchRoles = closure{}
 
 func init() {
-	implicitRolesClosure, switchRoles = initRoles(inheritedRoles)
+	inheritanceClosure, switchRoles = initRoles(inheritanceDAG)
 }
 
-func initRoles(inheritedRoles map[string][]inheritedRole) (implicitRolesClosure closureMap, switchRoles closureMap) {
-	implicitRolesClosure = closureMap{}
-	switchRoles = closureMap{}
+func initRoles(inheritanceDAG map[string][]edge) (inheritanceClosure closure, switchRoles closure) {
+	inheritanceClosure = closure{}
+	switchRoles = closure{}
 
 	// build closures in role inheritance graph
 	for _, role := range Roles {
-		implicitRolesClosure[role] = map[string]bool{
+		inheritanceClosure[role] = map[string]bool{
 			// All roles implicitly inherit from NoRole.
 			NoRole: true,
 		}
 		switchRoles[role] = map[string]bool{}
 
 		// the roles encountered over implicit inheritance
-		todoImp := list.New()
-		todoImp.PushBack(role)
+		todo := list.New()
+		todo.PushBack(role)
 
 		// the roles encountered over inheritance with explicit switch required
-		todoExp := list.New()
+		switchableTodo := list.New()
 
 		// track which roles has been reached in inheritance graph during traversal
 		done := map[string]bool{}
 
-		// Breadth-first traversal to collect closure of implicitly inherited roles
-		for p_ := todoImp.Front(); p_ != nil; p_ = p_.Next() {
+		// Breadth-first traversal to collect closure of inherited roles
+		for p_ := todo.Front(); p_ != nil; p_ = p_.Next() {
 			p := p_.Value.(string)
 			done[p] = true
 
-			implicitRolesClosure[role][p] = true
-			for _, inheritedRole := range inheritedRoles[p] {
-				if !done[inheritedRole.Role] {
-					if inheritedRole.ExplicitSwitch {
-						todoExp.PushBack(inheritedRole.Role)
+			inheritanceClosure[role][p] = true
+			for _, e := range inheritanceDAG[p] {
+				if !done[e.Role] {
+					if e.SwitchRequired {
+						switchableTodo.PushBack(e.Role)
 					} else {
-						todoImp.PushBack(inheritedRole.Role)
+						todo.PushBack(e.Role)
 					}
 				}
 			}
 		}
 
-		// Find ancestor roles only reachable over an explicit inheritance.
-		// When an ancestor role P was already reached via a path of implicit inheritance, any explicit inheritance of P has no effect.
-		for p_ := todoExp.Front(); p_ != nil; p_ = p_.Next() {
+		// Find inherited roles only reachable over an explicit inheritance.
+		// When an inherited role P was already reached via a path of implicit inheritance, any inheritance of P with switch required has no effect.
+		for p_ := switchableTodo.Front(); p_ != nil; p_ = p_.Next() {
 			p := p_.Value.(string)
 			if !done[p] {
 				switchRoles[role][p] = true
-				for _, inheritedRole := range inheritedRoles[p] {
+				for _, inheritedRole := range inheritanceDAG[p] {
 					if !done[inheritedRole.Role] {
-						todoExp.PushBack(inheritedRole.Role)
+						switchableTodo.PushBack(inheritedRole.Role)
 					}
 				}
 			}
@@ -132,7 +135,7 @@ func initRoles(inheritedRoles map[string][]inheritedRole) (implicitRolesClosure 
 }
 
 func valid(role string) bool {
-	_, ok := implicitRolesClosure[role]
+	_, ok := inheritanceClosure[role]
 	return ok
 }
 
@@ -140,7 +143,7 @@ func valid(role string) bool {
 // Switching is allowed when there is an implicit path from userRole to role
 // or userrole directly, explicitly inherits targetRole.
 func CanSwitchTo(userRole string, targetRole string) bool {
-	_, okImplicit := implicitRolesClosure[userRole][targetRole]
+	_, okImplicit := inheritanceClosure[userRole][targetRole]
 	_, okExplicit := switchRoles[userRole][targetRole]
 	return okImplicit || okExplicit
 }
@@ -170,14 +173,14 @@ func CanActAs(ctx *gin.Context, targetUserID string) bool {
 	return userID == targetUserID
 }
 
-// CanActIn checks if the user can act in the desired targetRole implicitly.
+// CanActIn checks if the user can act in the desired targetRole without switching to that role.
 func CanActIn(ctx *gin.Context, targetRole string) bool {
 	_, role, _, err := Get(ctx)
 	if err != nil {
 		return false
 	}
 
-	_, ok := implicitRolesClosure[role][targetRole]
+	_, ok := inheritanceClosure[role][targetRole]
 	return ok
 }
 

@@ -15,15 +15,15 @@ type MySuite struct{}
 
 func (s MySuite) Test_initRoles(assert, require *td.T) {
 	tests := []struct {
-		name           string
-		inheritedRoles map[string][]inheritedRole
-		impClosure     closureMap
-		expSwitchRoles closureMap
+		name               string
+		inheritanceDAG     map[string][]edge
+		inheritanceClosure closure
+		switchableRoles    closure
 	}{
 		{
 			name:           "default",
-			inheritedRoles: inheritedRoles,
-			impClosure: closureMap{
+			inheritanceDAG: inheritanceDAG,
+			inheritanceClosure: closure{
 				"event organizer": {
 					"event organizer": true,
 					"teacher":         true,
@@ -47,7 +47,7 @@ func (s MySuite) Test_initRoles(assert, require *td.T) {
 					"": true,
 				},
 			},
-			expSwitchRoles: closureMap{
+			switchableRoles: closure{
 				"event organizer": {},
 				"instance admin":  {},
 				"super admin": {
@@ -62,10 +62,10 @@ func (s MySuite) Test_initRoles(assert, require *td.T) {
 	}
 	for _, test := range tests {
 		assert.Run(test.name, func(t *td.T) {
-			c, s := initRoles(test.inheritedRoles)
+			c, s := initRoles(test.inheritanceDAG)
 
-			t.CmpDeeply(c, test.impClosure)
-			t.CmpDeeply(s, test.expSwitchRoles)
+			t.CmpDeeply(c, test.inheritanceClosure)
+			t.CmpDeeply(s, test.switchableRoles)
 		})
 	}
 }
