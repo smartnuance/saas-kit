@@ -27,7 +27,7 @@ func Example_switchRole() {
 		fmt.Println("unauthorized to act as teacher")
 	}
 
-	err := roles.SwitchRole(ctx, roles.RoleInstanceAdmin)
+	err := roles.SwitchTo(ctx, roles.RoleInstanceAdmin)
 	if err != nil {
 		fmt.Print(err)
 		return

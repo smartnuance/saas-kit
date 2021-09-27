@@ -98,9 +98,7 @@ func initRoles(inheritedRoles map[string][]inheritedRole) (implicitRolesClosure 
 		done := map[string]bool{}
 
 		// Breadth-first traversal to collect closure of implicitly inherited roles
-		for todoImp.Len() > 0 {
-			p_ := todoImp.Front()
-			todoImp.Remove(p_)
+		for p_ := todoImp.Front(); p_ != nil; p_ = p_.Next() {
 			p := p_.Value.(string)
 			done[p] = true
 
@@ -122,6 +120,11 @@ func initRoles(inheritedRoles map[string][]inheritedRole) (implicitRolesClosure 
 			p := p_.Value.(string)
 			if !done[p] {
 				switchRoles[role][p] = true
+				for _, inheritedRole := range inheritedRoles[p] {
+					if !done[inheritedRole.Role] {
+						todoExp.PushBack(inheritedRole.Role)
+					}
+				}
 			}
 		}
 	}

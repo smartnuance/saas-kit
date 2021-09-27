@@ -51,7 +51,9 @@ func (s MySuite) Test_initRoles(assert, require *td.T) {
 				"event organizer": {},
 				"instance admin":  {},
 				"super admin": {
-					"instance admin": true,
+					"instance admin":  true,
+					"event organizer": true,
+					"teacher":         true,
 				},
 				"teacher": {},
 				"":        {},
