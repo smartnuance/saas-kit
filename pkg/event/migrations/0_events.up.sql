@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS events(
   --date range
   starts date NOT NULL,
   ends date,
-  instance_id bigint NOT NULL,
+  instance_id CHAR(20) NOT NULL,
   owner_id CHAR(20),
   created_at timestamp with time zone NOT NULL DEFAULT NOW(),
   updated_at timestamp with time zone NOT NULL DEFAULT NOW(),

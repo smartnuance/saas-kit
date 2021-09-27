@@ -65,19 +65,49 @@ func (mr *MockDBAPIMockRecorder) Commit(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Commit", reflect.TypeOf((*MockDBAPI)(nil).Commit), arg0)
 }
 
-// CreateWorkshop mocks base method.
-func (m *MockDBAPI) CreateWorkshop(arg0 context.Context, arg1 *CreateWorkshopBody, arg2 string) (*dbmodels.Workshop, error) {
+// CreateEvent mocks base method.
+func (m *MockDBAPI) CreateEvent(arg0 context.Context, arg1 *EventData) (*dbmodels.Event, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateWorkshop", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "CreateEvent", arg0, arg1)
+	ret0, _ := ret[0].(*dbmodels.Event)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateEvent indicates an expected call of CreateEvent.
+func (mr *MockDBAPIMockRecorder) CreateEvent(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateEvent", reflect.TypeOf((*MockDBAPI)(nil).CreateEvent), arg0, arg1)
+}
+
+// CreateWorkshop mocks base method.
+func (m *MockDBAPI) CreateWorkshop(arg0 context.Context, arg1 *WorkshopData) (*dbmodels.Workshop, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateWorkshop", arg0, arg1)
 	ret0, _ := ret[0].(*dbmodels.Workshop)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateWorkshop indicates an expected call of CreateWorkshop.
-func (mr *MockDBAPIMockRecorder) CreateWorkshop(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockDBAPIMockRecorder) CreateWorkshop(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateWorkshop", reflect.TypeOf((*MockDBAPI)(nil).CreateWorkshop), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateWorkshop", reflect.TypeOf((*MockDBAPI)(nil).CreateWorkshop), arg0, arg1)
+}
+
+// GetEvent mocks base method.
+func (m *MockDBAPI) GetEvent(arg0 context.Context, arg1 string) (*dbmodels.Event, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEvent", arg0, arg1)
+	ret0, _ := ret[0].(*dbmodels.Event)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEvent indicates an expected call of GetEvent.
+func (mr *MockDBAPIMockRecorder) GetEvent(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEvent", reflect.TypeOf((*MockDBAPI)(nil).GetEvent), arg0, arg1)
 }
 
 // Rollback mocks base method.

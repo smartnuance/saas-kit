@@ -29,7 +29,7 @@ type Event struct {
 	Info       types.JSON  `boil:"info" json:"info" toml:"info" yaml:"info"`
 	Starts     time.Time   `boil:"starts" json:"starts" toml:"starts" yaml:"starts"`
 	Ends       null.Time   `boil:"ends" json:"ends,omitempty" toml:"ends" yaml:"ends,omitempty"`
-	InstanceID int64       `boil:"instance_id" json:"instance_id" toml:"instance_id" yaml:"instance_id"`
+	InstanceID string      `boil:"instance_id" json:"instance_id" toml:"instance_id" yaml:"instance_id"`
 	OwnerID    null.String `boil:"owner_id" json:"owner_id,omitempty" toml:"owner_id" yaml:"owner_id,omitempty"`
 	CreatedAt  time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	UpdatedAt  time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
@@ -173,29 +173,6 @@ func (w whereHelpernull_Time) GTE(x null.Time) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.GTE, x)
 }
 
-type whereHelperint64 struct{ field string }
-
-func (w whereHelperint64) EQ(x int64) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
-func (w whereHelperint64) NEQ(x int64) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
-func (w whereHelperint64) LT(x int64) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
-func (w whereHelperint64) LTE(x int64) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
-func (w whereHelperint64) GT(x int64) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
-func (w whereHelperint64) GTE(x int64) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
-func (w whereHelperint64) IN(slice []int64) qm.QueryMod {
-	values := make([]interface{}, 0, len(slice))
-	for _, value := range slice {
-		values = append(values, value)
-	}
-	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
-}
-func (w whereHelperint64) NIN(slice []int64) qm.QueryMod {
-	values := make([]interface{}, 0, len(slice))
-	for _, value := range slice {
-		values = append(values, value)
-	}
-	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
-}
-
 type whereHelpernull_String struct{ field string }
 
 func (w whereHelpernull_String) EQ(x null.String) qm.QueryMod {
@@ -224,7 +201,7 @@ var EventWhere = struct {
 	Info       whereHelpertypes_JSON
 	Starts     whereHelpertime_Time
 	Ends       whereHelpernull_Time
-	InstanceID whereHelperint64
+	InstanceID whereHelperstring
 	OwnerID    whereHelpernull_String
 	CreatedAt  whereHelpertime_Time
 	UpdatedAt  whereHelpertime_Time
@@ -234,7 +211,7 @@ var EventWhere = struct {
 	Info:       whereHelpertypes_JSON{field: "\"event\".\"events\".\"info\""},
 	Starts:     whereHelpertime_Time{field: "\"event\".\"events\".\"starts\""},
 	Ends:       whereHelpernull_Time{field: "\"event\".\"events\".\"ends\""},
-	InstanceID: whereHelperint64{field: "\"event\".\"events\".\"instance_id\""},
+	InstanceID: whereHelperstring{field: "\"event\".\"events\".\"instance_id\""},
 	OwnerID:    whereHelpernull_String{field: "\"event\".\"events\".\"owner_id\""},
 	CreatedAt:  whereHelpertime_Time{field: "\"event\".\"events\".\"created_at\""},
 	UpdatedAt:  whereHelpertime_Time{field: "\"event\".\"events\".\"updated_at\""},

@@ -8,7 +8,9 @@ import (
 	"database/sql"
 	"encoding/json"
 
+	"github.com/pkg/errors"
 	"github.com/rs/xid"
+	"github.com/rs/zerolog/log"
 	m "github.com/smartnuance/saas-kit/pkg/event/dbmodels"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -20,7 +22,9 @@ type DBAPI interface {
 	BeginTx(ctx context.Context) (*sql.Tx, error)
 	Commit(tx *sql.Tx) error
 	Rollback(tx *sql.Tx) error
-	CreateWorkshop(ctx context.Context, body *CreateWorkshopBody, eventID string) (workshop *m.Workshop, err error)
+	CreateWorkshop(ctx context.Context, data *WorkshopData) (workshop *m.Workshop, err error)
+	CreateEvent(ctx context.Context, instanceID string, data *EventData) (event *m.Event, err error)
+	GetEvent(ctx context.Context, eventID string) (event *m.Event, err error)
 }
 
 type dbAPI struct {
@@ -39,18 +43,19 @@ func (db *dbAPI) Rollback(tx *sql.Tx) error {
 	return tx.Rollback()
 }
 
-func (db *dbAPI) CreateWorkshop(ctx context.Context, body *CreateWorkshopBody, eventID string) (workshop *m.Workshop, err error) {
+func (db *dbAPI) CreateWorkshop(ctx context.Context, data *WorkshopData) (workshop *m.Workshop, err error) {
 	var info types.JSON
-	info, err = json.Marshal(body.WorkshopInfo)
+	info, err = json.Marshal(data.WorkshopInfo)
 	if err != nil {
 		return
 	}
 	workshop = &m.Workshop{
-		ID:      xid.New().String(),
-		Info:    info,
-		Starts:  body.Starts,
-		Ends:    null.TimeFrom(body.Ends),
-		EventID: eventID,
+		ID:           xid.New().String(),
+		Info:         info,
+		Starts:       data.Starts,
+		Ends:         null.TimeFrom(data.Ends),
+		EventID:      data.EventID,
+		Participants: types.JSON("{}"),
 	}
 	err = workshop.Upsert(ctx, db.DB, true, boil.None().Cols, boil.Infer(), boil.Infer())
 	if err != nil {
@@ -59,19 +64,36 @@ func (db *dbAPI) CreateWorkshop(ctx context.Context, body *CreateWorkshopBody, e
 	return
 }
 
-// func (db *dbAPI) CreateUser(ctx context.Context, tx *sql.Tx, name, email string, passwordHash []byte) (user *m.User, err error) {
-// 	user = &m.User{
-// 		ID:       xid.New().String(),
-// 		Name:     null.StringFrom(name),
-// 		Email:    email,
-// 		Password: passwordHash,
-// 	}
-// 	err = user.Insert(ctx, tx, boil.Infer())
-// 	if err != nil {
-// 		return
-// 	}
-// 	return
-// }
+func (db *dbAPI) CreateEvent(ctx context.Context, instanceID string, data *EventData) (event *m.Event, err error) {
+	var info types.JSON
+	info, err = json.Marshal(data.EventInfo)
+	if err != nil {
+		return
+	}
+	log.Debug().Msg(string(info))
+	event = &m.Event{
+		ID:         xid.New().String(),
+		Info:       info,
+		Starts:     data.Starts,
+		Ends:       null.TimeFrom(data.Ends),
+		InstanceID: instanceID,
+	}
+	err = event.Upsert(ctx, db.DB, true, boil.None().Cols, boil.Infer(), boil.Infer())
+	if err != nil {
+		return
+	}
+	return
+}
+
+func (db *dbAPI) GetEvent(ctx context.Context, eventID string) (event *m.Event, err error) {
+	event, err = m.Events(m.EventWhere.ID.EQ(eventID)).One(ctx, db.DB)
+	if err == sql.ErrNoRows {
+		// transform sql error in specific error of event context
+		err = errors.WithStack(ErrEventDoesNotExist)
+		return
+	}
+	return
+}
 
 type EventInfo struct {
 	Title        string `json:"title,omitempty"`
@@ -85,3 +107,7 @@ type WorkshopInfo struct {
 	LocationURL  string `json:"locationURL,omitempty"`
 	Couples      bool   `json:"couples"`
 }
+
+var (
+	ErrEventDoesNotExist = errors.New("event does not exist")
+)

@@ -64,7 +64,7 @@ Create super user:
 
 Use exposed endpoint to signup user:
 
-> http PUT :8801/signup name=Simon email=simon@smartnuance.com password=admin
+> http PUT :8801/signup instance:"c5263570ono4ui8qfhgg" name=Simon email=simon@smartnuance.com password=admin
 
 Test login and save refresh/access tokens:
 
