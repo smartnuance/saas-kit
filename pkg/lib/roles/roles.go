@@ -156,6 +156,9 @@ func SwitchTo(ctx *gin.Context, targetRole string) error {
 	if err != nil {
 		return err
 	}
+	if targetRole == role {
+		return nil
+	}
 	if !CanSwitchTo(role, targetRole) {
 		return ErrSwitchNotAllowed
 	}
@@ -219,12 +222,12 @@ func Get(ctx *gin.Context) (userID, role, instanceID string, err error) {
 	return
 }
 
-// FromHeaders parses headers to retrieve user's temporary role and instance to act for,
-// overwriting default role/instance from context.
-// When role parameter is missing, falls back to role specified in context.
+// ApplyHeaders parses headers to retrieve user's temporary role and instance to act for,
+// overwriting default role/instance from context. Switches to specified role.
+// When role parameter is missing, falls back to role specified in context set by role in JWT.
 // When instance parameter is missing, falls back to instance specified in context.
 // Returns an error when neither parameter nor fallback was provided for role or instance.
-func FromHeaders(ctx *gin.Context) (role, instanceID string, err error) {
+func ApplyHeaders(ctx *gin.Context) (role, instanceID string, err error) {
 	role = ctx.GetHeader(RoleKey)
 	if len(role) > 0 {
 		if !valid(role) {
@@ -237,6 +240,10 @@ func FromHeaders(ctx *gin.Context) (role, instanceID string, err error) {
 		if err != nil {
 			return
 		}
+	}
+	err = SwitchTo(ctx, role)
+	if err != nil {
+		return
 	}
 
 	instanceID = ctx.GetHeader(InstanceKey)
