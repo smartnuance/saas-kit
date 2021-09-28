@@ -28,7 +28,7 @@ func (s *Service) Revoke(ctx *gin.Context) error {
 		}
 		userID = user.ID
 	} else {
-		userID, _, _, err = roles.From(ctx)
+		userID, err = roles.User(ctx)
 		if err != nil {
 			return err
 		}
@@ -87,7 +87,7 @@ func (s *Service) RevokeAll(ctx *gin.Context) error {
 		}
 		userID = user.ID
 	} else {
-		userID, _, _, err = roles.From(ctx)
+		userID, err = roles.User(ctx)
 		if err != nil {
 			return err
 		}

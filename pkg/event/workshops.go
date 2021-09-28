@@ -76,7 +76,7 @@ func (s *Service) CreateWorkshop(ctx *gin.Context) (workshop *m.Workshop, err er
 	}
 
 	if event.InstanceID == "" {
-		_, _, event.InstanceID, err = roles.From(ctx)
+		event.InstanceID, err = roles.Instance(ctx)
 		if err != nil {
 			err = errors.WithStack(err)
 			return

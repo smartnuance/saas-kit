@@ -152,7 +152,7 @@ func CanSwitchTo(userRole string, targetRole string) bool {
 // The user's role defined in context is checked against the rules defining if switching is allowed.
 // The temporary role is set on the context under the "role" key, overwriting the original role.
 func SwitchTo(ctx *gin.Context, targetRole string) error {
-	_, role, _, err := From(ctx)
+	role, err := Role(ctx)
 	if err != nil {
 		return err
 	}
@@ -168,7 +168,7 @@ func SwitchTo(ctx *gin.Context, targetRole string) error {
 
 // CanActAs checks if the user can act as a desired user.
 func CanActAs(ctx *gin.Context, targetUserID string) bool {
-	userID, _, _, err := From(ctx)
+	userID, err := User(ctx)
 	if err != nil {
 		return false
 	}
@@ -178,7 +178,7 @@ func CanActAs(ctx *gin.Context, targetUserID string) bool {
 
 // CanActIn checks if the user can act in the desired targetRole without switching to that role.
 func CanActIn(ctx *gin.Context, targetRole string) bool {
-	_, role, _, err := From(ctx)
+	role, err := Role(ctx)
 	if err != nil {
 		return false
 	}
@@ -189,7 +189,7 @@ func CanActIn(ctx *gin.Context, targetRole string) bool {
 
 // CanActFor checks if the user can act for the desired instance.
 func CanActFor(ctx *gin.Context, instanceID string) bool {
-	_, _, userInstance, err := From(ctx)
+	userInstance, err := Instance(ctx)
 	if err != nil {
 		return false
 	}
@@ -197,29 +197,34 @@ func CanActFor(ctx *gin.Context, instanceID string) bool {
 	return userInstance == instanceID
 }
 
-// From retrieves the user, his role and the instance to act for from context.
+// User retrieves the user from context.
 // There is no default user. When no user is registerd in context, this results in ErrMissingUser.
-// The default role is NoRole. An invalid role results in ErrInvalidRole.
-// There is no default instance. An invalid instance results in ErrMissingInstance.
-func From(ctx *gin.Context) (userID, role, instanceID string, err error) {
+func User(ctx *gin.Context) (string, error) {
 	userID_, ok := ctx.Get(UserKey) // should exist
 	if !ok {
-		err = ErrMissingUser
-		return
+		return "", ErrMissingUser
 	}
-	userID = userID_.(string)
-	role = ctx.GetString(RoleKey) // corresponds to NoRole if empty
+	return userID_.(string), nil
+}
+
+// Role retrieves the role from context.
+// The default role is NoRole. An invalid role results in ErrInvalidRole.
+func Role(ctx *gin.Context) (string, error) {
+	role := ctx.GetString(RoleKey) // corresponds to NoRole if empty
 	if !valid(role) {
-		err = ErrInvalidRole
-		return
+		return "", ErrInvalidRole
 	}
+	return role, nil
+}
+
+// Instance retrieves the instance to act for from context.
+// There is no default instance. An invalid instance results in ErrMissingInstance.
+func Instance(ctx *gin.Context) (string, error) {
 	instanceID_, ok := ctx.Get(InstanceKey) // should exist
 	if !ok {
-		err = ErrMissingInstance
-		return
+		return "", ErrMissingInstance
 	}
-	instanceID = instanceID_.(string)
-	return
+	return instanceID_.(string), nil
 }
 
 // ApplyHeaders parses headers to retrieve user's temporary role and instance to act for,
@@ -235,8 +240,8 @@ func ApplyHeaders(ctx *gin.Context) (role, instanceID string, err error) {
 			return
 		}
 	} else {
-		// if no instance is provided, fallback to role from context
-		_, role, _, err = From(ctx)
+		// if no role is provided, fallback to role from context
+		role, err = Role(ctx)
 		if err != nil {
 			return
 		}
@@ -249,7 +254,7 @@ func ApplyHeaders(ctx *gin.Context) (role, instanceID string, err error) {
 	instanceID = ctx.GetHeader(InstanceKey)
 	if len(instanceID) == 0 {
 		// if no instance is provided, fallback to instance from context
-		_, _, instanceID, err = From(ctx)
+		instanceID, err = Instance(ctx)
 		if err != nil {
 			return
 		}
