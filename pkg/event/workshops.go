@@ -12,6 +12,7 @@ import (
 
 // WorkshopData describes the workshop to be created
 type WorkshopData struct {
+	InstanceID string `json:"instance"`
 	WorkshopInfo
 	// Starts must be provided as RFC 3339 strings
 	Starts time.Time `json:"starts"`
@@ -22,6 +23,7 @@ type WorkshopData struct {
 
 // EventData describes an Event
 type EventData struct {
+	InstanceID string `json:"instance"`
 	EventInfo
 	// Starts must be provided as RFC 3339 strings
 	Starts time.Time `json:"starts"`
@@ -30,12 +32,6 @@ type EventData struct {
 }
 
 func (s *Service) CreateWorkshop(ctx *gin.Context) (workshop *m.Workshop, err error) {
-	var instanceID string
-	_, instanceID, err = roles.ApplyHeaders(ctx)
-	if err != nil {
-		return
-	}
-
 	// Check permission
 	if !roles.CanActIn(ctx, roles.RoleEventOrganizer) {
 		err = errors.WithStack(ErrUnauthorized)
@@ -49,10 +45,25 @@ func (s *Service) CreateWorkshop(ctx *gin.Context) (workshop *m.Workshop, err er
 		return
 	}
 
+	// fallback to instance from context
+	if data.InstanceID == "" {
+		// fallback to default instance from headers
+		data.InstanceID, err = roles.Instance(ctx)
+		if err != nil {
+			return
+		}
+	}
+
+	if !roles.CanActFor(ctx, data.InstanceID) {
+		err = errors.WithStack(ErrUnauthorized)
+		return
+	}
+
 	var event *m.Event
 	if data.EventID == "" {
 		// create event for this specific event
-		event, err = s.DBAPI.CreateEvent(ctx, instanceID, &EventData{
+		event, err = s.DBAPI.CreateEvent(ctx, &EventData{
+			InstanceID: data.InstanceID,
 			EventInfo: EventInfo{
 				Title:        data.Title,
 				LocationName: data.LocationName,
@@ -69,14 +80,6 @@ func (s *Service) CreateWorkshop(ctx *gin.Context) (workshop *m.Workshop, err er
 		data.EventID = event.ID
 	} else {
 		event, err = s.DBAPI.GetEvent(ctx, data.EventID)
-		if err != nil {
-			err = errors.WithStack(err)
-			return
-		}
-	}
-
-	if event.InstanceID == "" {
-		event.InstanceID, err = roles.Instance(ctx)
 		if err != nil {
 			err = errors.WithStack(err)
 			return

@@ -47,11 +47,6 @@ func router(s *Service) *gin.Engine {
 			RevokeAllHandler(ctx, s)
 		})
 	}
-	// userAPI := api.Group("/user", tokens.AuthorizeJWT(s.TokenAPI.ValidationKey))
-	// {
-	// 	userAPI.GET("/:id", user)
-	// 	userAPI.DELETE("/:id", deleteUser)
-	// }
 
 	return router
 }

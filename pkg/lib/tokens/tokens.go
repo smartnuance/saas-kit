@@ -37,6 +37,10 @@ type RefreshTokenClaims struct {
 
 const BearerSchema = "Bearer "
 
+// AuthorizeJWT creates a middleware that checks the presence and validity of the authorization header.
+// If this middleware is installed on an endpoint, the authorization header is required.
+// When the header is present and the access token (JWT) inside is valid, user, role and instance are set to context.
+// The middleware creation is parameterized by service specifics.
 func AuthorizeJWT(validationKey *rsa.PublicKey, issuer, audience string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		authHeader := ctx.GetHeader("Authorization")
@@ -57,6 +61,14 @@ func AuthorizeJWT(validationKey *rsa.PublicKey, issuer, audience string) gin.Han
 		ctx.Set(roles.UserKey, claims.Subject)
 		ctx.Set(roles.RoleKey, claims.Role)
 		ctx.Set(roles.InstanceKey, claims.Instance)
+
+		switchRole := ctx.GetHeader(roles.RoleKey)
+		err = roles.SwitchTo(ctx, switchRole)
+		if err != nil {
+			log.Error().Err(err).Msg("")
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
 	}
 }
 

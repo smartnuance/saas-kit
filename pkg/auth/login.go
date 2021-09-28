@@ -14,7 +14,7 @@ import (
 
 // CredentialsBody describes the login credentials
 type CredentialsBody struct {
-	InstanceURL string `json:"url"`
+	InstanceURL string `json:"instance"`
 	Email       string `json:"email"`
 	Password    string `json:"password"`
 }
@@ -125,7 +125,6 @@ func (s *Service) Refresh(ctx *gin.Context) (string, error) {
 }
 
 var (
-	ErrUnauthorized         = errors.New("role insufficient to act on desired instances")
 	ErrMissingCredentials   = errors.New("missing credentials, email and password have to be provided")
 	ErrInvalidCredentials   = errors.New("invalid credentials, email/password combination wrong")
 	ErrMissingRefreshToken  = errors.New("missing refresh token in JSON body")

@@ -23,7 +23,7 @@ type DBAPI interface {
 	Commit(tx *sql.Tx) error
 	Rollback(tx *sql.Tx) error
 	CreateWorkshop(ctx context.Context, data *WorkshopData) (workshop *m.Workshop, err error)
-	CreateEvent(ctx context.Context, instanceID string, data *EventData) (event *m.Event, err error)
+	CreateEvent(ctx context.Context, data *EventData) (event *m.Event, err error)
 	GetEvent(ctx context.Context, eventID string) (event *m.Event, err error)
 }
 
@@ -64,7 +64,7 @@ func (db *dbAPI) CreateWorkshop(ctx context.Context, data *WorkshopData) (worksh
 	return
 }
 
-func (db *dbAPI) CreateEvent(ctx context.Context, instanceID string, data *EventData) (event *m.Event, err error) {
+func (db *dbAPI) CreateEvent(ctx context.Context, data *EventData) (event *m.Event, err error) {
 	var info types.JSON
 	info, err = json.Marshal(data.EventInfo)
 	if err != nil {
@@ -76,7 +76,7 @@ func (db *dbAPI) CreateEvent(ctx context.Context, instanceID string, data *Event
 		Info:       info,
 		Starts:     data.Starts,
 		Ends:       null.TimeFrom(data.Ends),
-		InstanceID: instanceID,
+		InstanceID: data.InstanceID,
 	}
 	err = event.Upsert(ctx, db.DB, true, boil.None().Cols, boil.Infer(), boil.Infer())
 	if err != nil {

@@ -14,9 +14,10 @@ import (
 
 // SignupBody describes the signup body with desired credentials
 type SignupBody struct {
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	InstanceURL string `json:"instance"`
+	Name        string `json:"name"`
+	Email       string `json:"email"`
+	Password    string `json:"password"`
 }
 
 func (s *Service) Signup(ctx *gin.Context) (userID string, err error) {
@@ -26,14 +27,12 @@ func (s *Service) Signup(ctx *gin.Context) (userID string, err error) {
 		return
 	}
 
-	var role string
-	var instanceID string
-	role, instanceID, err = roles.ApplyHeaders(ctx)
+	instance, err := s.DBAPI.GetInstance(ctx, body.InstanceURL)
 	if err != nil {
 		return
 	}
 
-	return s.signup(ctx, instanceID, body, role)
+	return s.signup(ctx, instance.ID, body, roles.NoRole)
 }
 
 func (s *Service) signup(ctx *gin.Context, instanceID string, body SignupBody, role string) (userID string, err error) {

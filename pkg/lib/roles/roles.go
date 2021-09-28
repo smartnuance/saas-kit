@@ -194,7 +194,15 @@ func CanActFor(ctx *gin.Context, instanceID string) bool {
 		return false
 	}
 
-	return userInstance == instanceID
+	if userInstance == instanceID {
+		return true
+	}
+
+	userRole, err := Role(ctx)
+	if err != nil {
+		return false
+	}
+	return userRole == RoleSuperAdmin
 }
 
 // User retrieves the user from context.
@@ -227,44 +235,10 @@ func Instance(ctx *gin.Context) (string, error) {
 	return instanceID_.(string), nil
 }
 
-// ApplyHeaders parses headers to retrieve user's temporary role and instance to act for,
-// overwriting default role/instance from context. Switches to specified role.
-// When role parameter is missing, falls back to role specified in context set by role in JWT.
-// When instance parameter is missing, falls back to instance specified in context.
-// Returns an error when neither parameter nor fallback was provided for role or instance.
-func ApplyHeaders(ctx *gin.Context) (role, instanceID string, err error) {
-	role = ctx.GetHeader(RoleKey)
-	if len(role) > 0 {
-		if !valid(role) {
-			err = ErrInvalidRole
-			return
-		}
-	} else {
-		// if no role is provided, fallback to role from context
-		role, err = Role(ctx)
-		if err != nil {
-			return
-		}
-	}
-	err = SwitchTo(ctx, role)
-	if err != nil {
-		return
-	}
-
-	instanceID = ctx.GetHeader(InstanceKey)
-	if len(instanceID) == 0 {
-		// if no instance is provided, fallback to instance from context
-		instanceID, err = Instance(ctx)
-		if err != nil {
-			return
-		}
-	}
-	return
-}
-
 var (
 	ErrMissingUser      = errors.New("missing user")
 	ErrInvalidRole      = errors.New("invalid role provided")
 	ErrMissingInstance  = errors.New("missing instance")
 	ErrSwitchNotAllowed = errors.New("role switch not allowed")
+	ErrUnauthorized     = errors.New("role insufficient to act on desired instance")
 )

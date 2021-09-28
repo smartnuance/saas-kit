@@ -10,7 +10,7 @@ import (
 // RevokeBody describes the user/instance to revoke tokens for
 type RevokeBody struct {
 	Email       string `json:"email"`
-	InstanceURL string `json:"url"`
+	InstanceURL string `json:"instance"`
 }
 
 func (s *Service) Revoke(ctx *gin.Context) error {
@@ -43,7 +43,7 @@ func (s *Service) Revoke(ctx *gin.Context) error {
 		instanceID = instance.ID
 	} else {
 		// fallback to default instance from headers
-		_, instanceID, err = roles.ApplyHeaders(ctx)
+		instanceID, err = roles.Instance(ctx)
 		if err != nil {
 			return err
 		}
@@ -52,7 +52,7 @@ func (s *Service) Revoke(ctx *gin.Context) error {
 	// Check permission to revoke token for potentially different user
 	if !(roles.CanActAs(ctx, userID) ||
 		(roles.CanActFor(ctx, instanceID) && roles.CanActIn(ctx, roles.RoleInstanceAdmin))) {
-		return errors.WithStack(ErrUnauthorized)
+		return errors.WithStack(roles.ErrUnauthorized)
 	}
 
 	profile, err := s.DBAPI.GetProfile(ctx, userID, instanceID)
@@ -96,7 +96,7 @@ func (s *Service) RevokeAll(ctx *gin.Context) error {
 	// Check permission to revoke token for potentially different user
 	if !(roles.CanActAs(ctx, userID) ||
 		roles.CanActIn(ctx, roles.RoleSuperAdmin)) {
-		return errors.WithStack(ErrUnauthorized)
+		return errors.WithStack(roles.ErrUnauthorized)
 	}
 
 	_, err = s.DBAPI.DeleteAllTokens(ctx, userID)

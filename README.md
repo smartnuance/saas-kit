@@ -62,13 +62,15 @@ Create super user:
 
 > go run ./cmd/auth adduser -name=Simon -email=simon@smartnuance.com -password=f00bartest -instance=smartnuance.com
 
-Use exposed endpoint to signup user:
+### Interact with auth service
 
-> http PUT :8801/signup instance:"c5263570ono4ui8qfhgg" name=Simon email=simon@smartnuance.com password=admin
+Use exposed endpoint to signup user (with no permissions to start with):
+
+> http PUT :8801/signup instance="smartnuance.com" name=Bob email=bob@smartnuance.com password=alice
 
 Test login and save refresh/access tokens:
 
-> RES=$(http POST :8801/login email=simon@smartnuance.com password=f00bartest url=smartnuance.com -v -b)
+> RES=$(http POST :8801/login email=simon@smartnuance.com password=f00bartest instance=smartnuance.com -v -b)
 
 > RT=$(echo $RES | jq -r '.refreshToken') 
 
@@ -83,6 +85,10 @@ Revoke token:
 
 > http -v DELETE :8801/revoke/ Authorization:"Bearer $AT"
 
+Revoke all tokens:
+
+> http -v DELETE :8801/revoke/all Authorization:"Bearer $AT"
+
 For a while, I can still use the access token, for example to rerun the idem-potent revoke:
 
 > http -v DELETE :8801/revoke/ Authorization:"Bearer $AT"
@@ -90,6 +96,12 @@ For a while, I can still use the access token, for example to rerun the idem-pot
 But if we try to use the revoked refresh token in a refresh call, this will fail:
 
 > http -v POST :8801/refresh refreshToken=$RT
+
+### Interact with event service
+
+Since no implicit switch from the super admin is allowed, we provide the role header to temporarily switch to the _event organizer_ role:
+
+> http -v PUT :8802/workshop Authorization:"Bearer $AT" role:"event organizer" title=Salsa locationName=Gazebo
 
 
 ## Packages used
