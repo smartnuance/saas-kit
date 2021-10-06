@@ -32,6 +32,18 @@ func router(s *Service) *gin.Engine {
 	return router
 }
 
+type MyTransport struct {
+	header http.Header
+}
+
+func (t MyTransport) RoundTrip(r *http.Request) (*http.Response, error) {
+	resp, err := http.DefaultTransport.RoundTrip(r)
+	resp.Header = t.header
+	return resp, err
+}
+
+var mytransport = MyTransport{}
+
 func ReverseProxy(address string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		remote, err := url.Parse("http://" + address)
@@ -51,6 +63,7 @@ func ReverseProxy(address string) gin.HandlerFunc {
 			req.URL.Host = remote.Host
 			req.URL.Path = ctx.Param("proxyPath")
 		}
+		proxy.Transport = mytransport
 
 		gin.WrapH(proxy)(ctx)
 	}
