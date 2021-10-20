@@ -13,7 +13,8 @@ func router(s *Service) *gin.Engine {
 	var router = gin.Default()
 
 	config := cors.DefaultConfig()
-	config.AddAllowHeaders("PUT", "PATCH", "GET", "POST", "DELETE", "OPTIONS")
+	config.AddAllowMethods("PUT", "PATCH", "GET", "POST", "DELETE", "OPTIONS")
+	config.AddAllowHeaders("Authorization")
 	if s.release {
 		config.AllowOriginFunc = func(origin string) bool {
 			_, ok := s.AllowOrigins[origin]
