@@ -26,22 +26,31 @@ func router(s *Service) *gin.Engine {
 
 	// with authorization middleware
 	api := router.Group("/", tokens.AuthorizeJWT(s.TokenAPI.ValidationKey, s.Issuer, s.Audience))
+	s.AddInfoHandlers(api.Group("/info"))
 
 	// without authorization middleware
-	api.PUT("/workshop", func(ctx *gin.Context) {
-		CreateWorkshopHandler(ctx, s)
-	})
+	api.PUT("/workshop", CreateWorkshopHandler(s))
 
 	return router
 }
 
+// AddInfoHandlers adds new handlers to retrieve model structure info.
+func (s *Service) AddInfoHandlers(routerGroup *gin.RouterGroup) {
+	dir := http.Dir(s.modelInfoPath)
+	routerGroup.GET("/workshop", func(ctx *gin.Context) {
+		ctx.FileFromFS("/workshop.json", dir)
+	})
+}
+
 // CreateWorkshopHandler creates a new workshop.
-func CreateWorkshopHandler(ctx *gin.Context, s *Service) {
-	workshop, err := s.CreateWorkshop(ctx)
-	if err != nil {
-		log.Error().Stack().Err(err).Msg("")
-		ctx.AbortWithStatus(http.StatusUnauthorized)
-	} else {
-		ctx.JSON(http.StatusCreated, gin.H{"status": http.StatusCreated, "message": "workshop created successfully!", "workshopID": workshop.ID})
+func CreateWorkshopHandler(s *Service) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		workshop, err := s.CreateWorkshop(ctx)
+		if err != nil {
+			log.Error().Stack().Err(err).Msg("")
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+		} else {
+			ctx.JSON(http.StatusCreated, gin.H{"status": http.StatusCreated, "message": "workshop created successfully!", "workshopID": workshop.ID})
+		}
 	}
 }

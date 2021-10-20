@@ -36,6 +36,8 @@ type Env struct {
 	service.HTTPEnv
 	AllowOrigins []string
 	release      bool
+
+	modelInfoPath string
 }
 
 // Service offers the APIs of the authentication service.
@@ -136,6 +138,11 @@ func Load() (env Env, err error) {
 
 	env.HTTPEnv.Port = envs[strings.ToUpper(ServiceName)+"_SERVICE_PORT"]
 	env.release = lib.Stage(envs["SAAS_KIT_ENV"]) == lib.PROD
+	var ok bool
+	env.modelInfoPath, ok = envs["MODEL_INFO_PATH"]
+	if !ok {
+		env.modelInfoPath = "./pkg/event/modelinfo"
+	}
 
 	env.DBEnv = service.LoadDBEnv(envs)
 	env.TokenEnv = tokens.Load(envs, ServiceName)
