@@ -97,6 +97,7 @@ func (s *Service) CreateWorkshop(ctx *gin.Context) (workshop *m.Workshop, err er
 			err = errors.WithStack(err)
 			return
 		}
+		data.EventID = event.ID
 	}
 
 	workshop, err = s.DBAPI.CreateWorkshop(ctx, &data)
