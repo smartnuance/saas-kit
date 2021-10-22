@@ -139,7 +139,7 @@ func valid(role string) bool {
 	return ok
 }
 
-// CanSwitchTo checks if the user's role can switch to a targetRole and acquiring those role's permissions.
+// CanSwitchTo checks if the user's role can switch to a targetRole acquiring those role's permissions.
 // Switching is allowed when there is an implicit path from userRole to role
 // or userrole directly, explicitly inherits targetRole.
 func CanSwitchTo(userRole string, targetRole string) bool {
