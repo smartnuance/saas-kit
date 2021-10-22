@@ -44,6 +44,9 @@ func (s *Service) AddInfoHandlers(routerGroup *gin.RouterGroup) {
 	routerGroup.GET("/workshop", func(ctx *gin.Context) {
 		ctx.FileFromFS("/workshop.json", dir)
 	})
+	routerGroup.GET("/event", func(ctx *gin.Context) {
+		ctx.FileFromFS("/event.json", dir)
+	})
 }
 
 // CreateWorkshopHandler creates a new workshop.

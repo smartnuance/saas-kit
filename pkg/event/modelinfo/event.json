@@ -1,0 +1,57 @@
+{
+  "infos": [
+    {
+      "name": "Event",
+      "name_plural": "Events",
+      "service": "event",
+      "model": "event",
+      "fields": {
+        "id": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "label": "ID"
+        },
+        "starts": {
+          "type": "datetime",
+          "required": false,
+          "read_only": false,
+          "label": "Date"
+        },
+        "ends": {
+          "type": "datetime",
+          "required": false,
+          "read_only": false,
+          "label": "Date"
+        },
+        "title": {
+          "type": "string",
+          "required": true,
+          "read_only": false,
+          "label": "Name",
+          "max_length": 255
+        },
+        "instance": {
+          "type": "string",
+          "required": true,
+          "read_only": false,
+          "label": "Instance"
+        },
+        "locationName": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "label": "Location",
+          "max_length": 255
+        },
+        "locationURL": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "label": "Location URL",
+          "max_length": 255
+        }
+      }
+    }
+  ]
+}
