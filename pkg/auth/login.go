@@ -19,7 +19,7 @@ type CredentialsBody struct {
 	Password    string `json:"password"`
 }
 
-func (s *Service) Login(ctx *gin.Context) (accessToken, refreshToken string, err error) {
+func (s *Service) Login(ctx *gin.Context) (accessToken, refreshToken, role string, err error) {
 	var body CredentialsBody
 	err = ctx.ShouldBind(&body)
 	if err != nil {
@@ -50,7 +50,6 @@ func (s *Service) Login(ctx *gin.Context) (accessToken, refreshToken string, err
 		return
 	}
 
-	var role string
 	if profile.Role.Valid {
 		role = profile.Role.String
 	} else {
@@ -66,7 +65,7 @@ func (s *Service) Login(ctx *gin.Context) (accessToken, refreshToken string, err
 		return
 	}
 
-	return accessToken, refreshToken, nil
+	return
 }
 
 func (s *Service) loginWithCredentials(ctx *gin.Context, email string, password string) (*m.User, error) {

@@ -62,7 +62,7 @@ func AuthorizeJWT(validationKey *rsa.PublicKey, issuer, audience string) gin.Han
 		ctx.Set(roles.RoleKey, claims.Role)
 		ctx.Set(roles.InstanceKey, claims.Instance)
 
-		switchRole := ctx.GetHeader(roles.RoleKey)
+		switchRole := ctx.GetHeader(roles.RoleHeader)
 		err = roles.SwitchTo(ctx, switchRole)
 		if err != nil {
 			log.Error().Err(err).Msg("")

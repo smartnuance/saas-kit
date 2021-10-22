@@ -8,6 +8,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
+	"github.com/smartnuance/saas-kit/pkg/lib/roles"
 )
 
 func router(s *Service) *gin.Engine {
@@ -16,6 +17,7 @@ func router(s *Service) *gin.Engine {
 	config := cors.DefaultConfig()
 	config.AddAllowMethods("PUT", "PATCH", "GET", "POST", "DELETE", "OPTIONS")
 	config.AddAllowHeaders("Authorization")
+	config.AddAllowHeaders(roles.RoleHeader)
 	if s.release {
 		config.AllowOriginFunc = func(origin string) bool {
 			_, ok := s.AllowOrigins[origin]

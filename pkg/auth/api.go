@@ -6,6 +6,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
+	"github.com/smartnuance/saas-kit/pkg/lib/roles"
 	"github.com/smartnuance/saas-kit/pkg/lib/tokens"
 )
 
@@ -15,6 +16,7 @@ func router(s *Service) *gin.Engine {
 	config := cors.DefaultConfig()
 	config.AddAllowMethods("PUT", "PATCH", "GET", "POST", "DELETE", "OPTIONS")
 	config.AddAllowHeaders("Authorization")
+	config.AddAllowHeaders(roles.RoleHeader)
 	if s.release {
 		config.AllowOriginFunc = func(origin string) bool {
 			_, ok := s.AllowOrigins[origin]
@@ -65,7 +67,7 @@ func SignupHandler(ctx *gin.Context, s *Service) {
 
 // LoginHandler logs a user in and returs a fresh set of tokens.
 func LoginHandler(ctx *gin.Context, s *Service) {
-	accessToken, refreshToken, err := s.Login(ctx)
+	accessToken, refreshToken, role, err := s.Login(ctx)
 	if err != nil {
 		log.Error().Stack().Err(err).Msg("")
 		ctx.AbortWithStatus(http.StatusUnauthorized)
@@ -73,6 +75,7 @@ func LoginHandler(ctx *gin.Context, s *Service) {
 		ctx.JSON(http.StatusOK, gin.H{
 			"accessToken":  accessToken,
 			"refreshToken": refreshToken,
+			"role": role,
 		})
 	}
 }

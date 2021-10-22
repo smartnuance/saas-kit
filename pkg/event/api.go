@@ -6,6 +6,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
+	"github.com/smartnuance/saas-kit/pkg/lib/roles"
 	"github.com/smartnuance/saas-kit/pkg/lib/tokens"
 )
 
@@ -15,6 +16,7 @@ func router(s *Service) *gin.Engine {
 	config := cors.DefaultConfig()
 	config.AddAllowMethods("PUT", "PATCH", "GET", "POST", "DELETE", "OPTIONS")
 	config.AddAllowHeaders("Authorization")
+	config.AddAllowHeaders(roles.RoleHeader)
 	if s.release {
 		config.AllowOriginFunc = func(origin string) bool {
 			_, ok := s.AllowOrigins[origin]
@@ -30,7 +32,8 @@ func router(s *Service) *gin.Engine {
 	s.AddInfoHandlers(api.Group("/info"))
 
 	// without authorization middleware
-	api.PUT("/workshop", CreateWorkshopHandler(s))
+	api.PUT("/workshop", s.CreateWorkshopHandler())
+	api.GET("/workshop/list", s.ListWorkshopHandler())
 
 	return router
 }
@@ -44,7 +47,7 @@ func (s *Service) AddInfoHandlers(routerGroup *gin.RouterGroup) {
 }
 
 // CreateWorkshopHandler creates a new workshop.
-func CreateWorkshopHandler(s *Service) gin.HandlerFunc {
+func (s *Service) CreateWorkshopHandler() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		workshop, err := s.CreateWorkshop(ctx)
 		if err != nil {
@@ -52,6 +55,19 @@ func CreateWorkshopHandler(s *Service) gin.HandlerFunc {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 		} else {
 			ctx.JSON(http.StatusCreated, gin.H{"status": http.StatusCreated, "message": "workshop created successfully!", "workshopID": workshop.ID})
+		}
+	}
+}
+
+// ListWorkshopHandler lists workshops.
+func (s *Service) ListWorkshopHandler() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		workshops, err := s.ListWorkshops(ctx)
+		if err != nil {
+			log.Error().Stack().Err(err).Msg("")
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+		} else {
+			ctx.JSON(http.StatusOK, workshops)
 		}
 	}
 }
