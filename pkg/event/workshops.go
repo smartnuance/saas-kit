@@ -10,15 +10,28 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// WorkshopData describes the workshop to be created
-type WorkshopData struct {
+// CreateWorkshopData describes the workshop to be created
+type CreateWorkshopData struct {
+	ID         string `json:"id"`
 	InstanceID string `json:"instance"`
 	WorkshopInfo
 	// Starts must be provided as RFC 3339 strings
 	Starts time.Time `json:"starts"`
 	// Ends must be provided as RFC 3339 strings
-	Ends    time.Time `json:"ends,omitempty"`
-	EventID string    `json:"eventID"`
+	Ends    *time.Time `json:"ends,omitempty"`
+	EventID string     `json:"eventID"`
+}
+
+// WorkshopData describes the workshop returned structure
+type WorkshopData struct {
+	ID string `json:"id"`
+	WorkshopInfo
+	// Starts must be provided as RFC 3339 strings
+	Starts time.Time `json:"starts"`
+	// Ends must be provided as RFC 3339 strings
+	Ends      *time.Time `json:"ends,omitempty"`
+	EventID   string     `json:"eventID"`
+	EventData EventData  `json:"event"`
 }
 
 // EventData describes an Event
@@ -28,7 +41,7 @@ type EventData struct {
 	// Starts must be provided as RFC 3339 strings
 	Starts time.Time `json:"starts"`
 	// Ends must be provided as RFC 3339 strings
-	Ends time.Time `json:"ends,omitempty"`
+	Ends *time.Time `json:"ends,omitempty"`
 }
 
 func (s *Service) CreateWorkshop(ctx *gin.Context) (workshop *m.Workshop, err error) {
@@ -38,7 +51,7 @@ func (s *Service) CreateWorkshop(ctx *gin.Context) (workshop *m.Workshop, err er
 		return
 	}
 
-	var data WorkshopData
+	var data CreateWorkshopData
 	err = ctx.ShouldBind(&data)
 	if err != nil {
 		err = errors.WithStack(err)
@@ -87,6 +100,22 @@ func (s *Service) CreateWorkshop(ctx *gin.Context) (workshop *m.Workshop, err er
 	}
 
 	workshop, err = s.DBAPI.CreateWorkshop(ctx, &data)
+	return
+}
+
+func (s *Service) ListWorkshops(ctx *gin.Context) (workshops []WorkshopData, err error) {
+	// Check permission
+	if !roles.CanActIn(ctx, roles.RoleEventOrganizer) {
+		err = errors.WithStack(ErrUnauthorized)
+		return
+	}
+
+	workshops, err = s.DBAPI.ListWorkshops(ctx)
+	if err != nil {
+		err = errors.WithStack(err)
+		return
+	}
+
 	return
 }
 

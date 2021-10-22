@@ -81,7 +81,7 @@ func (mr *MockDBAPIMockRecorder) CreateEvent(arg0, arg1 interface{}) *gomock.Cal
 }
 
 // CreateWorkshop mocks base method.
-func (m *MockDBAPI) CreateWorkshop(arg0 context.Context, arg1 *WorkshopData) (*dbmodels.Workshop, error) {
+func (m *MockDBAPI) CreateWorkshop(arg0 context.Context, arg1 *CreateWorkshopData) (*dbmodels.Workshop, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateWorkshop", arg0, arg1)
 	ret0, _ := ret[0].(*dbmodels.Workshop)
@@ -108,6 +108,21 @@ func (m *MockDBAPI) GetEvent(arg0 context.Context, arg1 string) (*dbmodels.Event
 func (mr *MockDBAPIMockRecorder) GetEvent(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEvent", reflect.TypeOf((*MockDBAPI)(nil).GetEvent), arg0, arg1)
+}
+
+// ListWorkshops mocks base method.
+func (m *MockDBAPI) ListWorkshops(arg0 context.Context) ([]WorkshopData, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListWorkshops", arg0)
+	ret0, _ := ret[0].([]WorkshopData)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListWorkshops indicates an expected call of ListWorkshops.
+func (mr *MockDBAPIMockRecorder) ListWorkshops(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListWorkshops", reflect.TypeOf((*MockDBAPI)(nil).ListWorkshops), arg0)
 }
 
 // Rollback mocks base method.
