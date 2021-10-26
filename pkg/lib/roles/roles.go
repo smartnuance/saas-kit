@@ -9,7 +9,8 @@ import (
 
 const (
 	RoleHeader     = "role"
-	
+	InstanceHeader = "instance"
+
 	UserKey     = "user"
 	RoleKey     = "role"
 	InstanceKey = "instance"
