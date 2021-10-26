@@ -74,12 +74,14 @@ func AuthorizeJWT(validationKey *rsa.PublicKey, issuer, audience string) gin.Han
 			ctx.Set(roles.InstanceKey, switchInstance)
 		}
 
-		switchRole := ctx.GetHeader(roles.RoleHeader)
-		err = roles.SwitchTo(ctx, switchRole)
-		if err != nil {
-			log.Error().Err(err).Msg("")
-			ctx.AbortWithStatus(http.StatusUnauthorized)
-			return
+		if len(ctx.Request.Header.Values(roles.RoleHeader)) > 0 {
+			switchRole := ctx.GetHeader(roles.RoleHeader)
+			err = roles.SwitchTo(ctx, switchRole)
+			if err != nil {
+				log.Error().Err(err).Msg("")
+				ctx.AbortWithStatus(http.StatusUnauthorized)
+				return
+			}
 		}
 	}
 }
