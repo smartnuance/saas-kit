@@ -111,18 +111,18 @@ func (mr *MockDBAPIMockRecorder) GetEvent(arg0, arg1 interface{}) *gomock.Call {
 }
 
 // ListWorkshops mocks base method.
-func (m *MockDBAPI) ListWorkshops(arg0 context.Context) ([]WorkshopData, error) {
+func (m *MockDBAPI) ListWorkshops(arg0 context.Context, arg1 string) ([]WorkshopData, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListWorkshops", arg0)
+	ret := m.ctrl.Call(m, "ListWorkshops", arg0, arg1)
 	ret0, _ := ret[0].([]WorkshopData)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListWorkshops indicates an expected call of ListWorkshops.
-func (mr *MockDBAPIMockRecorder) ListWorkshops(arg0 interface{}) *gomock.Call {
+func (mr *MockDBAPIMockRecorder) ListWorkshops(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListWorkshops", reflect.TypeOf((*MockDBAPI)(nil).ListWorkshops), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListWorkshops", reflect.TypeOf((*MockDBAPI)(nil).ListWorkshops), arg0, arg1)
 }
 
 // Rollback mocks base method.

@@ -107,13 +107,20 @@ func (s *Service) CreateWorkshop(ctx *gin.Context) (workshop *m.Workshop, err er
 func (s *Service) ListWorkshops(ctx *gin.Context) (workshops []WorkshopData, err error) {
 	// Check permission
 	if !roles.CanActIn(ctx, roles.RoleEventOrganizer) {
-		err = errors.WithStack(ErrUnauthorized)
+		r, _ := roles.Role(ctx)
+		err = errors.Wrapf(ErrUnauthorized, "'%s' can not act as %s", r, roles.RoleEventOrganizer)
 		return
 	}
 
-	workshops, err = s.DBAPI.ListWorkshops(ctx)
+	var instanceID string
+	instanceID, err = roles.Instance(ctx)
 	if err != nil {
-		err = errors.WithStack(err)
+		err = errors.Wrap(ErrUnauthorized, err.Error())
+		return
+	}
+
+	workshops, err = s.DBAPI.ListWorkshops(ctx, instanceID)
+	if err != nil {
 		return
 	}
 

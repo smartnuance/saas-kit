@@ -24,7 +24,7 @@ type DBAPI interface {
 	Commit(tx *sql.Tx) error
 	Rollback(tx *sql.Tx) error
 	CreateWorkshop(ctx context.Context, data *CreateWorkshopData) (workshop *m.Workshop, err error)
-	ListWorkshops(ctx context.Context) (workshop []WorkshopData, err error)
+	ListWorkshops(ctx context.Context, instanceID string) (workshop []WorkshopData, err error)
 	CreateEvent(ctx context.Context, data *EventData) (event *m.Event, err error)
 	GetEvent(ctx context.Context, eventID string) (event *m.Event, err error)
 }
@@ -70,8 +70,8 @@ func (db *dbAPI) CreateWorkshop(ctx context.Context, data *CreateWorkshopData) (
 	return
 }
 
-func (db *dbAPI) ListWorkshops(ctx context.Context) ([]WorkshopData, error) {
-	results, err := m.Workshops(qm.Load(m.WorkshopRels.Event), qm.Limit(10)).All(ctx, db.DB)
+func (db *dbAPI) ListWorkshops(ctx context.Context, instanceID string) ([]WorkshopData, error) {
+	results, err := m.Workshops(qm.Load(m.WorkshopRels.Event, m.EventWhere.InstanceID.EQ(instanceID)), qm.Limit(10)).All(ctx, db.DB)
 	if err == sql.ErrNoRows {
 		// wrap sql error in specific error of event context
 		return nil, errors.Wrap(ErrRetrieveWorkshopList, err.Error())
@@ -79,9 +79,18 @@ func (db *dbAPI) ListWorkshops(ctx context.Context) ([]WorkshopData, error) {
 
 	workshops := []WorkshopData{}
 	for _, w := range results {
-		workshop, err := loadWorkshop(w)
+		if w == nil {
+			return nil, errors.New("got nil workshop row")
+		}
+
+		workshop, err := loadWorkshop(*w)
 		if err != nil {
-			return nil, err
+			if errors.Is(err, ErrWorkshopWithNoEvent) {
+				log.Warn().Err(err).Str("workshop.ID", w.ID).Msg("skipping")
+				continue
+			} else {
+				return nil, err
+			}
 		}
 
 		workshops = append(workshops, workshop)
@@ -134,7 +143,7 @@ type WorkshopInfo struct {
 	Couples      bool   `json:"couples"`
 }
 
-func loadEvent(row *m.Event) (event EventData, err error) {
+func loadEvent(row m.Event) (event EventData, err error) {
 	var eventInfo EventInfo
 	err = json.Unmarshal(row.Info, &eventInfo)
 	if err != nil {
@@ -149,15 +158,20 @@ func loadEvent(row *m.Event) (event EventData, err error) {
 	return
 }
 
-func loadWorkshop(row *m.Workshop) (workshop WorkshopData, err error) {
+func loadWorkshop(row m.Workshop) (workshop WorkshopData, err error) {
 	var info WorkshopInfo
 	err = json.Unmarshal(row.Info, &info)
 	if err != nil {
 		return
 	}
 
+	eventRow := row.R.Event
+	if eventRow == nil {
+		err = ErrWorkshopWithNoEvent
+		return
+	}
 	var event EventData
-	event, err = loadEvent(row.R.Event)
+	event, err = loadEvent(*eventRow)
 	if err != nil {
 		return
 	}
@@ -175,4 +189,5 @@ func loadWorkshop(row *m.Workshop) (workshop WorkshopData, err error) {
 var (
 	ErrEventDoesNotExist    = errors.New("event does not exist")
 	ErrRetrieveWorkshopList = errors.New("retrieving workshop list failed")
+	ErrWorkshopWithNoEvent  = errors.New("workshop with no associated event found")
 )
