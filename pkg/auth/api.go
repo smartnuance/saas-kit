@@ -75,7 +75,8 @@ func LoginHandler(ctx *gin.Context, s *Service) {
 		ctx.JSON(http.StatusOK, gin.H{
 			"accessToken":  accessToken,
 			"refreshToken": refreshToken,
-			"role": role,
+			"role":         role,
+			"switchRoles":  roles.SwitchRoles(role),
 		})
 	}
 }

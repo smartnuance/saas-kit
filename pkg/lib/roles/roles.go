@@ -91,7 +91,9 @@ func initRoles(inheritanceDAG map[string][]edge) (inheritanceClosure closure, sw
 			// All roles implicitly inherit from NoRole.
 			NoRole: true,
 		}
-		switchRoles[role] = map[string]bool{}
+		switchRoles[role] = map[string]bool{
+			role: true,
+		}
 
 		// the roles encountered over implicit inheritance
 		todo := list.New()
@@ -140,6 +142,22 @@ func initRoles(inheritanceDAG map[string][]edge) (inheritanceClosure closure, sw
 func valid(role string) bool {
 	_, ok := inheritanceClosure[role]
 	return ok
+}
+
+// SwitchRoles returns an ordered list of roles a given user role can switch to.
+// The returned list is a copy and can be safely modified.
+func SwitchRoles(userRole string) []string {
+	if !valid(userRole) {
+		return nil
+	}
+
+	res := []string{}
+	for _, r := range Roles {
+		if switchRoles[userRole][r] {
+			res = append(res, r)
+		}
+	}
+	return res
 }
 
 // CanSwitchTo checks if the user's role can switch to a targetRole acquiring those role's permissions.
