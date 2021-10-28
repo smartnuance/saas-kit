@@ -11,6 +11,7 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	dbmodels "github.com/smartnuance/saas-kit/pkg/event/dbmodels"
+	paging "github.com/smartnuance/saas-kit/pkg/lib/paging"
 )
 
 // MockDBAPI is a mock of DBAPI interface.
@@ -111,18 +112,18 @@ func (mr *MockDBAPIMockRecorder) GetEvent(arg0, arg1 interface{}) *gomock.Call {
 }
 
 // ListWorkshops mocks base method.
-func (m *MockDBAPI) ListWorkshops(arg0 context.Context, arg1 string) ([]WorkshopData, error) {
+func (m *MockDBAPI) ListWorkshops(arg0 context.Context, arg1 string, arg2 paging.Page) ([]WorkshopData, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListWorkshops", arg0, arg1)
+	ret := m.ctrl.Call(m, "ListWorkshops", arg0, arg1, arg2)
 	ret0, _ := ret[0].([]WorkshopData)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListWorkshops indicates an expected call of ListWorkshops.
-func (mr *MockDBAPIMockRecorder) ListWorkshops(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockDBAPIMockRecorder) ListWorkshops(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListWorkshops", reflect.TypeOf((*MockDBAPI)(nil).ListWorkshops), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListWorkshops", reflect.TypeOf((*MockDBAPI)(nil).ListWorkshops), arg0, arg1, arg2)
 }
 
 // Rollback mocks base method.

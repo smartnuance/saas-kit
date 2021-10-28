@@ -1,5 +1,5 @@
 output   = "dbmodels"
-wipe     = true
+wipe     = false
 no-tests = true
 pkgname = "dbmodels"
 add-soft-deletes = true

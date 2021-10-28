@@ -12,6 +12,7 @@ import (
 	"github.com/rs/xid"
 	"github.com/rs/zerolog/log"
 	m "github.com/smartnuance/saas-kit/pkg/event/dbmodels"
+	"github.com/smartnuance/saas-kit/pkg/lib/paging"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -24,7 +25,7 @@ type DBAPI interface {
 	Commit(tx *sql.Tx) error
 	Rollback(tx *sql.Tx) error
 	CreateWorkshop(ctx context.Context, data *CreateWorkshopData) (workshop *m.Workshop, err error)
-	ListWorkshops(ctx context.Context, instanceID string) (workshop []WorkshopData, err error)
+	ListWorkshops(ctx context.Context, instanceID string, page paging.Page) (workshop []WorkshopData, err error)
 	CreateEvent(ctx context.Context, data *EventData) (event *m.Event, err error)
 	GetEvent(ctx context.Context, eventID string) (event *m.Event, err error)
 }
@@ -70,8 +71,11 @@ func (db *dbAPI) CreateWorkshop(ctx context.Context, data *CreateWorkshopData) (
 	return
 }
 
-func (db *dbAPI) ListWorkshops(ctx context.Context, instanceID string) ([]WorkshopData, error) {
-	results, err := m.Workshops(qm.Load(m.WorkshopRels.Event, m.EventWhere.InstanceID.EQ(instanceID)), qm.Limit(10)).All(ctx, db.DB)
+func (db *dbAPI) ListWorkshops(ctx context.Context, instanceID string, page paging.Page) ([]WorkshopData, error) {
+	results, err := m.Workshops(
+		qm.Load(m.WorkshopRels.Event, m.EventWhere.InstanceID.EQ(instanceID)),
+		m.EventWhere.ID.Page(page),
+	).All(ctx, db.DB)
 	if err == sql.ErrNoRows {
 		// wrap sql error in specific error of event context
 		return nil, errors.Wrap(ErrRetrieveWorkshopList, err.Error())

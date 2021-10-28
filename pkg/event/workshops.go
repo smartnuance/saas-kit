@@ -5,6 +5,7 @@ import (
 
 	"github.com/pkg/errors"
 	m "github.com/smartnuance/saas-kit/pkg/event/dbmodels"
+	"github.com/smartnuance/saas-kit/pkg/lib/paging"
 	"github.com/smartnuance/saas-kit/pkg/lib/roles"
 
 	"github.com/gin-gonic/gin"
@@ -119,7 +120,7 @@ func (s *Service) ListWorkshops(ctx *gin.Context) (workshops []WorkshopData, err
 		return
 	}
 
-	workshops, err = s.DBAPI.ListWorkshops(ctx, instanceID)
+	workshops, err = s.DBAPI.ListWorkshops(ctx, instanceID, paging.FromQuery(ctx))
 	if err != nil {
 		return
 	}
