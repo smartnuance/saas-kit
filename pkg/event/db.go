@@ -7,6 +7,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 
 	"github.com/pkg/errors"
 	"github.com/rs/xid"
@@ -73,7 +74,9 @@ func (db *dbAPI) CreateWorkshop(ctx context.Context, data *CreateWorkshopData) (
 
 func (db *dbAPI) ListWorkshops(ctx context.Context, instanceID string, page paging.Page) ([]WorkshopData, error) {
 	results, err := m.Workshops(
-		qm.Load(m.WorkshopRels.Event, m.EventWhere.InstanceID.EQ(instanceID)),
+		qm.InnerJoin(fmt.Sprintf("%s on %s = %s", m.TableNames.Events, m.EventTableColumns.ID, m.WorkshopColumns.EventID)),
+		qm.Load(m.WorkshopRels.Event),
+		m.EventWhere.InstanceID.EQ(instanceID),
 		m.EventWhere.ID.Page(page),
 	).All(ctx, db.DB)
 	if err == sql.ErrNoRows {
@@ -89,12 +92,7 @@ func (db *dbAPI) ListWorkshops(ctx context.Context, instanceID string, page pagi
 
 		workshop, err := loadWorkshop(*w)
 		if err != nil {
-			if errors.Is(err, ErrWorkshopWithNoEvent) {
-				log.Warn().Err(err).Str("workshop.ID", w.ID).Msg("skipping")
-				continue
-			} else {
-				return nil, err
-			}
+			return nil, err
 		}
 
 		workshops = append(workshops, workshop)
@@ -171,7 +169,8 @@ func loadWorkshop(row m.Workshop) (workshop WorkshopData, err error) {
 
 	eventRow := row.R.Event
 	if eventRow == nil {
-		err = ErrWorkshopWithNoEvent
+		err = errors.New("workshop with no associated event found")
+		log.Error().Err(err).Msg("bug")
 		return
 	}
 	var event EventData
@@ -193,5 +192,4 @@ func loadWorkshop(row m.Workshop) (workshop WorkshopData, err error) {
 var (
 	ErrEventDoesNotExist    = errors.New("event does not exist")
 	ErrRetrieveWorkshopList = errors.New("retrieving workshop list failed")
-	ErrWorkshopWithNoEvent  = errors.New("workshop with no associated event found")
 )
