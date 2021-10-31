@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// CreateWorkshopData describes the workshop to be created
+// CreateWorkshopData describes a workshop to be created
 type CreateWorkshopData struct {
 	ID         string `json:"id"`
 	InstanceID string `json:"instance"`
@@ -23,7 +23,7 @@ type CreateWorkshopData struct {
 	EventID string     `json:"eventID"`
 }
 
-// WorkshopData describes the workshop returned structure
+// WorkshopData describes a returned workshop
 type WorkshopData struct {
 	ID string `json:"id"`
 	WorkshopInfo
@@ -35,7 +35,7 @@ type WorkshopData struct {
 	EventData EventData  `json:"event"`
 }
 
-// EventData describes an Event
+// EventData describes an event
 type EventData struct {
 	InstanceID string `json:"instance"`
 	EventInfo
@@ -43,6 +43,12 @@ type EventData struct {
 	Starts time.Time `json:"starts"`
 	// Ends must be provided as RFC 3339 strings
 	Ends *time.Time `json:"ends,omitempty"`
+}
+
+// WorkshopList describes the returned workshop list with paging.
+type WorkshopList struct {
+	Workshops []WorkshopData `json:"items"`
+	Paging    paging.Paging  `json:"paging"`
 }
 
 func (s *Service) CreateWorkshop(ctx *gin.Context) (workshop *m.Workshop, err error) {
@@ -105,7 +111,7 @@ func (s *Service) CreateWorkshop(ctx *gin.Context) (workshop *m.Workshop, err er
 	return
 }
 
-func (s *Service) ListWorkshops(ctx *gin.Context) (workshops []WorkshopData, err error) {
+func (s *Service) ListWorkshops(ctx *gin.Context) (list WorkshopList, err error) {
 	// Check permission
 	if !roles.CanActIn(ctx, roles.RoleEventOrganizer) {
 		r, _ := roles.Role(ctx)
@@ -120,7 +126,7 @@ func (s *Service) ListWorkshops(ctx *gin.Context) (workshops []WorkshopData, err
 		return
 	}
 
-	workshops, err = s.DBAPI.ListWorkshops(ctx, instanceID, paging.FromQuery(ctx))
+	list, err = s.DBAPI.ListWorkshops(ctx, instanceID, paging.FromQuery(ctx))
 	if err != nil {
 		return
 	}

@@ -15,7 +15,8 @@ var (
 )
 
 type Page interface {
-	isPage() struct{}
+	Size() int
+	Query(query *url.Values)
 }
 
 type Paging struct {
@@ -28,14 +29,22 @@ type FirstSpec struct {
 	PageSize int `json:"size"`
 }
 
-func (f *FirstSpec) isPage() struct{} { return struct{}{} }
+func (f *FirstSpec) Query(query *url.Values) {
+	pageQuery(query, f)
+}
+
+func (f *FirstSpec) Size() int { return f.PageSize }
 
 type PreviousSpec struct {
 	EndIDExcl string `json:"end"`
 	PageSize  int    `json:"size"`
 }
 
-func (f *PreviousSpec) isPage() struct{} { return struct{}{} }
+func (f *PreviousSpec) Size() int { return f.PageSize }
+
+func (f *PreviousSpec) Query(query *url.Values) {
+	pageQuery(query, f)
+}
 
 type FullSpec struct {
 	// StartIDIncl is the start ID (inclusive), might be empty if page contains no elements
@@ -45,27 +54,35 @@ type FullSpec struct {
 	PageSize  int    `json:"size"`
 }
 
-func (f *FullSpec) isPage() struct{} { return struct{}{} }
+func (f *FullSpec) Size() int { return f.PageSize }
 
 type NextSpec struct {
 	StartIDExcl string `json:"start"`
 	PageSize    int    `json:"size"`
 }
 
-func (f *NextSpec) isPage() struct{} { return struct{}{} }
+func (f *NextSpec) Size() int { return f.PageSize }
 
-func (p FullSpec) Next() NextSpec {
+func (f *NextSpec) Query(query *url.Values) {
+	pageQuery(query, f)
+}
+
+func (p *FullSpec) Next() NextSpec {
 	return NextSpec{
 		StartIDExcl: p.EndIDIncl,
 		PageSize:    p.PageSize,
 	}
 }
 
-func (p FullSpec) Prev() PreviousSpec {
+func (p *FullSpec) Prev() PreviousSpec {
 	return PreviousSpec{
 		EndIDExcl: p.StartIDIncl,
 		PageSize:  p.PageSize,
 	}
+}
+
+func (f *FullSpec) Query(query *url.Values) {
+	pageQuery(query, f)
 }
 
 func FromQuery(c *gin.Context) Page {
@@ -103,23 +120,23 @@ func FromQuery(c *gin.Context) Page {
 	}
 }
 
-func AddQuery(u *url.URL, p Page) {
-	u.Query().Del(PageStartQueryParam)
-	u.Query().Del(PageEndQueryParam)
-	u.Query().Del(PageSizeQueryParam)
+func pageQuery(query *url.Values, p Page) {
+	query.Del(PageStartQueryParam)
+	query.Del(PageEndQueryParam)
+	query.Del(PageSizeQueryParam)
 
 	switch spec := p.(type) {
 	case *FirstSpec:
-		u.Query().Add(PageSizeQueryParam, strconv.Itoa(spec.PageSize))
+		query.Add(PageSizeQueryParam, strconv.Itoa(spec.PageSize))
 	case *PreviousSpec:
-		u.Query().Add(PageEndQueryParam, spec.EndIDExcl)
-		u.Query().Add(PageSizeQueryParam, strconv.Itoa(spec.PageSize))
+		query.Add(PageEndQueryParam, spec.EndIDExcl)
+		query.Add(PageSizeQueryParam, strconv.Itoa(spec.PageSize))
 	case *FullSpec:
-		u.Query().Add(PageStartQueryParam, spec.StartIDIncl)
-		u.Query().Add(PageEndQueryParam, spec.EndIDIncl)
-		u.Query().Add(PageSizeQueryParam, strconv.Itoa(spec.PageSize))
+		query.Add(PageStartQueryParam, spec.StartIDIncl)
+		query.Add(PageEndQueryParam, spec.EndIDIncl)
+		query.Add(PageSizeQueryParam, strconv.Itoa(spec.PageSize))
 	case *NextSpec:
-		u.Query().Add(PageStartQueryParam, spec.StartIDExcl)
-		u.Query().Add(PageSizeQueryParam, strconv.Itoa(spec.PageSize))
+		query.Add(PageStartQueryParam, spec.StartIDExcl)
+		query.Add(PageSizeQueryParam, strconv.Itoa(spec.PageSize))
 	}
 }

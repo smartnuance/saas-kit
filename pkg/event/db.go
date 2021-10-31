@@ -26,7 +26,7 @@ type DBAPI interface {
 	Commit(tx *sql.Tx) error
 	Rollback(tx *sql.Tx) error
 	CreateWorkshop(ctx context.Context, data *CreateWorkshopData) (workshop *m.Workshop, err error)
-	ListWorkshops(ctx context.Context, instanceID string, page paging.Page) (workshop []WorkshopData, err error)
+	ListWorkshops(ctx context.Context, instanceID string, page paging.Page) (list WorkshopList, err error)
 	CreateEvent(ctx context.Context, data *EventData) (event *m.Event, err error)
 	GetEvent(ctx context.Context, eventID string) (event *m.Event, err error)
 }
@@ -72,7 +72,7 @@ func (db *dbAPI) CreateWorkshop(ctx context.Context, data *CreateWorkshopData) (
 	return
 }
 
-func (db *dbAPI) ListWorkshops(ctx context.Context, instanceID string, page paging.Page) ([]WorkshopData, error) {
+func (db *dbAPI) ListWorkshops(ctx context.Context, instanceID string, page paging.Page) (list WorkshopList, err error) {
 	results, err := m.Workshops(
 		qm.InnerJoin(fmt.Sprintf("%s on %s = %s", m.TableNames.Events, m.EventTableColumns.ID, m.WorkshopColumns.EventID)),
 		qm.Load(m.WorkshopRels.Event),
@@ -81,24 +81,47 @@ func (db *dbAPI) ListWorkshops(ctx context.Context, instanceID string, page pagi
 	).All(ctx, db.DB)
 	if err == sql.ErrNoRows {
 		// wrap sql error in specific error of event context
-		return nil, errors.Wrap(ErrRetrieveWorkshopList, err.Error())
+		err = errors.Wrap(ErrRetrieveWorkshopList, err.Error())
+		return
 	}
 
-	workshops := []WorkshopData{}
 	for _, w := range results {
 		if w == nil {
-			return nil, errors.New("got nil workshop row")
+			err = errors.New("got nil workshop row")
+			return
 		}
 
-		workshop, err := loadWorkshop(*w)
+		var workshop WorkshopData
+		workshop, err = loadWorkshop(*w)
 		if err != nil {
-			return nil, err
+			return
 		}
 
-		workshops = append(workshops, workshop)
+		list.Workshops = append(list.Workshops, workshop)
 	}
 
-	return workshops, nil
+	list.Paging.Current.PageSize = len(list.Workshops)
+	if len(list.Workshops) > 0 {
+		list.Paging.Current.StartIDIncl = list.Workshops[0].ID
+		list.Paging.Current.EndIDIncl = list.Workshops[len(list.Workshops)-1].ID
+
+		_, isFirst := page.(*paging.FirstSpec)
+		if !isFirst {
+			list.Paging.Previous = &paging.PreviousSpec{
+				EndIDExcl: list.Workshops[0].ID,
+				PageSize:  page.Size(),
+			}
+		}
+		isLast := len(list.Workshops) < page.Size()
+		if !isLast {
+			list.Paging.Next = &paging.NextSpec{
+				StartIDExcl: list.Workshops[len(list.Workshops)-1].ID,
+				PageSize:    page.Size(),
+			}
+		}
+	}
+
+	return
 }
 
 func (db *dbAPI) CreateEvent(ctx context.Context, data *EventData) (event *m.Event, err error) {
