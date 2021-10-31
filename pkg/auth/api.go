@@ -61,7 +61,7 @@ func SignupHandler(ctx *gin.Context, s *Service) {
 		log.Error().Stack().Err(err).Msg("")
 		ctx.AbortWithStatus(http.StatusUnauthorized)
 	} else {
-		ctx.JSON(http.StatusCreated, gin.H{"status": http.StatusCreated, "message": "user created successfully!", "userID": userID})
+		ctx.JSON(http.StatusCreated, gin.H{"userID": userID})
 	}
 }
 
