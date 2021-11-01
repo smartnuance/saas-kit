@@ -69,16 +69,16 @@ func SignupHandler(ctx *gin.Context, s *Service) {
 func LoginHandler(ctx *gin.Context, s *Service) {
 	accessToken, refreshToken, role, err := s.Login(ctx)
 	if err != nil {
-		log.Error().Stack().Err(err).Msg("")
 		ctx.AbortWithStatus(http.StatusUnauthorized)
-	} else {
-		ctx.JSON(http.StatusOK, gin.H{
-			"accessToken":  accessToken,
-			"refreshToken": refreshToken,
-			"role":         role,
-			"switchRoles":  roles.SwitchRoles(role),
-		})
+		return
 	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"accessToken":  accessToken,
+		"refreshToken": refreshToken,
+		"role":         role,
+		"rolesSpec":    roles.RolesSpec(role),
+	})
 }
 
 // RefreshHandler refreshes a user's access token.

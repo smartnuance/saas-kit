@@ -65,7 +65,7 @@ var inheritanceDAG = dag{
 	},
 }
 
-type closure map[string]map[string]bool
+type closure map[string]map[string]struct{}
 
 // inheritanceClosure lists the transitive closure of each role's inherited roles.
 // The map's structure is
@@ -87,12 +87,12 @@ func initRoles(inheritanceDAG map[string][]edge) (inheritanceClosure closure, sw
 
 	// build closures in role inheritance graph
 	for _, role := range Roles {
-		inheritanceClosure[role] = map[string]bool{
+		inheritanceClosure[role] = map[string]struct{}{
 			// All roles implicitly inherit from NoRole.
-			NoRole: true,
+			NoRole: {},
 		}
-		switchRoles[role] = map[string]bool{
-			role: true,
+		switchRoles[role] = map[string]struct{}{
+			role: {},
 		}
 
 		// the roles encountered over implicit inheritance
@@ -110,7 +110,7 @@ func initRoles(inheritanceDAG map[string][]edge) (inheritanceClosure closure, sw
 			p := p_.Value.(string)
 			done[p] = true
 
-			inheritanceClosure[role][p] = true
+			inheritanceClosure[role][p] = struct{}{}
 			for _, e := range inheritanceDAG[p] {
 				if !done[e.Role] {
 					if e.SwitchRequired {
@@ -127,7 +127,7 @@ func initRoles(inheritanceDAG map[string][]edge) (inheritanceClosure closure, sw
 		for p_ := switchableTodo.Front(); p_ != nil; p_ = p_.Next() {
 			p := p_.Value.(string)
 			if !done[p] {
-				switchRoles[role][p] = true
+				switchRoles[role][p] = struct{}{}
 				for _, inheritedRole := range inheritanceDAG[p] {
 					if !done[inheritedRole.Role] {
 						switchableTodo.PushBack(inheritedRole.Role)
@@ -144,20 +144,30 @@ func valid(role string) bool {
 	return ok
 }
 
-// SwitchRoles returns an ordered list of roles a given user role can switch to.
-// The returned list is a copy and can be safely modified.
-func SwitchRoles(userRole string) []string {
+// rolesSpecEntry describes a user's target roles for switching and each of those roles inherited roles.
+type rolesSpecEntry struct {
+	Role      string   `json:"role"`
+	Inherited []string `json:"inherited"`
+}
+
+// rolesSpec are the switching target roles, ordered from more permissive to more specific roles.
+type rolesSpec []rolesSpecEntry
+
+// RolesSpec returns a RolesSpec for the given user role.
+func RolesSpec(userRole string) (spec rolesSpec) {
 	if !valid(userRole) {
-		return nil
+		return
 	}
 
-	res := []string{}
 	for _, r := range Roles {
-		if switchRoles[userRole][r] {
-			res = append(res, r)
+		if _, ok := switchRoles[userRole][r]; ok {
+			spec = append(spec, rolesSpecEntry{
+				Role:      r,
+				Inherited: InheritedRoles(r),
+			})
 		}
 	}
-	return res
+	return
 }
 
 // CanSwitchTo checks if the user's role can switch to a targetRole acquiring those role's permissions.
@@ -206,6 +216,17 @@ func CanActIn(ctx *gin.Context, targetRole string) bool {
 
 	_, ok := inheritanceClosure[role][targetRole]
 	return ok
+}
+
+// InheritedRoles returns an unordered list of roles a given user role can act in, without switching.
+// The returned list is a copy and can be safely modified.
+func InheritedRoles(userRole string) []string {
+	keys := make([]string, 0, len(inheritanceClosure[userRole]))
+	for k := range inheritanceClosure[userRole] {
+		keys = append(keys, k)
+	}
+
+	return keys
 }
 
 // CanActFor checks if the user can act for the desired instance.
