@@ -25,38 +25,47 @@ func (s MySuite) Test_initRoles(assert, require *td.T) {
 			inheritanceDAG: inheritanceDAG,
 			inheritanceClosure: closure{
 				"event organizer": {
-					"event organizer": true,
-					"teacher":         true,
-					"":                true,
+					"event organizer": struct{}{},
+					"teacher":         struct{}{},
+					"":                struct{}{},
 				},
 				"instance admin": {
-					"event organizer": true,
-					"instance admin":  true,
-					"teacher":         true,
-					"":                true,
+					"event organizer": struct{}{},
+					"instance admin":  struct{}{},
+					"teacher":         struct{}{},
+					"":                struct{}{},
 				},
 				"super admin": {
-					"super admin": true,
-					"":            true,
+					"super admin": struct{}{},
+					"":            struct{}{},
 				},
 				"teacher": {
-					"teacher": true,
-					"":        true,
+					"teacher": struct{}{},
+					"":        struct{}{},
 				},
 				"": {
-					"": true,
+					"": struct{}{},
 				},
 			},
 			switchableRoles: closure{
-				"event organizer": {},
-				"instance admin":  {},
-				"super admin": {
-					"instance admin":  true,
-					"event organizer": true,
-					"teacher":         true,
+				"event organizer": {
+					"event organizer": struct{}{},
 				},
-				"teacher": {},
-				"":        {},
+				"instance admin": {
+					"instance admin": struct{}{},
+				},
+				"super admin": {
+					"super admin":     struct{}{},
+					"instance admin":  struct{}{},
+					"event organizer": struct{}{},
+					"teacher":         struct{}{},
+				},
+				"teacher": {
+					"teacher": struct{}{},
+				},
+				"": {
+					"": struct{}{},
+				},
 			},
 		},
 	}
