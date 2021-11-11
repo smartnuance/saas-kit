@@ -18,4 +18,4 @@ jobs:
       - name: what earthly version is installed?
         run: earthly --version
       - name: run the earthly build & deploy for all services as one binary
-        run: earthly --build-arg service=dev +publish
+        run: earthly --push --build-arg service=dev +publish
