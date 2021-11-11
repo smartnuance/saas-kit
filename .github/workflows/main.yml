@@ -15,6 +15,8 @@ jobs:
         with:
           version: v0.5.10
       - uses: actions/checkout@v2
+      - name: Log in to container registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
       - name: what earthly version is installed?
         run: earthly --version
       - name: run the earthly build & deploy for all services as one binary
