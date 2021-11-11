@@ -7,7 +7,6 @@ package main
 
 import (
 	"embed"
-	"flag"
 	"os"
 	"sync"
 
@@ -24,35 +23,37 @@ import (
 var migrationDir embed.FS
 
 func Main() (err error) {
-	initCommand := flag.NewFlagSet("init", flag.ExitOnError)
-	deinitCommand := flag.NewFlagSet("deinit", flag.ExitOnError)
-	flag.Parse()
-
 	if len(os.Args) >= 2 {
 		// Switch on the subcommand and parse the flags for appropriate FlagSet
 		// os.Args[2:] will be all arguments starting after the subcommand at os.Args[1]
 		switch os.Args[1] {
 		case "init":
-			err = initCommand.Parse(os.Args[2:])
-			if err != nil {
-				return
-			}
-
 			err = execSQL("schemas.up.sql")
 			return
 		case "deinit":
-			err = deinitCommand.Parse(os.Args[2:])
-			if err != nil {
-				return
-			}
-
 			err = execSQL("schemas.down.sql")
+			return
+		case "webbff":
+			log.Info().Msg("Redirect to webbff service...")
+			os.Args = append(os.Args[0:1], os.Args[2:]...)
+			_, err = webbff.Main()
+			return
+		case "auth":
+			log.Info().Msg("Redirect to auth service...")
+			os.Args = append(os.Args[0:1], os.Args[2:]...)
+			_, err = auth.Main()
+			return
+		case "event":
+			log.Info().Msg("Redirect to event service...")
+			os.Args = append(os.Args[0:1], os.Args[2:]...)
+			_, err = event.Main()
 			return
 		default:
 			err = errors.Errorf("invalid command: %s", os.Args[1])
 			return
 		}
 	} else {
+		log.Info().Msg("Starting all services in separate goroutines...")
 		err = runAll()
 		return
 	}
@@ -177,7 +178,6 @@ func execSQL(script string) error {
 func main() {
 	lib.SetupLogger("dev", "", false)
 
-	log.Info().Msg("Starting all services in separate goroutines...")
 	err := Main()
 	if err != nil {
 		panic(err)
