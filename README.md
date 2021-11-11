@@ -37,11 +37,16 @@ Initialize separate database schemas, one for each service (in production you ha
 
 > go run ./cmd/dev init
 
+Migrate services:
+
+> go run ./cmd/auth migrate
+
+> go run ./cmd/event migrate
+
 
 ### Run service(s)
 
 Run single service
-(migrations are automatically applied during startup):
 
 > go run ./cmd/auth
 
@@ -101,7 +106,7 @@ But if we try to use the revoked refresh token in a refresh call, this will fail
 
 Since no implicit switch from the super admin is allowed, we provide the role header to temporarily switch to the _event organizer_ role:
 
-> http -v PUT :8802/workshop Authorization:"Bearer $AT" role:"event organizer" title=Salsa locationName=Gazebo
+> http -v PUT :8802/workshop Authorization:"Bearer $AT" role:"event organizer" instance:"c5263570ono4ui8qfhgg" title=Bachata locationName=Ponto
 
 
 ## Packages used
@@ -160,9 +165,11 @@ Or if you messed the database up and want to start from scratch, you can reinit 
 
 > go run ./cmd/dev init
 
-Just migrate service without running it afterwards:
+Migrate services:
 
 > go run ./cmd/auth migrate
+
+> go run ./cmd/event migrate
 
 When database is on newest version, we have to generated git-versioned DB models by
 
