@@ -1,0 +1,21 @@
+name: CI
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+    steps:
+      - uses: earthly/actions/setup-earthly@v1
+        with:
+          version: v0.5.10
+      - uses: actions/checkout@v2
+      - name: what earthly version is installed?
+        run: earthly --version
+      - name: run the earthly build & deploy for all services as one binary
+        run: earthly --build-arg service=dev +deploy

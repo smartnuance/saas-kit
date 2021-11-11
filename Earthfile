@@ -14,6 +14,18 @@ build:
     RUN govvv build ./cmd/$service
     SAVE ARTIFACT $service AS LOCAL bin/$service
 
+publish:
+    FROM debian:buster
+
+    WORKDIR /app
+    COPY +build/$service .
+    COPY .env* .
+
+    EXPOSE 8800
+    ENTRYPOINT ["/app/dev"]
+
+    SAVE IMAGE --push ghcr.io/smartnuance/saas-kit:latest
+
 lint:
     RUN go install honnef.co/go/tools/cmd/staticcheck@2021.1
     COPY . ./

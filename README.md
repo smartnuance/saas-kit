@@ -11,7 +11,7 @@ A reusable set of micro-services for a multi-tenant SAAS backend.
 
 ## A note on the frontend
 
-This example repository is integrated with a [compatible frontend built with Flutter (for web)](https://github.com/smartnuance/flutter-admin-kit). It can be used with any frontend technology since the exposed services offer complete REST APIs.
+This project is integrated with a [compatible frontend built with Flutter (for web)](https://github.com/smartnuance/flutter-admin-kit). It can be used with any frontend technology since the exposed services offer complete REST APIs.
 
 ## Getting started
 
@@ -186,6 +186,19 @@ To create reproducable builds, you can use [EARTHLY](https://docs.earthly.dev):
 With either way the resulting runnable is executed by:
 
 > ./bin/auth
+
+
+## Deploy services
+
+Again with [EARTHLY](https://docs.earthly.dev), we can switch the target to `deploy`:
+
+> earthly --build-arg service=dev +publish
+
+This will not yet push the created single-binary docker image.
+
+You can try to run the docker image locally, using the host network (so the ports used by the services needs to be free):
+
+> docker run --rm --network host -v $PWD/test/data:/app/test/data ghcr.io/smartnuance/saas-kit:latest
 
 
 ## Configure linter
