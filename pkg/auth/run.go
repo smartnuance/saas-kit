@@ -178,8 +178,6 @@ func (env Env) Setup() (s Service, err error) {
 
 	lib.SetupLogger(ServiceName, Version, env.release)
 
-	log.Info().Str("port", s.HTTPServer.Port).Str("gitCommit", GitCommit).Str("schema", env.DBEnv.Schema).Msg("setup")
-
 	s.DBConn, err = service.SetupDB(env.DBEnv, migrationDir)
 	if err != nil {
 		return
@@ -201,6 +199,8 @@ func (env Env) Setup() (s Service, err error) {
 	if env.release {
 		gin.SetMode(gin.ReleaseMode)
 	}
+
+	log.Info().Str("port", s.HTTPServer.Port).Str("gitCommit", GitCommit).Str("schema", env.DBEnv.Schema).Msg("setup")
 
 	return
 }
