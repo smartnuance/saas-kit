@@ -20,6 +20,9 @@ func router(s *Service) *gin.Engine {
 	if s.release {
 		config.AllowOriginFunc = func(origin string) bool {
 			_, ok := s.AllowOrigins[origin]
+			if !ok {
+				log.Warn().Str("origin", origin).Msg("rejected origin (CORS)")
+			}
 			return ok
 		}
 	} else {
