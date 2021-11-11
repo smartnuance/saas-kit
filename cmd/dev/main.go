@@ -12,6 +12,7 @@ import (
 	"sync"
 
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 	"github.com/smartnuance/saas-kit/pkg/auth"
 	"github.com/smartnuance/saas-kit/pkg/event"
 	"github.com/smartnuance/saas-kit/pkg/lib"
@@ -61,6 +62,7 @@ func runAll() error {
 	var wg sync.WaitGroup
 
 	errs := make(chan error, 1)
+	waitCh := make(chan struct{}, 1)
 
 	wg.Add(1)
 	go func() {
@@ -131,9 +133,18 @@ func runAll() error {
 		}
 	}()
 
-	wg.Wait()
-	close(errs)
-	return <-errs
+	go func() {
+		wg.Wait()
+		close(waitCh)
+	}()
+
+	select {
+	case err := <-errs:
+		return err
+	case <-waitCh:
+	}
+
+	return nil
 }
 
 func execSQL(script string) error {
@@ -164,6 +175,9 @@ func execSQL(script string) error {
 }
 
 func main() {
+	lib.SetupLogger("dev", "", false)
+
+	log.Info().Msg("Starting all services in separate goroutines...")
 	err := Main()
 	if err != nil {
 		panic(err)
