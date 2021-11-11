@@ -11,8 +11,7 @@ build:
     RUN go install github.com/ahmetb/govvv@latest
     
     COPY . ./
-    RUN go generate ./pkg/$service/run.go
-    RUN govvv build -pkg github.com/smartnuance/saas-kit/pkg/$service ./cmd/$service
+    RUN govvv build ./cmd/$service
     SAVE ARTIFACT $service AS LOCAL bin/$service
 
 lint:

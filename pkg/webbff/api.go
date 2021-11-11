@@ -41,8 +41,11 @@ type MyTransport struct {
 
 func (t MyTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 	resp, err := http.DefaultTransport.RoundTrip(r)
+	if err != nil {
+		return nil, err
+	}
 	resp.Header = t.header
-	return resp, err
+	return resp, nil
 }
 
 var mytransport = MyTransport{}
