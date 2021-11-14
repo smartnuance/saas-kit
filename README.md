@@ -2,6 +2,11 @@
 
 A reusable set of micro-services for a multi-tenant SAAS backend.
 
+<a href="https://smartnuance.com/blog/saas-kit/"><img src="https://gitlab.com/smartnuance/blog/-/raw/c0bcf702cabdcc432449d816da401a7f3e1fd6b6/src/data/blog/saas-kit/saas-kit.svg?inline=false" alt="go SaaS kit" width="80"></a>
+
+[demo](https://admin-kit.smartnuance.com) | [introductory blog post](https://smartnuance.com/blog/saas-kit/)
+
+
 ## Services & features
 
 [Authentication & permission service](./pkg/auth):
