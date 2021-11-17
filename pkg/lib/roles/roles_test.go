@@ -8,12 +8,12 @@ import (
 )
 
 func TestMySuite(t *testing.T) {
-	tdsuite.Run(t, MySuite{})
+	tdsuite.Run(t, &MySuite{})
 }
 
 type MySuite struct{}
 
-func (s MySuite) Test_initRoles(assert, require *td.T) {
+func (s *MySuite) Test_initRoles(assert, require *td.T) {
 	tests := []struct {
 		name               string
 		inheritanceDAG     map[string][]edge

@@ -13,12 +13,12 @@ import (
 )
 
 func TestMySuite(t *testing.T) {
-	tdsuite.Run(t, MySuite{})
+	tdsuite.Run(t, &MySuite{})
 }
 
 type MySuite struct{}
 
-func (s MySuite) Test_signup(assert, require *td.T) {
+func (s *MySuite) Test_signup(assert, require *td.T) {
 	// given
 	ctrl := gomock.NewController(require.TB)
 	mock := NewMockDBAPI(ctrl)
