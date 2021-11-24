@@ -9,10 +9,11 @@ A reusable set of micro-services for a multi-tenant SAAS backend.
 
 ## Services & features
 
-[Authentication & permission service](./pkg/auth):
-- authenticates users and issues JWTs with appropriate roles/permissions
+Authentication & Authorization: [service](./pkg/auth) | [jupyter playground](https://mybinder.org/v2/gh/smartnuance/saas-kit/HEAD?labpath=test%2Fnotebooks):
+- authenticates users and issues JWTs with appropriate roles
+- organize permissions hierarchically and easy to extend
 - supports revocation of JWTs
-- multiple profiles per user, profiles belong to one SAAS instance
+- multiple profiles per user, profiles belong to one SaaS instance
 
 ## A note on the frontend
 
