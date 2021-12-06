@@ -3,8 +3,8 @@ package lib
 import (
 	"os"
 
+	"github.com/friendsofgo/errors"
 	"github.com/joho/godotenv"
-	"github.com/pkg/errors"
 
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 )

@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"github.com/pkg/errors"
+	"github.com/friendsofgo/errors"
 
 	"github.com/gin-gonic/gin"
 	"github.com/smartnuance/saas-kit/pkg/lib/roles"

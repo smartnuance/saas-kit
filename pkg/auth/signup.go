@@ -5,8 +5,8 @@ import (
 
 	"github.com/rs/zerolog/log"
 
+	"github.com/friendsofgo/errors"
 	"github.com/gin-gonic/gin"
-	"github.com/pkg/errors"
 	m "github.com/smartnuance/saas-kit/pkg/auth/dbmodels"
 	"github.com/smartnuance/saas-kit/pkg/lib/roles"
 	"golang.org/x/crypto/bcrypt"

@@ -3,7 +3,7 @@ package tokens
 import (
 	"crypto/rsa"
 
-	"github.com/pkg/errors"
+	"github.com/friendsofgo/errors"
 	"github.com/smartnuance/saas-kit/pkg/lib/roles"
 
 	"fmt"

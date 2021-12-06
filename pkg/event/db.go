@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/pkg/errors"
+	"github.com/friendsofgo/errors"
 	"github.com/rs/xid"
 	"github.com/rs/zerolog/log"
 	m "github.com/smartnuance/saas-kit/pkg/event/dbmodels"

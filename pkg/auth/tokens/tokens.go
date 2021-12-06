@@ -5,8 +5,8 @@ import (
 	"io/ioutil"
 	"time"
 
+	"github.com/friendsofgo/errors"
 	jwt "github.com/golang-jwt/jwt/v4"
-	"github.com/pkg/errors"
 	"github.com/smartnuance/saas-kit/pkg/lib"
 	"github.com/smartnuance/saas-kit/pkg/lib/tokens"
 )

@@ -10,7 +10,7 @@ import (
 	"os"
 	"sync"
 
-	"github.com/pkg/errors"
+	"github.com/friendsofgo/errors"
 	"github.com/rs/zerolog/log"
 	"github.com/smartnuance/saas-kit/pkg/auth"
 	"github.com/smartnuance/saas-kit/pkg/event"

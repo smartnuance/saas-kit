@@ -3,7 +3,7 @@ package event
 import (
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/friendsofgo/errors"
 	m "github.com/smartnuance/saas-kit/pkg/event/dbmodels"
 	"github.com/smartnuance/saas-kit/pkg/lib/paging"
 	"github.com/smartnuance/saas-kit/pkg/lib/roles"

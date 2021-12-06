@@ -8,7 +8,7 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/friendsofgo/errors"
 	"github.com/rs/xid"
 	m "github.com/smartnuance/saas-kit/pkg/auth/dbmodels"
 	"github.com/volatiletech/null/v8"

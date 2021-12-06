@@ -10,8 +10,8 @@ import (
 	"strings"
 
 	"github.com/RichardKnop/go-fixtures"
+	"github.com/friendsofgo/errors"
 	"github.com/gin-gonic/gin"
-	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	m "github.com/smartnuance/saas-kit/pkg/auth/dbmodels"
 	"github.com/smartnuance/saas-kit/pkg/auth/tokens"

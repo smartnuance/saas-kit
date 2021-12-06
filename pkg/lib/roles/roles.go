@@ -3,8 +3,8 @@ package roles
 import (
 	"container/list"
 
+	"github.com/friendsofgo/errors"
 	"github.com/gin-gonic/gin"
-	"github.com/pkg/errors"
 )
 
 const (

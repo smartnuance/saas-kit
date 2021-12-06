@@ -3,7 +3,7 @@ package auth
 import (
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/friendsofgo/errors"
 
 	"github.com/gin-gonic/gin"
 	m "github.com/smartnuance/saas-kit/pkg/auth/dbmodels"
