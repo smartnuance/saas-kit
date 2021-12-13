@@ -1,23 +1,21 @@
-# go SAAS kit
+# go SaaS kit
 
-A reusable set of micro-services for a multi-tenant SAAS backend.
+A reusable set of micro-services for a multi-tenant SaaS backend.
 
 <a href="https://smartnuance.com/blog/saas-kit/"><img src="https://gitlab.com/smartnuance/blog/-/raw/c0bcf702cabdcc432449d816da401a7f3e1fd6b6/src/data/blog/saas-kit/saas-kit.svg?inline=false" alt="go SaaS kit" width="80"></a>
 
-[demo](https://admin-kit.smartnuance.com) | [introductory blog post](https://smartnuance.com/blog/saas-kit/)
+[demo](https://admin-kit.smartnuance.com) | [introductory blog post](https://smartnuance.com/blog/saas-kit/) | [API playground](https://mybinder.org/v2/gh/smartnuance/saas-kit/HEAD?labpath=test%2Fnotebooks%2Fapi.ipynb)
 
 
 ## Services & features
 
-Authentication & Authorization: [service](./pkg/auth) | [jupyter playground](https://mybinder.org/v2/gh/smartnuance/saas-kit/HEAD?labpath=test%2Fnotebooks):
-- authenticates users and issues JWTs with appropriate roles
-- organize permissions hierarchically and easy to extend
-- supports revocation of JWTs
-- multiple profiles per user, profiles belong to one SaaS instance
+- Authentication & Authorization: [service](./pkg/auth) | [design](https://smartnuance.com/blog/saas-kit/#token-authentication) | [API playground](https://mybinder.org/v2/gh/smartnuance/saas-kit/HEAD?labpath=test%2Fnotebooks%2Fapi.ipynb)
+
 
 ## A note on the frontend
 
 This project is integrated with a [compatible frontend built with Flutter (for web)](https://github.com/smartnuance/flutter-admin-kit). It can be used with any frontend technology since the exposed services offer complete REST APIs.
+
 
 ## Getting started
 
@@ -28,6 +26,7 @@ Choose your environment `dev` (default), `test` or `prod`:
 > export SAAS_KIT_ENV="test"
 
 Create an environment file `.env.dev` or `.env.test` for the environments used, where you might want to override some env-specific variables.
+
 
 ### Database
 
@@ -73,6 +72,7 @@ Create super user:
 
 > go run ./cmd/auth adduser -name=Simon -email=simon@smartnuance.com -password=f00bartest -instance=smartnuance.com
 
+
 ### Interact with auth service
 
 Use exposed endpoint to signup user (with no permissions to start with):
@@ -107,6 +107,7 @@ For a while, I can still use the access token, for example to rerun the idem-pot
 But if we try to use the revoked refresh token in a refresh call, this will fail:
 
 > http -v POST :8801/refresh refreshToken=$RT
+
 
 ### Interact with event service
 
@@ -143,9 +144,10 @@ Testing:
 - [gomock](https://github.com/golang/mock)
 - [go-testdep](https://github.com/maxatome/go-testdeep)
 
-# Contribute
 
-## Development tools
+## Contribute
+
+### Development tools
 
 All tools necessary for development like installing code generators is done via `go:generate` commands at the top of `cmd/dev/main.go`:
 
@@ -157,7 +159,8 @@ For developers's convenience all generation commands are collected via `go:gener
 
 > go generate ./pkg/auth
 
-## Migrate database
+
+### Migrate database
 
 To interact with database, we use a schema first approach with [sqlboiler](https://github.com/volatiletech/sqlboiler#getting-started). It generates type-safe code to interact with the DB.
 
@@ -182,7 +185,7 @@ When database is on newest version, we have to generated git-versioned DB models
 > go generate ./pkg/auth/db.go
 
 
-## Build service(s)
+### Build service(s)
 
 To include build information we use the [`govvv`](github.com/ahmetb/govvv) utility:
 
@@ -201,7 +204,7 @@ With either way the resulting runnable is executed by:
 > ./bin/auth
 
 
-## Deploy services
+### Deploy services
 
 Again with [EARTHLY](https://docs.earthly.dev), we can switch the target to `deploy`:
 
@@ -214,7 +217,7 @@ You can try to run the docker image locally, using the host network (so the port
 > docker run --rm --network host -v $PWD/test/data:/app/test/data ghcr.io/smartnuance/saas-kit:latest
 
 
-## Configure linter
+### Configure linter
 
 We are using the configurable [staticcheck](https://staticcheck.io/docs/) linter.
 
@@ -225,7 +228,7 @@ Check that your [VScode](https://code.visualstudio.com/) workspace settings cont
     "go.lintTool": "staticcheck"
 
 
-## Configure testing
+### Configure testing
 
 If your IDE (like VScode) shows broken test output because it does not support colored output, add this to your workspace settings:
 
