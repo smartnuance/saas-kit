@@ -87,6 +87,7 @@ func (db *dbAPI) ListWorkshops(ctx context.Context, instanceID string, page pagi
 		return
 	}
 
+	list.Workshops = []WorkshopData{}
 	for _, w := range results {
 		if w == nil {
 			err = errors.New("got nil workshop row")
