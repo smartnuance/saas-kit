@@ -8,7 +8,14 @@ import (
 	"github.com/rs/zerolog/pkgerrors"
 )
 
+var setup = false
+
 func SetupLogger(service, version string, releaseMode bool) {
+	if setup {
+		return
+	}
+	setup = true
+
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
 	// Default level for this example is info, unless debug flag is present
