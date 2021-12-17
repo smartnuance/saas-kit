@@ -134,6 +134,28 @@ func (s *Service) ListWorkshops(ctx *gin.Context) (list WorkshopList, err error)
 	return
 }
 
+func (s *Service) DeleteWorkshop(ctx *gin.Context) (err error) {
+	// Check permission
+	if !roles.CanActIn(ctx, roles.RoleEventOrganizer) {
+		r, _ := roles.Role(ctx)
+		err = errors.Wrapf(ErrUnauthorized, "'%s' can not act as %s", r, roles.RoleEventOrganizer)
+		return
+	}
+
+	_, err = roles.Instance(ctx)
+	if err != nil {
+		err = errors.Wrap(ErrUnauthorized, err.Error())
+		return
+	}
+
+	err = s.DBAPI.DeleteWorkshop(ctx, ctx.Param("id"))
+	if err != nil {
+		return
+	}
+
+	return
+}
+
 var (
 	ErrUnauthorized = errors.New("role insufficient to act on desired instances")
 )

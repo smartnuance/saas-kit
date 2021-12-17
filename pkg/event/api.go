@@ -29,11 +29,12 @@ func router(s *Service) *gin.Engine {
 
 	// with authorization middleware
 	api := router.Group("/", tokens.AuthorizeJWT(s.TokenAPI.ValidationKey, s.Issuer, s.Audience))
-	s.AddInfoHandlers(api.Group("/info"))
-
-	// without authorization middleware
 	api.PUT("/workshop", s.CreateWorkshopHandler())
 	api.GET("/workshop/list", s.ListWorkshopHandler())
+	api.DELETE("/workshop/:id", s.DeleteWorkshopHandler())
+
+	// without authorization middleware
+	s.AddInfoHandlers(api.Group("/info"))
 
 	return router
 }
@@ -71,6 +72,19 @@ func (s *Service) ListWorkshopHandler() gin.HandlerFunc {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 		} else {
 			ctx.JSON(http.StatusOK, workshops)
+		}
+	}
+}
+
+// DeleteWorkshopHandler deletes a workshop.
+func (s *Service) DeleteWorkshopHandler() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		err := s.DeleteWorkshop(ctx)
+		if err != nil {
+			log.Error().Stack().Err(err).Msg("")
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+		} else {
+			ctx.Status(http.StatusOK)
 		}
 	}
 }

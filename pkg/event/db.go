@@ -27,6 +27,8 @@ type DBAPI interface {
 	Rollback(tx *sql.Tx) error
 	CreateWorkshop(ctx context.Context, data *CreateWorkshopData) (workshop *m.Workshop, err error)
 	ListWorkshops(ctx context.Context, instanceID string, page paging.Page) (list WorkshopList, err error)
+	GetWorkshop(ctx context.Context, workshopID string) (workshop *m.Workshop, err error)
+	DeleteWorkshop(ctx context.Context, workshopID string) (err error)
 	CreateEvent(ctx context.Context, data *EventData) (event *m.Event, err error)
 	GetEvent(ctx context.Context, eventID string) (event *m.Event, err error)
 }
@@ -124,6 +126,19 @@ func (db *dbAPI) ListWorkshops(ctx context.Context, instanceID string, page pagi
 	return
 }
 
+func (db *dbAPI) DeleteWorkshop(ctx context.Context, workshopID string) (err error) {
+	workshop, err := db.GetWorkshop(ctx, workshopID)
+	if errors.Is(err, ErrWorkshopDoesNotExist) {
+		// for idempotence: return no error
+		return nil
+	}
+	if err != nil {
+		return
+	}
+	_, err = workshop.Delete(ctx, db.DB, false)
+	return
+}
+
 func (db *dbAPI) CreateEvent(ctx context.Context, data *EventData) (event *m.Event, err error) {
 	var info types.JSON
 	info, err = json.Marshal(data.EventInfo)
@@ -145,6 +160,16 @@ func (db *dbAPI) CreateEvent(ctx context.Context, data *EventData) (event *m.Eve
 	return
 }
 
+func (db *dbAPI) GetWorkshop(ctx context.Context, workshopID string) (workshop *m.Workshop, err error) {
+	workshop, err = m.Workshops(m.WorkshopWhere.ID.EQ(workshopID)).One(ctx, db.DB)
+	if err == sql.ErrNoRows {
+		// transform sql error in specific error of event context
+		err = errors.WithStack(ErrWorkshopDoesNotExist)
+		return
+	}
+	return
+}
+
 func (db *dbAPI) GetEvent(ctx context.Context, eventID string) (event *m.Event, err error) {
 	event, err = m.Events(m.EventWhere.ID.EQ(eventID)).One(ctx, db.DB)
 	if err == sql.ErrNoRows {
@@ -157,12 +182,14 @@ func (db *dbAPI) GetEvent(ctx context.Context, eventID string) (event *m.Event, 
 
 type EventInfo struct {
 	Title        string `json:"title,omitempty"`
+	Slug         string `json:"slug,omitempty"`
 	LocationName string `json:"locationName,omitempty"`
 	LocationURL  string `json:"locationURL,omitempty"`
 }
 
 type WorkshopInfo struct {
 	Title        string `json:"title,omitempty"`
+	Slug         string `json:"slug,omitempty"`
 	LocationName string `json:"locationName,omitempty"`
 	LocationURL  string `json:"locationURL,omitempty"`
 	Couples      bool   `json:"couples"`
@@ -214,5 +241,6 @@ func loadWorkshop(row m.Workshop) (workshop WorkshopData, err error) {
 
 var (
 	ErrEventDoesNotExist    = errors.New("event does not exist")
+	ErrWorkshopDoesNotExist = errors.New("workshop does not exist")
 	ErrRetrieveWorkshopList = errors.New("retrieving workshop list failed")
 )
