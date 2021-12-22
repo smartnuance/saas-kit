@@ -96,6 +96,20 @@ func (mr *MockDBAPIMockRecorder) CreateWorkshop(arg0, arg1 interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateWorkshop", reflect.TypeOf((*MockDBAPI)(nil).CreateWorkshop), arg0, arg1)
 }
 
+// DeleteWorkshop mocks base method.
+func (m *MockDBAPI) DeleteWorkshop(arg0 context.Context, arg1 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteWorkshop", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteWorkshop indicates an expected call of DeleteWorkshop.
+func (mr *MockDBAPIMockRecorder) DeleteWorkshop(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteWorkshop", reflect.TypeOf((*MockDBAPI)(nil).DeleteWorkshop), arg0, arg1)
+}
+
 // GetEvent mocks base method.
 func (m *MockDBAPI) GetEvent(arg0 context.Context, arg1 string) (*dbmodels.Event, error) {
 	m.ctrl.T.Helper()
@@ -111,11 +125,26 @@ func (mr *MockDBAPIMockRecorder) GetEvent(arg0, arg1 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEvent", reflect.TypeOf((*MockDBAPI)(nil).GetEvent), arg0, arg1)
 }
 
+// GetWorkshop mocks base method.
+func (m *MockDBAPI) GetWorkshop(arg0 context.Context, arg1 string) (*dbmodels.Workshop, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetWorkshop", arg0, arg1)
+	ret0, _ := ret[0].(*dbmodels.Workshop)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetWorkshop indicates an expected call of GetWorkshop.
+func (mr *MockDBAPIMockRecorder) GetWorkshop(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWorkshop", reflect.TypeOf((*MockDBAPI)(nil).GetWorkshop), arg0, arg1)
+}
+
 // ListWorkshops mocks base method.
-func (m *MockDBAPI) ListWorkshops(arg0 context.Context, arg1 string, arg2 paging.Page) ([]WorkshopData, error) {
+func (m *MockDBAPI) ListWorkshops(arg0 context.Context, arg1 string, arg2 paging.Page) (WorkshopList, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListWorkshops", arg0, arg1, arg2)
-	ret0, _ := ret[0].([]WorkshopData)
+	ret0, _ := ret[0].(WorkshopList)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
