@@ -149,16 +149,12 @@ Testing:
 
 ### Development tools
 
-All tools necessary for development like installing code generators is done via `go:generate` commands at the top of `cmd/dev/main.go`:
-
-> go generate ./cmd/dev
-
+All tools necessary for development like installing code generators are listed in `tools.go`.
 (a subset of those tools are installed in CI build step of `Earthfile`)
 
-For developers's convenience all generation commands are collected via `go:generate` at the top of each service's `run.go`, e.g. for the auth service
+To run all generators recursively:
 
-> go generate ./pkg/auth
-
+> go generate ./...
 
 ### Migrate database
 
@@ -188,10 +184,6 @@ When database is on newest version, we have to generated git-versioned DB models
 ### Build service(s)
 
 To include build information we use the [`govvv`](github.com/ahmetb/govvv) utility:
-
-> go install github.com/ahmetb/govvv@latest
-
-Then
 
 > govvv build -pkg github.com/smartnuance/saas-kit/pkg/auth -o ./bin/ ./cmd/auth
 
