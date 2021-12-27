@@ -12,6 +12,7 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	dbmodels "github.com/smartnuance/saas-kit/pkg/auth/dbmodels"
+	roles "github.com/smartnuance/saas-kit/pkg/lib/roles"
 )
 
 // MockDBAPI is a mock of DBAPI interface.
@@ -67,7 +68,7 @@ func (mr *MockDBAPIMockRecorder) Commit(arg0 interface{}) *gomock.Call {
 }
 
 // CreateProfile mocks base method.
-func (m *MockDBAPI) CreateProfile(arg0 context.Context, arg1 *sql.Tx, arg2 string, arg3 *dbmodels.User, arg4 string) (*dbmodels.Profile, error) {
+func (m *MockDBAPI) CreateProfile(arg0 context.Context, arg1 *sql.Tx, arg2 string, arg3 *dbmodels.User, arg4 roles.Role) (*dbmodels.Profile, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateProfile", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(*dbmodels.Profile)

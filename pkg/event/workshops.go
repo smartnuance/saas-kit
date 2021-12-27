@@ -114,7 +114,7 @@ func (s *Service) CreateWorkshop(ctx *gin.Context) (workshop *m.Workshop, err er
 func (s *Service) ListWorkshops(ctx *gin.Context) (list WorkshopList, err error) {
 	// Check permission
 	if !roles.CanActIn(ctx, roles.RoleEventOrganizer) {
-		r, _ := roles.Role(ctx)
+		r, _ := roles.FromContext(ctx)
 		err = errors.Wrapf(ErrUnauthorized, "'%s' can not act as %s", r, roles.RoleEventOrganizer)
 		return
 	}
@@ -137,7 +137,7 @@ func (s *Service) ListWorkshops(ctx *gin.Context) (list WorkshopList, err error)
 func (s *Service) DeleteWorkshop(ctx *gin.Context) (err error) {
 	// Check permission
 	if !roles.CanActIn(ctx, roles.RoleEventOrganizer) {
-		r, _ := roles.Role(ctx)
+		r, _ := roles.FromContext(ctx)
 		err = errors.Wrapf(ErrUnauthorized, "'%s' can not act as %s", r, roles.RoleEventOrganizer)
 		return
 	}

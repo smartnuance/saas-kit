@@ -8,6 +8,7 @@ import (
 	"github.com/friendsofgo/errors"
 	jwt "github.com/golang-jwt/jwt/v4"
 	"github.com/smartnuance/saas-kit/pkg/lib"
+	"github.com/smartnuance/saas-kit/pkg/lib/roles"
 	"github.com/smartnuance/saas-kit/pkg/lib/tokens"
 )
 
@@ -68,10 +69,10 @@ func Setup(env TokenEnv) (c *TokenController, err error) {
 	return
 }
 
-func (c *TokenController) GenerateAccessToken(userID, instanceID string, role string) (token string, err error) {
+func (c *TokenController) GenerateAccessToken(userID, instanceID string, role roles.Role) (token string, err error) {
 	claims := tokens.AccessTokenClaims{
 		Purpose:  tokens.AccessPurpose,
-		Role:     role,
+		Role:     string(role),
 		Instance: instanceID,
 		StandardClaims: jwt.StandardClaims{
 			Subject:   userID,

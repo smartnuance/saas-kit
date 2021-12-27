@@ -15,15 +15,18 @@ const (
 	RoleKey     = "role"
 	InstanceKey = "instance"
 )
+
+type Role string
+
 const (
-	RoleSuperAdmin     = "super admin"
-	RoleInstanceAdmin  = "instance admin"
-	RoleEventOrganizer = "event organizer"
-	RoleTeacher        = "teacher"
-	NoRole             = ""
+	RoleSuperAdmin     Role = "super admin"
+	RoleInstanceAdmin  Role = "instance admin"
+	RoleEventOrganizer Role = "event organizer"
+	RoleTeacher        Role = "teacher"
+	NoRole             Role = ""
 )
 
-var Roles = []string{
+var Roles = []Role{
 	RoleSuperAdmin,
 	RoleInstanceAdmin,
 	RoleEventOrganizer,
@@ -34,13 +37,13 @@ var Roles = []string{
 // edge builds a DAG of role inheritance with transitive permission propagation.
 type edge struct {
 	// Role is the role to inherit permissions from.
-	Role string
+	Role Role
 	// SwitchRequired defines if the user has to explicitly switch to inherited role to receive its permissions.
 	SwitchRequired bool
 }
 
 // dag represents a DAG.
-type dag map[string][]edge
+type dag map[Role][]edge
 
 // inheritanceDAG describes the role inheritance DAG.
 // All roles implicitly inherit from NoRole without stating it here. NoRole makes the inheritance DAG rooted.
@@ -65,7 +68,7 @@ var inheritanceDAG = dag{
 	},
 }
 
-type closure map[string]map[string]struct{}
+type closure map[Role]map[Role]struct{}
 
 // inheritanceClosure lists the transitive closure of each role's inherited roles.
 // The map's structure is
@@ -81,17 +84,17 @@ func init() {
 	inheritanceClosure, switchRoles = initRoles(inheritanceDAG)
 }
 
-func initRoles(inheritanceDAG map[string][]edge) (inheritanceClosure closure, switchRoles closure) {
+func initRoles(inheritanceDAG map[Role][]edge) (inheritanceClosure closure, switchRoles closure) {
 	inheritanceClosure = closure{}
 	switchRoles = closure{}
 
 	// build closures in role inheritance graph
 	for _, role := range Roles {
-		inheritanceClosure[role] = map[string]struct{}{
+		inheritanceClosure[role] = map[Role]struct{}{
 			// All roles implicitly inherit from NoRole.
 			NoRole: {},
 		}
-		switchRoles[role] = map[string]struct{}{
+		switchRoles[role] = map[Role]struct{}{
 			role: {},
 		}
 
@@ -103,11 +106,11 @@ func initRoles(inheritanceDAG map[string][]edge) (inheritanceClosure closure, sw
 		switchableTodo := list.New()
 
 		// track which roles has been reached in inheritance graph during traversal
-		done := map[string]bool{}
+		done := map[Role]bool{}
 
 		// Breadth-first traversal to collect closure of inherited roles
 		for p_ := todo.Front(); p_ != nil; p_ = p_.Next() {
-			p := p_.Value.(string)
+			p := p_.Value.(Role)
 			done[p] = true
 
 			inheritanceClosure[role][p] = struct{}{}
@@ -125,7 +128,7 @@ func initRoles(inheritanceDAG map[string][]edge) (inheritanceClosure closure, sw
 		// Find inherited roles only reachable over an explicit inheritance.
 		// When an inherited role P was already reached via a path of implicit inheritance, any inheritance of P with switch required has no effect.
 		for p_ := switchableTodo.Front(); p_ != nil; p_ = p_.Next() {
-			p := p_.Value.(string)
+			p := p_.Value.(Role)
 			if !done[p] {
 				switchRoles[role][p] = struct{}{}
 				for _, inheritedRole := range inheritanceDAG[p] {
@@ -139,22 +142,22 @@ func initRoles(inheritanceDAG map[string][]edge) (inheritanceClosure closure, sw
 	return
 }
 
-func valid(role string) bool {
+func valid(role Role) bool {
 	_, ok := inheritanceClosure[role]
 	return ok
 }
 
 // rolesSpecEntry describes a user's target roles for switching and each of those roles inherited roles.
 type rolesSpecEntry struct {
-	Role      string   `json:"role"`
-	Inherited []string `json:"inherited"`
+	Role      Role   `json:"role"`
+	Inherited []Role `json:"inherited"`
 }
 
 // rolesSpec are the switching target roles, ordered from more permissive to more specific roles.
 type rolesSpec []rolesSpecEntry
 
 // RolesSpec returns a RolesSpec for the given user role.
-func RolesSpec(userRole string) (spec rolesSpec) {
+func RolesSpec(userRole Role) (spec rolesSpec) {
 	if !valid(userRole) {
 		return
 	}
@@ -173,7 +176,7 @@ func RolesSpec(userRole string) (spec rolesSpec) {
 // CanSwitchTo checks if the user's role can switch to a targetRole acquiring those role's permissions.
 // Switching is allowed when there is an implicit path from userRole to role
 // or userrole directly, explicitly inherits targetRole.
-func CanSwitchTo(userRole string, targetRole string) bool {
+func CanSwitchTo(userRole Role, targetRole Role) bool {
 	_, okImplicit := inheritanceClosure[userRole][targetRole]
 	_, okExplicit := switchRoles[userRole][targetRole]
 	return okImplicit || okExplicit
@@ -182,8 +185,8 @@ func CanSwitchTo(userRole string, targetRole string) bool {
 // SwitchTo attempts to switch to a temporary targetRole.
 // The user's role defined in context is checked against the rules defining if switching is allowed.
 // The temporary role is set on the context under the "role" key, overwriting the original role.
-func SwitchTo(ctx *gin.Context, targetRole string) error {
-	role, err := Role(ctx)
+func SwitchTo(ctx *gin.Context, targetRole Role) error {
+	role, err := FromContext(ctx)
 	if err != nil {
 		return err
 	}
@@ -208,8 +211,8 @@ func CanActAs(ctx *gin.Context, targetUserID string) bool {
 }
 
 // CanActIn checks if the user can act in the desired targetRole without switching to that role.
-func CanActIn(ctx *gin.Context, targetRole string) bool {
-	role, err := Role(ctx)
+func CanActIn(ctx *gin.Context, targetRole Role) bool {
+	role, err := FromContext(ctx)
 	if err != nil {
 		return false
 	}
@@ -220,8 +223,8 @@ func CanActIn(ctx *gin.Context, targetRole string) bool {
 
 // InheritedRoles returns an unordered list of roles a given user role can act in, without switching.
 // The returned list is a copy and can be safely modified.
-func InheritedRoles(userRole string) []string {
-	keys := make([]string, 0, len(inheritanceClosure[userRole]))
+func InheritedRoles(userRole Role) []Role {
+	keys := make([]Role, 0, len(inheritanceClosure[userRole]))
 	for k := range inheritanceClosure[userRole] {
 		keys = append(keys, k)
 	}
@@ -240,7 +243,7 @@ func CanActFor(ctx *gin.Context, instanceID string) bool {
 		return true
 	}
 
-	userRole, err := Role(ctx)
+	userRole, err := FromContext(ctx)
 	if err != nil {
 		return false
 	}
@@ -257,10 +260,14 @@ func User(ctx *gin.Context) (string, error) {
 	return userID_.(string), nil
 }
 
-// Role retrieves the role from context.
+// FromContext retrieves the role from context.
 // The default role is NoRole. An invalid role results in ErrInvalidRole.
-func Role(ctx *gin.Context) (string, error) {
-	role := ctx.GetString(RoleKey) // corresponds to NoRole if empty
+func FromContext(ctx *gin.Context) (Role, error) {
+	role_, ok := ctx.Get(RoleKey) // corresponds to NoRole if empty
+	if !ok {
+		role_ = NoRole
+	}
+	role := role_.(Role)
 	if !valid(role) {
 		return "", ErrInvalidRole
 	}

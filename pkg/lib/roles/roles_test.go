@@ -16,7 +16,7 @@ type MySuite struct{}
 func (s *MySuite) Test_initRoles(assert, require *td.T) {
 	tests := []struct {
 		name               string
-		inheritanceDAG     map[string][]edge
+		inheritanceDAG     map[Role][]edge
 		inheritanceClosure closure
 		switchableRoles    closure
 	}{

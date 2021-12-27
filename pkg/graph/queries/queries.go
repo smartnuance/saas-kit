@@ -215,6 +215,8 @@ var sources = []*ast.Source{
 #
 # https://gqlgen.com/getting-started/
 
+scalar Role
+
 type Todo {
   id: ID!
   text: String!

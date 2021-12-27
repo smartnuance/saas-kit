@@ -35,7 +35,7 @@ func (s *Service) Signup(ctx *gin.Context) (userID string, err error) {
 	return s.signup(ctx, instance.ID, body, roles.NoRole)
 }
 
-func (s *Service) signup(ctx *gin.Context, instanceID string, body SignupBody, role string) (userID string, err error) {
+func (s *Service) signup(ctx *gin.Context, instanceID string, body SignupBody, role roles.Role) (userID string, err error) {
 	log.Debug().Msgf("Signup user %s with email %s to %s with role %s", body.Name, body.Email, instanceID, role)
 	if len(body.Email) == 0 {
 		err = ErrInvalidEmail

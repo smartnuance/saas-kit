@@ -11,6 +11,7 @@ import (
 	"github.com/friendsofgo/errors"
 	"github.com/rs/xid"
 	m "github.com/smartnuance/saas-kit/pkg/auth/dbmodels"
+	"github.com/smartnuance/saas-kit/pkg/lib/roles"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	// . "github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -24,7 +25,7 @@ type DBAPI interface {
 	GetInstance(ctx context.Context, instanceURL string) (instance *m.Instance, err error)
 	GetProfile(ctx context.Context, userID, instanceID string) (profile *m.Profile, err error)
 	GetUserAndProfile(ctx context.Context, userID string, instanceURL string) (user *m.User, profile *m.Profile, err error)
-	CreateProfile(ctx context.Context, tx *sql.Tx, instanceID string, user *m.User, role string) (profile *m.Profile, err error)
+	CreateProfile(ctx context.Context, tx *sql.Tx, instanceID string, user *m.User, role roles.Role) (profile *m.Profile, err error)
 	CreateUser(ctx context.Context, tx *sql.Tx, name, email string, passwordHash []byte) (user *m.User, err error)
 	DeleteUser(ctx context.Context, userID string) error
 	SaveToken(ctx context.Context, profile *m.Profile, token string, expiresAt time.Time) error
@@ -96,12 +97,12 @@ func (db *dbAPI) GetUserAndProfile(ctx context.Context, userID string, instanceU
 	return
 }
 
-func (db *dbAPI) CreateProfile(ctx context.Context, tx *sql.Tx, instanceID string, user *m.User, role string) (profile *m.Profile, err error) {
+func (db *dbAPI) CreateProfile(ctx context.Context, tx *sql.Tx, instanceID string, user *m.User, role roles.Role) (profile *m.Profile, err error) {
 	profile = &m.Profile{
 		ID:         xid.New().String(),
 		InstanceID: instanceID,
 		UserID:     user.ID,
-		Role:       null.StringFrom(role),
+		Role:       null.StringFrom(string(role)),
 	}
 	err = profile.Upsert(ctx, tx, true, boil.None().Cols, boil.Infer(), boil.Infer())
 	if err != nil {
