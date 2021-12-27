@@ -1,26 +1,26 @@
 # Where are all the schema files located? globs are supported eg  src/**/*.graphqls
 schema:
-  - graph/*.graphqls
+  - pkg/graph/*.graphqls
 
 # Where should the generated server code go?
 exec:
-  filename: graph/generated/generated.go
-  package: generated
+  filename: pkg/graph/queries/queries.go
+  package: queries
 
 # Uncomment to enable federation
 # federation:
-#   filename: graph/generated/federation.go
+#   filename: graph/queries/federation.go
 #   package: generated
 
 # Where should any generated models go?
 model:
-  filename: graph/model/models_gen.go
-  package: model
+  filename: pkg/graph/models/models.go
+  package: models
 
 # Where should the resolver implementations go?
 resolver:
   layout: follow-schema
-  dir: graph
+  dir: pkg/graph
   package: graph
 
 # Optional: turn on use `gqlgen:"fieldName"` tags in your models
@@ -35,7 +35,7 @@ resolver:
 # gqlgen will search for any type names in the schema in these go packages
 # if they match it will use them, otherwise it will generate them.
 autobind:
-  - "github.com/smartnuance/saas-kit/graph/model"
+  - "github.com/smartnuance/saas-kit/pkg/graph/models"
 
 # This section declares type mapping between the GraphQL and go type systems
 #
