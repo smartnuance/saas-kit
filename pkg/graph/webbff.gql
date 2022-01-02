@@ -1,0 +1,52 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+scalar Role
+scalar Time
+
+type Event {
+  id: ID!
+}
+
+type Workshop {
+  id: ID!
+  instance: ID!
+  WorkshopInfo: WorkshopInfo!
+  Starts: Time!
+  Ends: Time!
+  Event: Event!
+}
+
+type WorkshopInfo {
+  Title: String!
+  Slug: String!
+  LocationName: String!
+  LocationURL: String!
+  Couples: Boolean!
+}
+
+input WorkshopInfoInput {
+  Title: String!
+  Slug: String!
+  LocationName: String!
+  LocationURL: String!
+  Couples: Boolean!
+}
+
+input NewWorkshop {
+  id: ID!
+  instance: ID!
+  WorkshopInfo: WorkshopInfoInput!
+  Starts: Time!
+  Ends: Time!
+  EventID: ID!
+}
+
+type Query {
+  workshops: [Workshop!]!
+}
+
+type Mutation {
+  createWorkshop(input: NewWorkshop!): Workshop!
+}

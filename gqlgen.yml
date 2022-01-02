@@ -1,6 +1,6 @@
 # Where are all the schema files located? globs are supported eg  src/**/*.graphqls
 schema:
-  - pkg/graph/*.graphqls
+  - pkg/graph/*.gql
 
 # Where should the generated server code go?
 exec:
@@ -20,8 +20,9 @@ model:
 # Where should the resolver implementations go?
 resolver:
   layout: follow-schema
-  dir: pkg/graph
-  package: graph
+  dir: pkg/webbff
+  package: webbff
+  filename_template: "{name}.gql.go"
 
 # Optional: turn on use `gqlgen:"fieldName"` tags in your models
 # struct_tag: json
@@ -54,3 +55,9 @@ models:
       - github.com/99designs/gqlgen/graphql.Int
       - github.com/99designs/gqlgen/graphql.Int64
       - github.com/99designs/gqlgen/graphql.Int32
+  Time:
+    model:
+      - github.com/99designs/gqlgen/graphql.Time
+  Role:
+    model:
+      - github.com/smartnuance/saas-kit/pkg/lib/roles.Role

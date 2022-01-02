@@ -10,7 +10,6 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
-	"github.com/smartnuance/saas-kit/pkg/graph"
 	"github.com/smartnuance/saas-kit/pkg/graph/queries"
 	"github.com/smartnuance/saas-kit/pkg/lib/roles"
 )
@@ -36,7 +35,7 @@ func router(s *Service) *gin.Engine {
 	router.Any("/auth/*proxyPath", ReverseProxy(s.authServiceAddress))
 	router.Any("/event/*proxyPath", ReverseProxy(s.eventServiceAddress))
 
-	srv := handler.NewDefaultServer(queries.NewExecutableSchema(queries.Config{Resolvers: &graph.Resolver{}}))
+	srv := handler.NewDefaultServer(queries.NewExecutableSchema(queries.Config{Resolvers: &Resolver{s}}))
 	router.Any("/", gin.WrapH(playground.Handler("GraphQL playground", "/query")))
 	router.Any("/query", gin.WrapH(srv))
 

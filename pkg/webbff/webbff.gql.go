@@ -1,4 +1,4 @@
-package graph
+package webbff
 
 // This file will be automatically regenerated based on the schema, any resolver implementations
 // will be copied through when generating and any unknown code will be moved to the end.
@@ -7,15 +7,15 @@ import (
 	"context"
 	"fmt"
 
-	gqlmodels "github.com/smartnuance/saas-kit/pkg/graph/models"
+	"github.com/smartnuance/saas-kit/pkg/graph/models"
 	"github.com/smartnuance/saas-kit/pkg/graph/queries"
 )
 
-func (r *mutationResolver) CreateTodo(ctx context.Context, input gqlmodels.NewTodo) (*gqlmodels.Todo, error) {
+func (r *mutationResolver) CreateWorkshop(ctx context.Context, input models.NewWorkshop) (*models.Workshop, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) Todos(ctx context.Context) ([]*gqlmodels.Todo, error) {
+func (r *queryResolver) Workshops(ctx context.Context) ([]*models.Workshop, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 

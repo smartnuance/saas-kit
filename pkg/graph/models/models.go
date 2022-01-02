@@ -2,19 +2,44 @@
 
 package models
 
-type NewTodo struct {
-	Text   string `json:"text"`
-	UserID string `json:"userId"`
+import (
+	"time"
+)
+
+type Event struct {
+	ID string `json:"id"`
 }
 
-type Todo struct {
-	ID   string `json:"id"`
-	Text string `json:"text"`
-	Done bool   `json:"done"`
-	User *User  `json:"user"`
+type NewWorkshop struct {
+	ID           string             `json:"id"`
+	Instance     string             `json:"instance"`
+	WorkshopInfo *WorkshopInfoInput `json:"WorkshopInfo"`
+	Starts       time.Time          `json:"Starts"`
+	Ends         time.Time          `json:"Ends"`
+	EventID      string             `json:"EventID"`
 }
 
-type User struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+type Workshop struct {
+	ID           string        `json:"id"`
+	Instance     string        `json:"instance"`
+	WorkshopInfo *WorkshopInfo `json:"WorkshopInfo"`
+	Starts       time.Time     `json:"Starts"`
+	Ends         time.Time     `json:"Ends"`
+	Event        *Event        `json:"Event"`
+}
+
+type WorkshopInfo struct {
+	Title        string `json:"Title"`
+	Slug         string `json:"Slug"`
+	LocationName string `json:"LocationName"`
+	LocationURL  string `json:"LocationURL"`
+	Couples      bool   `json:"Couples"`
+}
+
+type WorkshopInfoInput struct {
+	Title        string `json:"Title"`
+	Slug         string `json:"Slug"`
+	LocationName string `json:"LocationName"`
+	LocationURL  string `json:"LocationURL"`
+	Couples      bool   `json:"Couples"`
 }

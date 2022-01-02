@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
@@ -43,32 +44,41 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	Event struct {
+		ID func(childComplexity int) int
+	}
+
 	Mutation struct {
-		CreateTodo func(childComplexity int, input models.NewTodo) int
+		CreateWorkshop func(childComplexity int, input models.NewWorkshop) int
 	}
 
 	Query struct {
-		Todos func(childComplexity int) int
+		Workshops func(childComplexity int) int
 	}
 
-	Todo struct {
-		Done func(childComplexity int) int
-		ID   func(childComplexity int) int
-		Text func(childComplexity int) int
-		User func(childComplexity int) int
+	Workshop struct {
+		Ends         func(childComplexity int) int
+		Event        func(childComplexity int) int
+		ID           func(childComplexity int) int
+		Instance     func(childComplexity int) int
+		Starts       func(childComplexity int) int
+		WorkshopInfo func(childComplexity int) int
 	}
 
-	User struct {
-		ID   func(childComplexity int) int
-		Name func(childComplexity int) int
+	WorkshopInfo struct {
+		Couples      func(childComplexity int) int
+		LocationName func(childComplexity int) int
+		LocationURL  func(childComplexity int) int
+		Slug         func(childComplexity int) int
+		Title        func(childComplexity int) int
 	}
 }
 
 type MutationResolver interface {
-	CreateTodo(ctx context.Context, input models.NewTodo) (*models.Todo, error)
+	CreateWorkshop(ctx context.Context, input models.NewWorkshop) (*models.Workshop, error)
 }
 type QueryResolver interface {
-	Todos(ctx context.Context) ([]*models.Todo, error)
+	Workshops(ctx context.Context) ([]*models.Workshop, error)
 }
 
 type executableSchema struct {
@@ -86,66 +96,108 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	_ = ec
 	switch typeName + "." + field {
 
-	case "Mutation.createTodo":
-		if e.complexity.Mutation.CreateTodo == nil {
+	case "Event.id":
+		if e.complexity.Event.ID == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_createTodo_args(context.TODO(), rawArgs)
+		return e.complexity.Event.ID(childComplexity), true
+
+	case "Mutation.createWorkshop":
+		if e.complexity.Mutation.CreateWorkshop == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createWorkshop_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateTodo(childComplexity, args["input"].(models.NewTodo)), true
+		return e.complexity.Mutation.CreateWorkshop(childComplexity, args["input"].(models.NewWorkshop)), true
 
-	case "Query.todos":
-		if e.complexity.Query.Todos == nil {
+	case "Query.workshops":
+		if e.complexity.Query.Workshops == nil {
 			break
 		}
 
-		return e.complexity.Query.Todos(childComplexity), true
+		return e.complexity.Query.Workshops(childComplexity), true
 
-	case "Todo.done":
-		if e.complexity.Todo.Done == nil {
+	case "Workshop.Ends":
+		if e.complexity.Workshop.Ends == nil {
 			break
 		}
 
-		return e.complexity.Todo.Done(childComplexity), true
+		return e.complexity.Workshop.Ends(childComplexity), true
 
-	case "Todo.id":
-		if e.complexity.Todo.ID == nil {
+	case "Workshop.Event":
+		if e.complexity.Workshop.Event == nil {
 			break
 		}
 
-		return e.complexity.Todo.ID(childComplexity), true
+		return e.complexity.Workshop.Event(childComplexity), true
 
-	case "Todo.text":
-		if e.complexity.Todo.Text == nil {
+	case "Workshop.id":
+		if e.complexity.Workshop.ID == nil {
 			break
 		}
 
-		return e.complexity.Todo.Text(childComplexity), true
+		return e.complexity.Workshop.ID(childComplexity), true
 
-	case "Todo.user":
-		if e.complexity.Todo.User == nil {
+	case "Workshop.instance":
+		if e.complexity.Workshop.Instance == nil {
 			break
 		}
 
-		return e.complexity.Todo.User(childComplexity), true
+		return e.complexity.Workshop.Instance(childComplexity), true
 
-	case "User.id":
-		if e.complexity.User.ID == nil {
+	case "Workshop.Starts":
+		if e.complexity.Workshop.Starts == nil {
 			break
 		}
 
-		return e.complexity.User.ID(childComplexity), true
+		return e.complexity.Workshop.Starts(childComplexity), true
 
-	case "User.name":
-		if e.complexity.User.Name == nil {
+	case "Workshop.WorkshopInfo":
+		if e.complexity.Workshop.WorkshopInfo == nil {
 			break
 		}
 
-		return e.complexity.User.Name(childComplexity), true
+		return e.complexity.Workshop.WorkshopInfo(childComplexity), true
+
+	case "WorkshopInfo.Couples":
+		if e.complexity.WorkshopInfo.Couples == nil {
+			break
+		}
+
+		return e.complexity.WorkshopInfo.Couples(childComplexity), true
+
+	case "WorkshopInfo.LocationName":
+		if e.complexity.WorkshopInfo.LocationName == nil {
+			break
+		}
+
+		return e.complexity.WorkshopInfo.LocationName(childComplexity), true
+
+	case "WorkshopInfo.LocationURL":
+		if e.complexity.WorkshopInfo.LocationURL == nil {
+			break
+		}
+
+		return e.complexity.WorkshopInfo.LocationURL(childComplexity), true
+
+	case "WorkshopInfo.Slug":
+		if e.complexity.WorkshopInfo.Slug == nil {
+			break
+		}
+
+		return e.complexity.WorkshopInfo.Slug(childComplexity), true
+
+	case "WorkshopInfo.Title":
+		if e.complexity.WorkshopInfo.Title == nil {
+			break
+		}
+
+		return e.complexity.WorkshopInfo.Title(childComplexity), true
 
 	}
 	return 0, false
@@ -211,35 +263,57 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
-	{Name: "pkg/graph/schema.graphqls", Input: `# GraphQL schema example
+	{Name: "pkg/graph/webbff.gql", Input: `# GraphQL schema example
 #
 # https://gqlgen.com/getting-started/
 
 scalar Role
+scalar Time
 
-type Todo {
+type Event {
   id: ID!
-  text: String!
-  done: Boolean!
-  user: User!
 }
 
-type User {
+type Workshop {
   id: ID!
-  name: String!
+  instance: ID!
+  WorkshopInfo: WorkshopInfo!
+  Starts: Time!
+  Ends: Time!
+  Event: Event!
+}
+
+type WorkshopInfo {
+  Title: String!
+  Slug: String!
+  LocationName: String!
+  LocationURL: String!
+  Couples: Boolean!
+}
+
+input WorkshopInfoInput {
+  Title: String!
+  Slug: String!
+  LocationName: String!
+  LocationURL: String!
+  Couples: Boolean!
+}
+
+input NewWorkshop {
+  id: ID!
+  instance: ID!
+  WorkshopInfo: WorkshopInfoInput!
+  Starts: Time!
+  Ends: Time!
+  EventID: ID!
 }
 
 type Query {
-  todos: [Todo!]!
-}
-
-input NewTodo {
-  text: String!
-  userId: String!
+  workshops: [Workshop!]!
 }
 
 type Mutation {
-  createTodo(input: NewTodo!): Todo!
+  createWorkshop(input: NewWorkshop!): Workshop!
 }
 `, BuiltIn: false},
 }
@@ -249,13 +323,13 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // region    ***************************** args.gotpl *****************************
 
-func (ec *executionContext) field_Mutation_createTodo_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_createWorkshop_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 models.NewTodo
+	var arg0 models.NewWorkshop
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNNewTodo2githubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐNewTodo(ctx, tmp)
+		arg0, err = ec.unmarshalNNewWorkshop2githubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐNewWorkshop(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -317,7 +391,42 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 
 // region    **************************** field.gotpl *****************************
 
-func (ec *executionContext) _Mutation_createTodo(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Event_id(ctx context.Context, field graphql.CollectedField, obj *models.Event) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Event",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_createWorkshop(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -334,7 +443,7 @@ func (ec *executionContext) _Mutation_createTodo(ctx context.Context, field grap
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_createTodo_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_createWorkshop_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -342,7 +451,7 @@ func (ec *executionContext) _Mutation_createTodo(ctx context.Context, field grap
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateTodo(rctx, args["input"].(models.NewTodo))
+		return ec.resolvers.Mutation().CreateWorkshop(rctx, args["input"].(models.NewWorkshop))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -354,12 +463,12 @@ func (ec *executionContext) _Mutation_createTodo(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*models.Todo)
+	res := resTmp.(*models.Workshop)
 	fc.Result = res
-	return ec.marshalNTodo2ᚖgithubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐTodo(ctx, field.Selections, res)
+	return ec.marshalNWorkshop2ᚖgithubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐWorkshop(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Query_todos(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Query_workshops(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -377,7 +486,7 @@ func (ec *executionContext) _Query_todos(ctx context.Context, field graphql.Coll
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Todos(rctx)
+		return ec.resolvers.Query().Workshops(rctx)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -389,9 +498,9 @@ func (ec *executionContext) _Query_todos(ctx context.Context, field graphql.Coll
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*models.Todo)
+	res := resTmp.([]*models.Workshop)
 	fc.Result = res
-	return ec.marshalNTodo2ᚕᚖgithubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐTodoᚄ(ctx, field.Selections, res)
+	return ec.marshalNWorkshop2ᚕᚖgithubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐWorkshopᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -465,7 +574,7 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 	return ec.marshalO__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Todo_id(ctx context.Context, field graphql.CollectedField, obj *models.Todo) (ret graphql.Marshaler) {
+func (ec *executionContext) _Workshop_id(ctx context.Context, field graphql.CollectedField, obj *models.Workshop) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -473,7 +582,7 @@ func (ec *executionContext) _Todo_id(ctx context.Context, field graphql.Collecte
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:     "Todo",
+		Object:     "Workshop",
 		Field:      field,
 		Args:       nil,
 		IsMethod:   false,
@@ -500,7 +609,7 @@ func (ec *executionContext) _Todo_id(ctx context.Context, field graphql.Collecte
 	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Todo_text(ctx context.Context, field graphql.CollectedField, obj *models.Todo) (ret graphql.Marshaler) {
+func (ec *executionContext) _Workshop_instance(ctx context.Context, field graphql.CollectedField, obj *models.Workshop) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -508,7 +617,7 @@ func (ec *executionContext) _Todo_text(ctx context.Context, field graphql.Collec
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:     "Todo",
+		Object:     "Workshop",
 		Field:      field,
 		Args:       nil,
 		IsMethod:   false,
@@ -518,7 +627,182 @@ func (ec *executionContext) _Todo_text(ctx context.Context, field graphql.Collec
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Text, nil
+		return obj.Instance, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Workshop_WorkshopInfo(ctx context.Context, field graphql.CollectedField, obj *models.Workshop) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Workshop",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.WorkshopInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.WorkshopInfo)
+	fc.Result = res
+	return ec.marshalNWorkshopInfo2ᚖgithubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐWorkshopInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Workshop_Starts(ctx context.Context, field graphql.CollectedField, obj *models.Workshop) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Workshop",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Starts, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Workshop_Ends(ctx context.Context, field graphql.CollectedField, obj *models.Workshop) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Workshop",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Ends, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Workshop_Event(ctx context.Context, field graphql.CollectedField, obj *models.Workshop) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Workshop",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Event, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Event)
+	fc.Result = res
+	return ec.marshalNEvent2ᚖgithubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐEvent(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _WorkshopInfo_Title(ctx context.Context, field graphql.CollectedField, obj *models.WorkshopInfo) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "WorkshopInfo",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Title, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -535,7 +819,7 @@ func (ec *executionContext) _Todo_text(ctx context.Context, field graphql.Collec
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Todo_done(ctx context.Context, field graphql.CollectedField, obj *models.Todo) (ret graphql.Marshaler) {
+func (ec *executionContext) _WorkshopInfo_Slug(ctx context.Context, field graphql.CollectedField, obj *models.WorkshopInfo) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -543,7 +827,7 @@ func (ec *executionContext) _Todo_done(ctx context.Context, field graphql.Collec
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:     "Todo",
+		Object:     "WorkshopInfo",
 		Field:      field,
 		Args:       nil,
 		IsMethod:   false,
@@ -553,7 +837,112 @@ func (ec *executionContext) _Todo_done(ctx context.Context, field graphql.Collec
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Done, nil
+		return obj.Slug, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _WorkshopInfo_LocationName(ctx context.Context, field graphql.CollectedField, obj *models.WorkshopInfo) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "WorkshopInfo",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LocationName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _WorkshopInfo_LocationURL(ctx context.Context, field graphql.CollectedField, obj *models.WorkshopInfo) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "WorkshopInfo",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LocationURL, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _WorkshopInfo_Couples(ctx context.Context, field graphql.CollectedField, obj *models.WorkshopInfo) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "WorkshopInfo",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Couples, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -568,111 +957,6 @@ func (ec *executionContext) _Todo_done(ctx context.Context, field graphql.Collec
 	res := resTmp.(bool)
 	fc.Result = res
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Todo_user(ctx context.Context, field graphql.CollectedField, obj *models.Todo) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Todo",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.User, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*models.User)
-	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐUser(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _User_id(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "User",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _User_name(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "User",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
@@ -1797,8 +2081,8 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    **************************** input.gotpl *****************************
 
-func (ec *executionContext) unmarshalInputNewTodo(ctx context.Context, obj interface{}) (models.NewTodo, error) {
-	var it models.NewTodo
+func (ec *executionContext) unmarshalInputNewWorkshop(ctx context.Context, obj interface{}) (models.NewWorkshop, error) {
+	var it models.NewWorkshop
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -1806,19 +2090,106 @@ func (ec *executionContext) unmarshalInputNewTodo(ctx context.Context, obj inter
 
 	for k, v := range asMap {
 		switch k {
-		case "text":
+		case "id":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
-			it.Text, err = ec.unmarshalNString2string(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			it.ID, err = ec.unmarshalNID2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
-		case "userId":
+		case "instance":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
-			it.UserID, err = ec.unmarshalNString2string(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("instance"))
+			it.Instance, err = ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "WorkshopInfo":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("WorkshopInfo"))
+			it.WorkshopInfo, err = ec.unmarshalNWorkshopInfoInput2ᚖgithubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐWorkshopInfoInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "Starts":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Starts"))
+			it.Starts, err = ec.unmarshalNTime2timeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "Ends":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Ends"))
+			it.Ends, err = ec.unmarshalNTime2timeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "EventID":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("EventID"))
+			it.EventID, err = ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputWorkshopInfoInput(ctx context.Context, obj interface{}) (models.WorkshopInfoInput, error) {
+	var it models.WorkshopInfoInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "Title":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Title"))
+			it.Title, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "Slug":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Slug"))
+			it.Slug, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "LocationName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("LocationName"))
+			it.LocationName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "LocationURL":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("LocationURL"))
+			it.LocationURL, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "Couples":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Couples"))
+			it.Couples, err = ec.unmarshalNBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -1836,6 +2207,33 @@ func (ec *executionContext) unmarshalInputNewTodo(ctx context.Context, obj inter
 
 // region    **************************** object.gotpl ****************************
 
+var eventImplementors = []string{"Event"}
+
+func (ec *executionContext) _Event(ctx context.Context, sel ast.SelectionSet, obj *models.Event) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, eventImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Event")
+		case "id":
+			out.Values[i] = ec._Event_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var mutationImplementors = []string{"Mutation"}
 
 func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -1851,8 +2249,8 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Mutation")
-		case "createTodo":
-			out.Values[i] = ec._Mutation_createTodo(ctx, field)
+		case "createWorkshop":
+			out.Values[i] = ec._Mutation_createWorkshop(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -1882,7 +2280,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
-		case "todos":
+		case "workshops":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
 				defer func() {
@@ -1890,7 +2288,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_todos(ctx, field)
+				res = ec._Query_workshops(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -1911,34 +2309,44 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 	return out
 }
 
-var todoImplementors = []string{"Todo"}
+var workshopImplementors = []string{"Workshop"}
 
-func (ec *executionContext) _Todo(ctx context.Context, sel ast.SelectionSet, obj *models.Todo) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, todoImplementors)
+func (ec *executionContext) _Workshop(ctx context.Context, sel ast.SelectionSet, obj *models.Workshop) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, workshopImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("Todo")
+			out.Values[i] = graphql.MarshalString("Workshop")
 		case "id":
-			out.Values[i] = ec._Todo_id(ctx, field, obj)
+			out.Values[i] = ec._Workshop_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "text":
-			out.Values[i] = ec._Todo_text(ctx, field, obj)
+		case "instance":
+			out.Values[i] = ec._Workshop_instance(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "done":
-			out.Values[i] = ec._Todo_done(ctx, field, obj)
+		case "WorkshopInfo":
+			out.Values[i] = ec._Workshop_WorkshopInfo(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "user":
-			out.Values[i] = ec._Todo_user(ctx, field, obj)
+		case "Starts":
+			out.Values[i] = ec._Workshop_Starts(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "Ends":
+			out.Values[i] = ec._Workshop_Ends(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "Event":
+			out.Values[i] = ec._Workshop_Event(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -1953,24 +2361,39 @@ func (ec *executionContext) _Todo(ctx context.Context, sel ast.SelectionSet, obj
 	return out
 }
 
-var userImplementors = []string{"User"}
+var workshopInfoImplementors = []string{"WorkshopInfo"}
 
-func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj *models.User) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, userImplementors)
+func (ec *executionContext) _WorkshopInfo(ctx context.Context, sel ast.SelectionSet, obj *models.WorkshopInfo) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, workshopInfoImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("User")
-		case "id":
-			out.Values[i] = ec._User_id(ctx, field, obj)
+			out.Values[i] = graphql.MarshalString("WorkshopInfo")
+		case "Title":
+			out.Values[i] = ec._WorkshopInfo_Title(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "name":
-			out.Values[i] = ec._User_name(ctx, field, obj)
+		case "Slug":
+			out.Values[i] = ec._WorkshopInfo_Slug(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "LocationName":
+			out.Values[i] = ec._WorkshopInfo_LocationName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "LocationURL":
+			out.Values[i] = ec._WorkshopInfo_LocationURL(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "Couples":
+			out.Values[i] = ec._WorkshopInfo_Couples(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -2250,6 +2673,16 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) marshalNEvent2ᚖgithubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐEvent(ctx context.Context, sel ast.SelectionSet, v *models.Event) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Event(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -2265,8 +2698,8 @@ func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.Selec
 	return res
 }
 
-func (ec *executionContext) unmarshalNNewTodo2githubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐNewTodo(ctx context.Context, v interface{}) (models.NewTodo, error) {
-	res, err := ec.unmarshalInputNewTodo(ctx, v)
+func (ec *executionContext) unmarshalNNewWorkshop2githubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐNewWorkshop(ctx context.Context, v interface{}) (models.NewWorkshop, error) {
+	res, err := ec.unmarshalInputNewWorkshop(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -2285,11 +2718,26 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
-func (ec *executionContext) marshalNTodo2githubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐTodo(ctx context.Context, sel ast.SelectionSet, v models.Todo) graphql.Marshaler {
-	return ec._Todo(ctx, sel, &v)
+func (ec *executionContext) unmarshalNTime2timeᚐTime(ctx context.Context, v interface{}) (time.Time, error) {
+	res, err := graphql.UnmarshalTime(v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNTodo2ᚕᚖgithubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐTodoᚄ(ctx context.Context, sel ast.SelectionSet, v []*models.Todo) graphql.Marshaler {
+func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel ast.SelectionSet, v time.Time) graphql.Marshaler {
+	res := graphql.MarshalTime(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) marshalNWorkshop2githubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐWorkshop(ctx context.Context, sel ast.SelectionSet, v models.Workshop) graphql.Marshaler {
+	return ec._Workshop(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNWorkshop2ᚕᚖgithubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐWorkshopᚄ(ctx context.Context, sel ast.SelectionSet, v []*models.Workshop) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -2313,7 +2761,7 @@ func (ec *executionContext) marshalNTodo2ᚕᚖgithubᚗcomᚋsmartnuanceᚋsaas
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNTodo2ᚖgithubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐTodo(ctx, sel, v[i])
+			ret[i] = ec.marshalNWorkshop2ᚖgithubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐWorkshop(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -2333,24 +2781,29 @@ func (ec *executionContext) marshalNTodo2ᚕᚖgithubᚗcomᚋsmartnuanceᚋsaas
 	return ret
 }
 
-func (ec *executionContext) marshalNTodo2ᚖgithubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐTodo(ctx context.Context, sel ast.SelectionSet, v *models.Todo) graphql.Marshaler {
+func (ec *executionContext) marshalNWorkshop2ᚖgithubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐWorkshop(ctx context.Context, sel ast.SelectionSet, v *models.Workshop) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
 		}
 		return graphql.Null
 	}
-	return ec._Todo(ctx, sel, v)
+	return ec._Workshop(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐUser(ctx context.Context, sel ast.SelectionSet, v *models.User) graphql.Marshaler {
+func (ec *executionContext) marshalNWorkshopInfo2ᚖgithubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐWorkshopInfo(ctx context.Context, sel ast.SelectionSet, v *models.WorkshopInfo) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
 		}
 		return graphql.Null
 	}
-	return ec._User(ctx, sel, v)
+	return ec._WorkshopInfo(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNWorkshopInfoInput2ᚖgithubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐWorkshopInfoInput(ctx context.Context, v interface{}) (*models.WorkshopInfoInput, error) {
+	res, err := ec.unmarshalInputWorkshopInfoInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
