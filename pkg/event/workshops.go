@@ -1,54 +1,19 @@
 package event
 
 import (
-	"time"
-
 	"github.com/friendsofgo/errors"
 	m "github.com/smartnuance/saas-kit/pkg/event/dbmodels"
+	"github.com/smartnuance/saas-kit/pkg/graph/models"
 	"github.com/smartnuance/saas-kit/pkg/lib/paging"
 	"github.com/smartnuance/saas-kit/pkg/lib/roles"
 
 	"github.com/gin-gonic/gin"
 )
 
-// CreateWorkshopData describes a workshop to be created
-type CreateWorkshopData struct {
-	ID         string `json:"id"`
-	InstanceID string `json:"instance"`
-	WorkshopInfo
-	// Starts must be provided as RFC 3339 strings
-	Starts time.Time `json:"starts"`
-	// Ends must be provided as RFC 3339 strings
-	Ends    *time.Time `json:"ends,omitempty"`
-	EventID string     `json:"eventID"`
-}
-
-// WorkshopData describes a returned workshop
-type WorkshopData struct {
-	ID string `json:"id"`
-	WorkshopInfo
-	// Starts must be provided as RFC 3339 strings
-	Starts time.Time `json:"starts"`
-	// Ends must be provided as RFC 3339 strings
-	Ends      *time.Time `json:"ends,omitempty"`
-	EventID   string     `json:"eventID"`
-	EventData EventData  `json:"event"`
-}
-
-// EventData describes an event
-type EventData struct {
-	InstanceID string `json:"instance"`
-	EventInfo
-	// Starts must be provided as RFC 3339 strings
-	Starts time.Time `json:"starts"`
-	// Ends must be provided as RFC 3339 strings
-	Ends *time.Time `json:"ends,omitempty"`
-}
-
 // WorkshopList describes the returned workshop list with paging.
 type WorkshopList struct {
-	Workshops []WorkshopData `json:"items"`
-	Paging    paging.Paging  `json:"paging"`
+	Workshops []models.Workshop `json:"items"`
+	Paging    paging.Paging     `json:"paging"`
 }
 
 func (s *Service) CreateWorkshop(ctx *gin.Context) (workshop *m.Workshop, err error) {
@@ -58,7 +23,7 @@ func (s *Service) CreateWorkshop(ctx *gin.Context) (workshop *m.Workshop, err er
 		return
 	}
 
-	var data CreateWorkshopData
+	var data models.WorkshopInput
 	err = ctx.ShouldBind(&data)
 	if err != nil {
 		err = errors.WithStack(err)
@@ -66,15 +31,15 @@ func (s *Service) CreateWorkshop(ctx *gin.Context) (workshop *m.Workshop, err er
 	}
 
 	// fallback to instance from context
-	if data.InstanceID == "" {
+	if data.Instance == "" {
 		// fallback to default instance from headers
-		data.InstanceID, err = roles.Instance(ctx)
+		data.Instance, err = roles.Instance(ctx)
 		if err != nil {
 			return
 		}
 	}
 
-	if !roles.CanActFor(ctx, data.InstanceID) {
+	if !roles.CanActFor(ctx, data.Instance) {
 		err = errors.WithStack(ErrUnauthorized)
 		return
 	}
@@ -82,12 +47,12 @@ func (s *Service) CreateWorkshop(ctx *gin.Context) (workshop *m.Workshop, err er
 	var event *m.Event
 	if data.EventID == "" {
 		// create event for this specific event
-		event, err = s.DBAPI.CreateEvent(ctx, &EventData{
-			InstanceID: data.InstanceID,
-			EventInfo: EventInfo{
-				Title:        data.Title,
-				LocationName: data.LocationName,
-				LocationURL:  data.LocationURL,
+		event, err = s.DBAPI.CreateEvent(ctx, &models.Event{
+			Instance: &models.Instance{ID: data.Instance},
+			EventInfo: &models.EventInfo{
+				Title:        data.WorkshopInfo.Title,
+				LocationName: data.WorkshopInfo.LocationName,
+				LocationURL:  data.WorkshopInfo.LocationURL,
 			},
 			// assume same start/end of workshop
 			Starts: data.Starts,

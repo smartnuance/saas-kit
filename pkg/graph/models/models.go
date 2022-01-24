@@ -7,39 +7,56 @@ import (
 )
 
 type Event struct {
-	ID string `json:"id"`
+	ID        string     `json:"id"`
+	Instance  *Instance  `json:"instance"`
+	EventInfo *EventInfo `json:"eventInfo"`
+	Starts    time.Time  `json:"starts"`
+	Ends      *time.Time `json:"ends"`
 }
 
-type NewWorkshop struct {
-	ID           string             `json:"id"`
-	Instance     string             `json:"instance"`
-	WorkshopInfo *WorkshopInfoInput `json:"WorkshopInfo"`
-	Starts       time.Time          `json:"Starts"`
-	Ends         time.Time          `json:"Ends"`
-	EventID      string             `json:"EventID"`
+type EventInfo struct {
+	Title        string `json:"title"`
+	Slug         string `json:"slug"`
+	LocationName string `json:"locationName"`
+	LocationURL  string `json:"locationURL"`
+}
+
+type Instance struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	URL  string `json:"URL"`
 }
 
 type Workshop struct {
 	ID           string        `json:"id"`
 	Instance     string        `json:"instance"`
-	WorkshopInfo *WorkshopInfo `json:"WorkshopInfo"`
-	Starts       time.Time     `json:"Starts"`
-	Ends         time.Time     `json:"Ends"`
-	Event        *Event        `json:"Event"`
+	WorkshopInfo *WorkshopInfo `json:"workshopInfo"`
+	Starts       time.Time     `json:"starts"`
+	Ends         *time.Time    `json:"ends"`
+	Event        *Event        `json:"event"`
 }
 
 type WorkshopInfo struct {
-	Title        string `json:"Title"`
-	Slug         string `json:"Slug"`
-	LocationName string `json:"LocationName"`
-	LocationURL  string `json:"LocationURL"`
-	Couples      bool   `json:"Couples"`
+	Title        string `json:"title"`
+	Slug         string `json:"slug"`
+	LocationName string `json:"locationName"`
+	LocationURL  string `json:"locationURL"`
+	Couples      bool   `json:"couples"`
 }
 
 type WorkshopInfoInput struct {
-	Title        string `json:"Title"`
-	Slug         string `json:"Slug"`
-	LocationName string `json:"LocationName"`
-	LocationURL  string `json:"LocationURL"`
-	Couples      bool   `json:"Couples"`
+	Title        string `json:"title"`
+	Slug         string `json:"slug"`
+	LocationName string `json:"locationName"`
+	LocationURL  string `json:"locationURL"`
+	Couples      bool   `json:"couples"`
+}
+
+type WorkshopInput struct {
+	ID           string             `json:"id"`
+	Instance     string             `json:"instance"`
+	WorkshopInfo *WorkshopInfoInput `json:"workshopInfo"`
+	Starts       time.Time          `json:"starts"`
+	Ends         *time.Time         `json:"ends"`
+	EventID      string             `json:"eventID"`
 }

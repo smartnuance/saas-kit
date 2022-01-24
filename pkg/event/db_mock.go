@@ -11,6 +11,7 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	dbmodels "github.com/smartnuance/saas-kit/pkg/event/dbmodels"
+	models "github.com/smartnuance/saas-kit/pkg/graph/models"
 	paging "github.com/smartnuance/saas-kit/pkg/lib/paging"
 )
 
@@ -67,7 +68,7 @@ func (mr *MockDBAPIMockRecorder) Commit(arg0 interface{}) *gomock.Call {
 }
 
 // CreateEvent mocks base method.
-func (m *MockDBAPI) CreateEvent(arg0 context.Context, arg1 *EventData) (*dbmodels.Event, error) {
+func (m *MockDBAPI) CreateEvent(arg0 context.Context, arg1 *models.Event) (*dbmodels.Event, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateEvent", arg0, arg1)
 	ret0, _ := ret[0].(*dbmodels.Event)
@@ -82,7 +83,7 @@ func (mr *MockDBAPIMockRecorder) CreateEvent(arg0, arg1 interface{}) *gomock.Cal
 }
 
 // CreateWorkshop mocks base method.
-func (m *MockDBAPI) CreateWorkshop(arg0 context.Context, arg1 *CreateWorkshopData) (*dbmodels.Workshop, error) {
+func (m *MockDBAPI) CreateWorkshop(arg0 context.Context, arg1 *models.WorkshopInput) (*dbmodels.Workshop, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateWorkshop", arg0, arg1)
 	ret0, _ := ret[0].(*dbmodels.Workshop)

@@ -45,11 +45,28 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Event struct {
-		ID func(childComplexity int) int
+		Ends      func(childComplexity int) int
+		EventInfo func(childComplexity int) int
+		ID        func(childComplexity int) int
+		Instance  func(childComplexity int) int
+		Starts    func(childComplexity int) int
+	}
+
+	EventInfo struct {
+		LocationName func(childComplexity int) int
+		LocationURL  func(childComplexity int) int
+		Slug         func(childComplexity int) int
+		Title        func(childComplexity int) int
+	}
+
+	Instance struct {
+		ID   func(childComplexity int) int
+		Name func(childComplexity int) int
+		URL  func(childComplexity int) int
 	}
 
 	Mutation struct {
-		CreateWorkshop func(childComplexity int, input models.NewWorkshop) int
+		CreateWorkshop func(childComplexity int, input models.WorkshopInput) int
 	}
 
 	Query struct {
@@ -75,10 +92,10 @@ type ComplexityRoot struct {
 }
 
 type MutationResolver interface {
-	CreateWorkshop(ctx context.Context, input models.NewWorkshop) (*models.Workshop, error)
+	CreateWorkshop(ctx context.Context, input models.WorkshopInput) (*models.Workshop, error)
 }
 type QueryResolver interface {
-	Workshops(ctx context.Context) ([]*models.Workshop, error)
+	Workshops(ctx context.Context) ([]models.Workshop, error)
 }
 
 type executableSchema struct {
@@ -96,12 +113,89 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	_ = ec
 	switch typeName + "." + field {
 
+	case "Event.ends":
+		if e.complexity.Event.Ends == nil {
+			break
+		}
+
+		return e.complexity.Event.Ends(childComplexity), true
+
+	case "Event.eventInfo":
+		if e.complexity.Event.EventInfo == nil {
+			break
+		}
+
+		return e.complexity.Event.EventInfo(childComplexity), true
+
 	case "Event.id":
 		if e.complexity.Event.ID == nil {
 			break
 		}
 
 		return e.complexity.Event.ID(childComplexity), true
+
+	case "Event.instance":
+		if e.complexity.Event.Instance == nil {
+			break
+		}
+
+		return e.complexity.Event.Instance(childComplexity), true
+
+	case "Event.starts":
+		if e.complexity.Event.Starts == nil {
+			break
+		}
+
+		return e.complexity.Event.Starts(childComplexity), true
+
+	case "EventInfo.locationName":
+		if e.complexity.EventInfo.LocationName == nil {
+			break
+		}
+
+		return e.complexity.EventInfo.LocationName(childComplexity), true
+
+	case "EventInfo.locationURL":
+		if e.complexity.EventInfo.LocationURL == nil {
+			break
+		}
+
+		return e.complexity.EventInfo.LocationURL(childComplexity), true
+
+	case "EventInfo.slug":
+		if e.complexity.EventInfo.Slug == nil {
+			break
+		}
+
+		return e.complexity.EventInfo.Slug(childComplexity), true
+
+	case "EventInfo.title":
+		if e.complexity.EventInfo.Title == nil {
+			break
+		}
+
+		return e.complexity.EventInfo.Title(childComplexity), true
+
+	case "Instance.id":
+		if e.complexity.Instance.ID == nil {
+			break
+		}
+
+		return e.complexity.Instance.ID(childComplexity), true
+
+	case "Instance.name":
+		if e.complexity.Instance.Name == nil {
+			break
+		}
+
+		return e.complexity.Instance.Name(childComplexity), true
+
+	case "Instance.URL":
+		if e.complexity.Instance.URL == nil {
+			break
+		}
+
+		return e.complexity.Instance.URL(childComplexity), true
 
 	case "Mutation.createWorkshop":
 		if e.complexity.Mutation.CreateWorkshop == nil {
@@ -113,7 +207,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateWorkshop(childComplexity, args["input"].(models.NewWorkshop)), true
+		return e.complexity.Mutation.CreateWorkshop(childComplexity, args["input"].(models.WorkshopInput)), true
 
 	case "Query.workshops":
 		if e.complexity.Query.Workshops == nil {
@@ -122,14 +216,14 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Workshops(childComplexity), true
 
-	case "Workshop.Ends":
+	case "Workshop.ends":
 		if e.complexity.Workshop.Ends == nil {
 			break
 		}
 
 		return e.complexity.Workshop.Ends(childComplexity), true
 
-	case "Workshop.Event":
+	case "Workshop.event":
 		if e.complexity.Workshop.Event == nil {
 			break
 		}
@@ -150,49 +244,49 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Workshop.Instance(childComplexity), true
 
-	case "Workshop.Starts":
+	case "Workshop.starts":
 		if e.complexity.Workshop.Starts == nil {
 			break
 		}
 
 		return e.complexity.Workshop.Starts(childComplexity), true
 
-	case "Workshop.WorkshopInfo":
+	case "Workshop.workshopInfo":
 		if e.complexity.Workshop.WorkshopInfo == nil {
 			break
 		}
 
 		return e.complexity.Workshop.WorkshopInfo(childComplexity), true
 
-	case "WorkshopInfo.Couples":
+	case "WorkshopInfo.couples":
 		if e.complexity.WorkshopInfo.Couples == nil {
 			break
 		}
 
 		return e.complexity.WorkshopInfo.Couples(childComplexity), true
 
-	case "WorkshopInfo.LocationName":
+	case "WorkshopInfo.locationName":
 		if e.complexity.WorkshopInfo.LocationName == nil {
 			break
 		}
 
 		return e.complexity.WorkshopInfo.LocationName(childComplexity), true
 
-	case "WorkshopInfo.LocationURL":
+	case "WorkshopInfo.locationURL":
 		if e.complexity.WorkshopInfo.LocationURL == nil {
 			break
 		}
 
 		return e.complexity.WorkshopInfo.LocationURL(childComplexity), true
 
-	case "WorkshopInfo.Slug":
+	case "WorkshopInfo.slug":
 		if e.complexity.WorkshopInfo.Slug == nil {
 			break
 		}
 
 		return e.complexity.WorkshopInfo.Slug(childComplexity), true
 
-	case "WorkshopInfo.Title":
+	case "WorkshopInfo.title":
 		if e.complexity.WorkshopInfo.Title == nil {
 			break
 		}
@@ -270,42 +364,59 @@ var sources = []*ast.Source{
 scalar Role
 scalar Time
 
+type Instance {
+  id: ID!
+  name: String!
+  URL: String!
+}
+
 type Event {
   id: ID!
+  instance: Instance!
+  eventInfo: EventInfo!
+  starts: Time!
+  ends: Time
+}
+
+type EventInfo {
+  title: String!
+  slug: String!
+  locationName: String!
+  locationURL: String!
 }
 
 type Workshop {
   id: ID!
   instance: ID!
-  WorkshopInfo: WorkshopInfo!
-  Starts: Time!
-  Ends: Time!
-  Event: Event!
+  workshopInfo: WorkshopInfo!
+  starts: Time!
+  ends: Time
+  event: Event!
 }
 
 type WorkshopInfo {
-  Title: String!
-  Slug: String!
-  LocationName: String!
-  LocationURL: String!
-  Couples: Boolean!
+  title: String!
+  slug: String!
+  locationName: String!
+  locationURL: String!
+  couples: Boolean!
 }
 
 input WorkshopInfoInput {
-  Title: String!
-  Slug: String!
-  LocationName: String!
-  LocationURL: String!
-  Couples: Boolean!
+  title: String!
+  slug: String!
+  locationName: String!
+  locationURL: String!
+  couples: Boolean!
 }
 
-input NewWorkshop {
+input WorkshopInput {
   id: ID!
   instance: ID!
-  WorkshopInfo: WorkshopInfoInput!
-  Starts: Time!
-  Ends: Time!
-  EventID: ID!
+  workshopInfo: WorkshopInfoInput!
+  starts: Time!
+  ends: Time
+  eventID: ID!
 }
 
 type Query {
@@ -313,7 +424,7 @@ type Query {
 }
 
 type Mutation {
-  createWorkshop(input: NewWorkshop!): Workshop!
+  createWorkshop(input: WorkshopInput!): Workshop!
 }
 `, BuiltIn: false},
 }
@@ -326,10 +437,10 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 func (ec *executionContext) field_Mutation_createWorkshop_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 models.NewWorkshop
+	var arg0 models.WorkshopInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNNewWorkshop2githubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐNewWorkshop(ctx, tmp)
+		arg0, err = ec.unmarshalNWorkshopInput2githubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐWorkshopInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -426,6 +537,388 @@ func (ec *executionContext) _Event_id(ctx context.Context, field graphql.Collect
 	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Event_instance(ctx context.Context, field graphql.CollectedField, obj *models.Event) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Event",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Instance, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Instance)
+	fc.Result = res
+	return ec.marshalNInstance2ᚖgithubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐInstance(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Event_eventInfo(ctx context.Context, field graphql.CollectedField, obj *models.Event) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Event",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.EventInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.EventInfo)
+	fc.Result = res
+	return ec.marshalNEventInfo2ᚖgithubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐEventInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Event_starts(ctx context.Context, field graphql.CollectedField, obj *models.Event) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Event",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Starts, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Event_ends(ctx context.Context, field graphql.CollectedField, obj *models.Event) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Event",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Ends, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*time.Time)
+	fc.Result = res
+	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _EventInfo_title(ctx context.Context, field graphql.CollectedField, obj *models.EventInfo) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "EventInfo",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Title, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _EventInfo_slug(ctx context.Context, field graphql.CollectedField, obj *models.EventInfo) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "EventInfo",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Slug, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _EventInfo_locationName(ctx context.Context, field graphql.CollectedField, obj *models.EventInfo) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "EventInfo",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LocationName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _EventInfo_locationURL(ctx context.Context, field graphql.CollectedField, obj *models.EventInfo) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "EventInfo",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LocationURL, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Instance_id(ctx context.Context, field graphql.CollectedField, obj *models.Instance) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Instance",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Instance_name(ctx context.Context, field graphql.CollectedField, obj *models.Instance) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Instance",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Instance_URL(ctx context.Context, field graphql.CollectedField, obj *models.Instance) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Instance",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.URL, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Mutation_createWorkshop(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -451,7 +944,7 @@ func (ec *executionContext) _Mutation_createWorkshop(ctx context.Context, field 
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateWorkshop(rctx, args["input"].(models.NewWorkshop))
+		return ec.resolvers.Mutation().CreateWorkshop(rctx, args["input"].(models.WorkshopInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -498,9 +991,9 @@ func (ec *executionContext) _Query_workshops(ctx context.Context, field graphql.
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*models.Workshop)
+	res := resTmp.([]models.Workshop)
 	fc.Result = res
-	return ec.marshalNWorkshop2ᚕᚖgithubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐWorkshopᚄ(ctx, field.Selections, res)
+	return ec.marshalNWorkshop2ᚕgithubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐWorkshopᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -644,7 +1137,7 @@ func (ec *executionContext) _Workshop_instance(ctx context.Context, field graphq
 	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Workshop_WorkshopInfo(ctx context.Context, field graphql.CollectedField, obj *models.Workshop) (ret graphql.Marshaler) {
+func (ec *executionContext) _Workshop_workshopInfo(ctx context.Context, field graphql.CollectedField, obj *models.Workshop) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -679,7 +1172,7 @@ func (ec *executionContext) _Workshop_WorkshopInfo(ctx context.Context, field gr
 	return ec.marshalNWorkshopInfo2ᚖgithubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐWorkshopInfo(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Workshop_Starts(ctx context.Context, field graphql.CollectedField, obj *models.Workshop) (ret graphql.Marshaler) {
+func (ec *executionContext) _Workshop_starts(ctx context.Context, field graphql.CollectedField, obj *models.Workshop) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -714,7 +1207,7 @@ func (ec *executionContext) _Workshop_Starts(ctx context.Context, field graphql.
 	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Workshop_Ends(ctx context.Context, field graphql.CollectedField, obj *models.Workshop) (ret graphql.Marshaler) {
+func (ec *executionContext) _Workshop_ends(ctx context.Context, field graphql.CollectedField, obj *models.Workshop) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -739,17 +1232,14 @@ func (ec *executionContext) _Workshop_Ends(ctx context.Context, field graphql.Co
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(time.Time)
+	res := resTmp.(*time.Time)
 	fc.Result = res
-	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Workshop_Event(ctx context.Context, field graphql.CollectedField, obj *models.Workshop) (ret graphql.Marshaler) {
+func (ec *executionContext) _Workshop_event(ctx context.Context, field graphql.CollectedField, obj *models.Workshop) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -784,7 +1274,7 @@ func (ec *executionContext) _Workshop_Event(ctx context.Context, field graphql.C
 	return ec.marshalNEvent2ᚖgithubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐEvent(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _WorkshopInfo_Title(ctx context.Context, field graphql.CollectedField, obj *models.WorkshopInfo) (ret graphql.Marshaler) {
+func (ec *executionContext) _WorkshopInfo_title(ctx context.Context, field graphql.CollectedField, obj *models.WorkshopInfo) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -819,7 +1309,7 @@ func (ec *executionContext) _WorkshopInfo_Title(ctx context.Context, field graph
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _WorkshopInfo_Slug(ctx context.Context, field graphql.CollectedField, obj *models.WorkshopInfo) (ret graphql.Marshaler) {
+func (ec *executionContext) _WorkshopInfo_slug(ctx context.Context, field graphql.CollectedField, obj *models.WorkshopInfo) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -854,7 +1344,7 @@ func (ec *executionContext) _WorkshopInfo_Slug(ctx context.Context, field graphq
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _WorkshopInfo_LocationName(ctx context.Context, field graphql.CollectedField, obj *models.WorkshopInfo) (ret graphql.Marshaler) {
+func (ec *executionContext) _WorkshopInfo_locationName(ctx context.Context, field graphql.CollectedField, obj *models.WorkshopInfo) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -889,7 +1379,7 @@ func (ec *executionContext) _WorkshopInfo_LocationName(ctx context.Context, fiel
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _WorkshopInfo_LocationURL(ctx context.Context, field graphql.CollectedField, obj *models.WorkshopInfo) (ret graphql.Marshaler) {
+func (ec *executionContext) _WorkshopInfo_locationURL(ctx context.Context, field graphql.CollectedField, obj *models.WorkshopInfo) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -924,7 +1414,7 @@ func (ec *executionContext) _WorkshopInfo_LocationURL(ctx context.Context, field
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _WorkshopInfo_Couples(ctx context.Context, field graphql.CollectedField, obj *models.WorkshopInfo) (ret graphql.Marshaler) {
+func (ec *executionContext) _WorkshopInfo_couples(ctx context.Context, field graphql.CollectedField, obj *models.WorkshopInfo) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -2081,8 +2571,63 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    **************************** input.gotpl *****************************
 
-func (ec *executionContext) unmarshalInputNewWorkshop(ctx context.Context, obj interface{}) (models.NewWorkshop, error) {
-	var it models.NewWorkshop
+func (ec *executionContext) unmarshalInputWorkshopInfoInput(ctx context.Context, obj interface{}) (models.WorkshopInfoInput, error) {
+	var it models.WorkshopInfoInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "title":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
+			it.Title, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "slug":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("slug"))
+			it.Slug, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "locationName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("locationName"))
+			it.LocationName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "locationURL":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("locationURL"))
+			it.LocationURL, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "couples":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("couples"))
+			it.Couples, err = ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputWorkshopInput(ctx context.Context, obj interface{}) (models.WorkshopInput, error) {
+	var it models.WorkshopInput
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -2106,90 +2651,35 @@ func (ec *executionContext) unmarshalInputNewWorkshop(ctx context.Context, obj i
 			if err != nil {
 				return it, err
 			}
-		case "WorkshopInfo":
+		case "workshopInfo":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("WorkshopInfo"))
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("workshopInfo"))
 			it.WorkshopInfo, err = ec.unmarshalNWorkshopInfoInput2ᚖgithubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐWorkshopInfoInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
-		case "Starts":
+		case "starts":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Starts"))
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("starts"))
 			it.Starts, err = ec.unmarshalNTime2timeᚐTime(ctx, v)
 			if err != nil {
 				return it, err
 			}
-		case "Ends":
+		case "ends":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Ends"))
-			it.Ends, err = ec.unmarshalNTime2timeᚐTime(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ends"))
+			it.Ends, err = ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
 			if err != nil {
 				return it, err
 			}
-		case "EventID":
+		case "eventID":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("EventID"))
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("eventID"))
 			it.EventID, err = ec.unmarshalNID2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputWorkshopInfoInput(ctx context.Context, obj interface{}) (models.WorkshopInfoInput, error) {
-	var it models.WorkshopInfoInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	for k, v := range asMap {
-		switch k {
-		case "Title":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Title"))
-			it.Title, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "Slug":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Slug"))
-			it.Slug, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "LocationName":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("LocationName"))
-			it.LocationName, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "LocationURL":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("LocationURL"))
-			it.LocationURL, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "Couples":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Couples"))
-			it.Couples, err = ec.unmarshalNBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -2220,6 +2710,102 @@ func (ec *executionContext) _Event(ctx context.Context, sel ast.SelectionSet, ob
 			out.Values[i] = graphql.MarshalString("Event")
 		case "id":
 			out.Values[i] = ec._Event_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "instance":
+			out.Values[i] = ec._Event_instance(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "eventInfo":
+			out.Values[i] = ec._Event_eventInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "starts":
+			out.Values[i] = ec._Event_starts(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "ends":
+			out.Values[i] = ec._Event_ends(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var eventInfoImplementors = []string{"EventInfo"}
+
+func (ec *executionContext) _EventInfo(ctx context.Context, sel ast.SelectionSet, obj *models.EventInfo) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, eventInfoImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EventInfo")
+		case "title":
+			out.Values[i] = ec._EventInfo_title(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "slug":
+			out.Values[i] = ec._EventInfo_slug(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "locationName":
+			out.Values[i] = ec._EventInfo_locationName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "locationURL":
+			out.Values[i] = ec._EventInfo_locationURL(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var instanceImplementors = []string{"Instance"}
+
+func (ec *executionContext) _Instance(ctx context.Context, sel ast.SelectionSet, obj *models.Instance) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, instanceImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Instance")
+		case "id":
+			out.Values[i] = ec._Instance_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "name":
+			out.Values[i] = ec._Instance_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "URL":
+			out.Values[i] = ec._Instance_URL(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -2330,23 +2916,20 @@ func (ec *executionContext) _Workshop(ctx context.Context, sel ast.SelectionSet,
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "WorkshopInfo":
-			out.Values[i] = ec._Workshop_WorkshopInfo(ctx, field, obj)
+		case "workshopInfo":
+			out.Values[i] = ec._Workshop_workshopInfo(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "Starts":
-			out.Values[i] = ec._Workshop_Starts(ctx, field, obj)
+		case "starts":
+			out.Values[i] = ec._Workshop_starts(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "Ends":
-			out.Values[i] = ec._Workshop_Ends(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "Event":
-			out.Values[i] = ec._Workshop_Event(ctx, field, obj)
+		case "ends":
+			out.Values[i] = ec._Workshop_ends(ctx, field, obj)
+		case "event":
+			out.Values[i] = ec._Workshop_event(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -2372,28 +2955,28 @@ func (ec *executionContext) _WorkshopInfo(ctx context.Context, sel ast.Selection
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("WorkshopInfo")
-		case "Title":
-			out.Values[i] = ec._WorkshopInfo_Title(ctx, field, obj)
+		case "title":
+			out.Values[i] = ec._WorkshopInfo_title(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "Slug":
-			out.Values[i] = ec._WorkshopInfo_Slug(ctx, field, obj)
+		case "slug":
+			out.Values[i] = ec._WorkshopInfo_slug(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "LocationName":
-			out.Values[i] = ec._WorkshopInfo_LocationName(ctx, field, obj)
+		case "locationName":
+			out.Values[i] = ec._WorkshopInfo_locationName(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "LocationURL":
-			out.Values[i] = ec._WorkshopInfo_LocationURL(ctx, field, obj)
+		case "locationURL":
+			out.Values[i] = ec._WorkshopInfo_locationURL(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "Couples":
-			out.Values[i] = ec._WorkshopInfo_Couples(ctx, field, obj)
+		case "couples":
+			out.Values[i] = ec._WorkshopInfo_couples(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -2683,6 +3266,16 @@ func (ec *executionContext) marshalNEvent2ᚖgithubᚗcomᚋsmartnuanceᚋsaas�
 	return ec._Event(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNEventInfo2ᚖgithubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐEventInfo(ctx context.Context, sel ast.SelectionSet, v *models.EventInfo) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._EventInfo(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -2698,9 +3291,14 @@ func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.Selec
 	return res
 }
 
-func (ec *executionContext) unmarshalNNewWorkshop2githubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐNewWorkshop(ctx context.Context, v interface{}) (models.NewWorkshop, error) {
-	res, err := ec.unmarshalInputNewWorkshop(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
+func (ec *executionContext) marshalNInstance2ᚖgithubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐInstance(ctx context.Context, sel ast.SelectionSet, v *models.Instance) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Instance(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
@@ -2737,7 +3335,7 @@ func (ec *executionContext) marshalNWorkshop2githubᚗcomᚋsmartnuanceᚋsaas�
 	return ec._Workshop(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNWorkshop2ᚕᚖgithubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐWorkshopᚄ(ctx context.Context, sel ast.SelectionSet, v []*models.Workshop) graphql.Marshaler {
+func (ec *executionContext) marshalNWorkshop2ᚕgithubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐWorkshopᚄ(ctx context.Context, sel ast.SelectionSet, v []models.Workshop) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -2761,7 +3359,7 @@ func (ec *executionContext) marshalNWorkshop2ᚕᚖgithubᚗcomᚋsmartnuanceᚋ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNWorkshop2ᚖgithubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐWorkshop(ctx, sel, v[i])
+			ret[i] = ec.marshalNWorkshop2githubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐWorkshop(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -2804,6 +3402,11 @@ func (ec *executionContext) marshalNWorkshopInfo2ᚖgithubᚗcomᚋsmartnuance�
 func (ec *executionContext) unmarshalNWorkshopInfoInput2ᚖgithubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐWorkshopInfoInput(ctx context.Context, v interface{}) (*models.WorkshopInfoInput, error) {
 	res, err := ec.unmarshalInputWorkshopInfoInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNWorkshopInput2githubᚗcomᚋsmartnuanceᚋsaasᚑkitᚋpkgᚋgraphᚋmodelsᚐWorkshopInput(ctx context.Context, v interface{}) (models.WorkshopInput, error) {
+	res, err := ec.unmarshalInputWorkshopInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
@@ -3109,6 +3712,21 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 		return graphql.Null
 	}
 	return graphql.MarshalString(*v)
+}
+
+func (ec *executionContext) unmarshalOTime2ᚖtimeᚐTime(ctx context.Context, v interface{}) (*time.Time, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalTime(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOTime2ᚖtimeᚐTime(ctx context.Context, sel ast.SelectionSet, v *time.Time) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return graphql.MarshalTime(*v)
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {

@@ -5,42 +5,59 @@
 scalar Role
 scalar Time
 
+type Instance {
+  id: ID!
+  name: String!
+  URL: String!
+}
+
 type Event {
   id: ID!
+  instance: Instance!
+  eventInfo: EventInfo!
+  starts: Time!
+  ends: Time
+}
+
+type EventInfo {
+  title: String!
+  slug: String!
+  locationName: String!
+  locationURL: String!
 }
 
 type Workshop {
   id: ID!
   instance: ID!
-  WorkshopInfo: WorkshopInfo!
-  Starts: Time!
-  Ends: Time!
-  Event: Event!
+  workshopInfo: WorkshopInfo!
+  starts: Time!
+  ends: Time
+  event: Event!
 }
 
 type WorkshopInfo {
-  Title: String!
-  Slug: String!
-  LocationName: String!
-  LocationURL: String!
-  Couples: Boolean!
+  title: String!
+  slug: String!
+  locationName: String!
+  locationURL: String!
+  couples: Boolean!
 }
 
 input WorkshopInfoInput {
-  Title: String!
-  Slug: String!
-  LocationName: String!
-  LocationURL: String!
-  Couples: Boolean!
+  title: String!
+  slug: String!
+  locationName: String!
+  locationURL: String!
+  couples: Boolean!
 }
 
-input NewWorkshop {
+input WorkshopInput {
   id: ID!
   instance: ID!
-  WorkshopInfo: WorkshopInfoInput!
-  Starts: Time!
-  Ends: Time!
-  EventID: ID!
+  workshopInfo: WorkshopInfoInput!
+  starts: Time!
+  ends: Time
+  eventID: ID!
 }
 
 type Query {
@@ -48,5 +65,5 @@ type Query {
 }
 
 type Mutation {
-  createWorkshop(input: NewWorkshop!): Workshop!
+  createWorkshop(input: WorkshopInput!): Workshop!
 }

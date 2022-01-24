@@ -11,11 +11,11 @@ import (
 	"github.com/smartnuance/saas-kit/pkg/graph/queries"
 )
 
-func (r *mutationResolver) CreateWorkshop(ctx context.Context, input models.NewWorkshop) (*models.Workshop, error) {
+func (r *mutationResolver) CreateWorkshop(ctx context.Context, input models.WorkshopInput) (*models.Workshop, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) Workshops(ctx context.Context) ([]*models.Workshop, error) {
+func (r *queryResolver) Workshops(ctx context.Context) ([]models.Workshop, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 

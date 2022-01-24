@@ -59,9 +59,9 @@ func AuthorizeJWT(validationKey *rsa.PublicKey, issuer, audience string) gin.Han
 		}
 
 		// set default context from JWT attributes
-		ctx.Set(roles.UserKey, claims.Subject)      // acting subject (immutable)
-		ctx.Set(roles.InstanceKey, claims.Instance) // instance (switchable by super admins onld)
-		ctx.Set(roles.RoleKey, claims.Role)         // role (switchable if permission to)
+		ctx.Set(roles.UserKey, claims.Subject)          // acting subject (immutable)
+		ctx.Set(roles.InstanceKey, claims.Instance)     // instance (switchable by super admins onld)
+		ctx.Set(roles.RoleKey, roles.Role(claims.Role)) // role (switchable if permission to)
 
 		// order matters: first check if default JWT role allows for instance switch if header is present
 		switchInstance := ctx.GetHeader(roles.InstanceHeader)
