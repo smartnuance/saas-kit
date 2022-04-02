@@ -40,7 +40,7 @@ type Env struct {
 	modelInfoPath string
 }
 
-// Service offers the APIs of the authentication service.
+// Service offers the APIs of the event service.
 // This struct holds hierarchically structured state that is shared between requests.
 type Service struct {
 	Env

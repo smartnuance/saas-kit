@@ -5,18 +5,34 @@ package webbff
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
 
 	"github.com/smartnuance/saas-kit/pkg/graph/models"
 	"github.com/smartnuance/saas-kit/pkg/graph/queries"
+	"github.com/smartnuance/saas-kit/pkg/lib/roles"
 )
 
-func (r *mutationResolver) CreateWorkshop(ctx context.Context, input models.WorkshopInput) (*models.Workshop, error) {
+func (r *mutationResolver) CreateWorkshop(ctx context.Context, input models.WorkshopInput) (workshop *models.Workshop, err error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) Workshops(ctx context.Context) ([]models.Workshop, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *queryResolver) Workshops(ctx context.Context) (workshops []models.Workshop, err error) {
+	req, err := http.NewRequest("GET", "http://"+r.Service.eventServiceAddress+"/workshop/list", nil)
+	if err != nil {
+		return
+	}
+
+	req.Header.Add("Authorization", ctx.Value("Authorization").(string))
+	req.Header.Add(roles.RoleHeader, ctx.Value(roles.RoleKey).(string))
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+	err = json.NewDecoder(resp.Body).Decode(&workshops)
+	return
 }
 
 // Mutation returns queries.MutationResolver implementation.

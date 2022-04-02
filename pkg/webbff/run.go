@@ -28,7 +28,7 @@ type Env struct {
 	release             bool
 }
 
-// Service offers the APIs of the authentication service.
+// Service offers the APIs of the webff service.
 // This struct holds hierarchically structured state that is shared between requests.
 type Service struct {
 	Env
