@@ -10,12 +10,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// WorkshopList describes the returned workshop list with paging.
-type WorkshopList struct {
-	Workshops []models.Workshop `json:"items"`
-	Paging    paging.Paging     `json:"paging"`
-}
-
 func (s *Service) CreateWorkshop(ctx *gin.Context) (workshop *m.Workshop, err error) {
 	// Check permission
 	if !roles.CanActIn(ctx, roles.RoleEventOrganizer) {
@@ -76,7 +70,7 @@ func (s *Service) CreateWorkshop(ctx *gin.Context) (workshop *m.Workshop, err er
 	return
 }
 
-func (s *Service) ListWorkshops(ctx *gin.Context) (list WorkshopList, err error) {
+func (s *Service) ListWorkshops(ctx *gin.Context) (list models.WorkshopList, err error) {
 	// Check permission
 	if !roles.CanActIn(ctx, roles.RoleEventOrganizer) {
 		r, _ := roles.FromContext(ctx)

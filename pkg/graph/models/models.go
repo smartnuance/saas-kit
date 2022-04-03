@@ -21,10 +21,53 @@ type EventInfo struct {
 	LocationURL  string `json:"locationURL"`
 }
 
+// FirstSpec describes the first page of a collection of items.
+//
+// It's no more than a wrapped page size.
+type FirstSpec struct {
+	// The size (number of items) of the first page.
+	PageSize int `json:"pageSize"`
+}
+
+type FullSpec struct {
+	// Start of the a page idenfied by the first item's ID.
+	Start string `json:"start"`
+	// End of the a page idenfied by the last item's ID.
+	End string `json:"end"`
+	// The size (number of items) of a page.
+	PageSize int `json:"pageSize"`
+}
+
 type Instance struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
 	URL  string `json:"URL"`
+}
+
+// A NextSpec describes the next page of the current one.
+//
+// It does not explicitely identify the last item to be stable upon inserts.
+type NextSpec struct {
+	// Start of the next page idenfied by the last item's ID on the preceding page (usually equals to the current page).
+	Start string `json:"start"`
+	// The size (number of items) of a next page.
+	PageSize int `json:"pageSize"`
+}
+
+type Paging struct {
+	Prev *PreviousSpec `json:"prev"`
+	Cur  *FullSpec     `json:"cur"`
+	Next *NextSpec     `json:"next"`
+}
+
+// A PreviousSpec describes the previous page of the current one.
+//
+// It does not explicitely identify the first item to be stable upon inserts.
+type PreviousSpec struct {
+	// End of the previous page idenfied by the first item's ID on the successing page (usually equals to the current page).
+	End string `json:"end"`
+	// The size (number of items) of a previous page.
+	PageSize int `json:"pageSize"`
 }
 
 type Workshop struct {
@@ -59,4 +102,9 @@ type WorkshopInput struct {
 	Starts       time.Time          `json:"starts"`
 	Ends         *time.Time         `json:"ends"`
 	EventID      string             `json:"eventID"`
+}
+
+type WorkshopList struct {
+	Items  []Workshop `json:"items"`
+	Paging *Paging    `json:"paging"`
 }

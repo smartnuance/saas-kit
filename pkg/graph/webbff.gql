@@ -5,6 +5,71 @@
 scalar Role
 scalar Time
 
+"""
+FirstSpec describes the first page of a collection of items.
+
+It's no more than a wrapped page size.
+"""
+type FirstSpec {
+    """
+    The size (number of items) of the first page.
+    """
+    pageSize: Int!
+}
+
+"""
+A PreviousSpec describes the previous page of the current one.
+
+It does not explicitely identify the first item to be stable upon inserts.
+"""
+type PreviousSpec {
+    """
+    End of the previous page idenfied by the first item's ID on the successing page (usually equals to the current page).
+    """
+    end: String!
+    """
+    The size (number of items) of a previous page.
+    """
+    pageSize: Int!
+}
+
+"""
+A NextSpec describes the next page of the current one.
+
+It does not explicitely identify the last item to be stable upon inserts.
+"""
+type NextSpec {
+    """
+    Start of the next page idenfied by the last item's ID on the preceding page (usually equals to the current page).
+    """
+    start: String!
+    """
+    The size (number of items) of a next page.
+    """
+    pageSize: Int!
+}
+
+type FullSpec {
+    """
+    Start of the a page idenfied by the first item's ID.
+    """
+    start: String!
+    """
+    End of the a page idenfied by the last item's ID.
+    """
+    end: String!
+    """
+    The size (number of items) of a page.
+    """
+    pageSize: Int!
+}
+
+type Paging {
+    prev: PreviousSpec
+    cur: FullSpec
+    next: NextSpec
+}
+
 type Instance {
   id: ID!
   name: String!
@@ -60,8 +125,13 @@ input WorkshopInput {
   eventID: ID!
 }
 
+type WorkshopList {
+    items: [Workshop!]!
+    paging: Paging!
+}
+
 type Query {
-  workshops: [Workshop!]!
+  workshops: WorkshopList
 }
 
 type Mutation {

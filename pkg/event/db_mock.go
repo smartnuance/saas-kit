@@ -142,10 +142,10 @@ func (mr *MockDBAPIMockRecorder) GetWorkshop(arg0, arg1 interface{}) *gomock.Cal
 }
 
 // ListWorkshops mocks base method.
-func (m *MockDBAPI) ListWorkshops(arg0 context.Context, arg1 string, arg2 paging.Page) (WorkshopList, error) {
+func (m *MockDBAPI) ListWorkshops(arg0 context.Context, arg1 string, arg2 paging.Page) (models.WorkshopList, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListWorkshops", arg0, arg1, arg2)
-	ret0, _ := ret[0].(WorkshopList)
+	ret0, _ := ret[0].(models.WorkshopList)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

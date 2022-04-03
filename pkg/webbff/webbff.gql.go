@@ -14,25 +14,29 @@ import (
 	"github.com/smartnuance/saas-kit/pkg/lib/roles"
 )
 
-func (r *mutationResolver) CreateWorkshop(ctx context.Context, input models.WorkshopInput) (workshop *models.Workshop, err error) {
+func (r *mutationResolver) CreateWorkshop(ctx context.Context, input models.WorkshopInput) (*models.Workshop, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) Workshops(ctx context.Context) (workshops []models.Workshop, err error) {
+func (r *queryResolver) Workshops(ctx context.Context) (*models.WorkshopList, error) {
 	req, err := http.NewRequest("GET", "http://"+r.Service.eventServiceAddress+"/workshop/list", nil)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	req.Header.Add("Authorization", ctx.Value("Authorization").(string))
 	req.Header.Add(roles.RoleHeader, ctx.Value(roles.RoleKey).(string))
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return
+		return nil, err
 	}
 	defer resp.Body.Close()
-	err = json.NewDecoder(resp.Body).Decode(&workshops)
-	return
+	var workshopList models.WorkshopList
+	err = json.NewDecoder(resp.Body).Decode(&workshopList)
+	if err != nil {
+		return nil, err
+	}
+	return &workshopList, nil
 }
 
 // Mutation returns queries.MutationResolver implementation.

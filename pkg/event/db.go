@@ -27,7 +27,7 @@ type DBAPI interface {
 	Commit(tx *sql.Tx) error
 	Rollback(tx *sql.Tx) error
 	CreateWorkshop(ctx context.Context, data *models.WorkshopInput) (workshop *m.Workshop, err error)
-	ListWorkshops(ctx context.Context, instanceID string, page paging.Page) (list WorkshopList, err error)
+	ListWorkshops(ctx context.Context, instanceID string, page paging.Page) (list models.WorkshopList, err error)
 	GetWorkshop(ctx context.Context, workshopID string) (workshop *m.Workshop, err error)
 	DeleteWorkshop(ctx context.Context, workshopID string) (err error)
 	CreateEvent(ctx context.Context, data *models.Event) (event *m.Event, err error)
@@ -75,7 +75,7 @@ func (db *dbAPI) CreateWorkshop(ctx context.Context, data *models.WorkshopInput)
 	return
 }
 
-func (db *dbAPI) ListWorkshops(ctx context.Context, instanceID string, page paging.Page) (list WorkshopList, err error) {
+func (db *dbAPI) ListWorkshops(ctx context.Context, instanceID string, page paging.Page) (list models.WorkshopList, err error) {
 	results, err := m.Workshops(
 		qm.InnerJoin(fmt.Sprintf("%s on %s = %s", m.TableNames.Events, m.EventTableColumns.ID, m.WorkshopColumns.EventID)),
 		qm.Load(m.WorkshopRels.Event),
@@ -88,7 +88,7 @@ func (db *dbAPI) ListWorkshops(ctx context.Context, instanceID string, page pagi
 		return
 	}
 
-	list.Workshops = []models.Workshop{}
+	list.Items = []models.Workshop{}
 	for _, w := range results {
 		if w == nil {
 			err = errors.New("got nil workshop row")
@@ -101,26 +101,26 @@ func (db *dbAPI) ListWorkshops(ctx context.Context, instanceID string, page pagi
 			return
 		}
 
-		list.Workshops = append(list.Workshops, workshop)
+		list.Items = append(list.Items, workshop)
 	}
 
-	list.Paging.Current.PageSize = len(list.Workshops)
-	if len(list.Workshops) > 0 {
-		list.Paging.Current.StartIDIncl = list.Workshops[0].ID
-		list.Paging.Current.EndIDIncl = list.Workshops[len(list.Workshops)-1].ID
+	list.Paging = &models.Paging{Cur: &models.FullSpec{PageSize: len(list.Items)}}
+	if len(list.Items) > 0 {
+		list.Paging.Cur.Start = list.Items[0].ID
+		list.Paging.Cur.End = list.Items[len(list.Items)-1].ID
 
 		_, isFirst := page.(*paging.FirstSpec)
 		if !isFirst {
-			list.Paging.Previous = &paging.PreviousSpec{
-				EndIDExcl: list.Workshops[0].ID,
-				PageSize:  page.Size(),
+			list.Paging.Prev = &models.PreviousSpec{
+				End:      list.Items[0].ID,
+				PageSize: page.Size(),
 			}
 		}
-		isLast := len(list.Workshops) < page.Size()
+		isLast := len(list.Items) < page.Size()
 		if !isLast {
-			list.Paging.Next = &paging.NextSpec{
-				StartIDExcl: list.Workshops[len(list.Workshops)-1].ID,
-				PageSize:    page.Size(),
+			list.Paging.Next = &models.NextSpec{
+				Start:    list.Items[len(list.Items)-1].ID,
+				PageSize: page.Size(),
 			}
 		}
 	}
