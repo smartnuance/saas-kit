@@ -1,11 +1,14 @@
 package event
 
 import (
+	"io/ioutil"
+
 	"github.com/friendsofgo/errors"
+	"github.com/smartnuance/saas-kit/pkg/auth"
 	m "github.com/smartnuance/saas-kit/pkg/event/dbmodels"
-	"github.com/smartnuance/saas-kit/pkg/graph/models"
 	"github.com/smartnuance/saas-kit/pkg/lib/paging"
 	"github.com/smartnuance/saas-kit/pkg/lib/roles"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/gin-gonic/gin"
 )
@@ -17,8 +20,13 @@ func (s *Service) CreateWorkshop(ctx *gin.Context) (workshop *m.Workshop, err er
 		return
 	}
 
-	var data models.WorkshopInput
-	err = ctx.ShouldBind(&data)
+	jsonData, err := ioutil.ReadAll(ctx.Request.Body)
+	if err != nil {
+		err = errors.WithStack(err)
+		return
+	}
+	var data Workshop
+	err = protojson.Unmarshal(jsonData, &data)
 	if err != nil {
 		err = errors.WithStack(err)
 		return
@@ -39,11 +47,11 @@ func (s *Service) CreateWorkshop(ctx *gin.Context) (workshop *m.Workshop, err er
 	}
 
 	var event *m.Event
-	if data.EventID == "" {
-		// create event for this specific event
-		event, err = s.DBAPI.CreateEvent(ctx, &models.Event{
-			Instance: &models.Instance{ID: data.Instance},
-			EventInfo: &models.EventInfo{
+	if data.BelongsTo == nil {
+		// create event for this specific workshop
+		event, err = s.DBAPI.CreateEvent(ctx, &Event{
+			Instance: &auth.Instance{Id: data.Instance},
+			EventInfo: &Event_Info{
 				Title:        data.WorkshopInfo.Title,
 				LocationName: data.WorkshopInfo.LocationName,
 				LocationURL:  data.WorkshopInfo.LocationURL,
@@ -56,21 +64,21 @@ func (s *Service) CreateWorkshop(ctx *gin.Context) (workshop *m.Workshop, err er
 			err = errors.WithStack(err)
 			return
 		}
-		data.EventID = event.ID
+		data.BelongsTo = &Workshop_EventID{EventID: event.ID}
 	} else {
-		event, err = s.DBAPI.GetEvent(ctx, data.EventID)
+		event, err = s.DBAPI.GetEvent(ctx, data.Id)
 		if err != nil {
 			err = errors.WithStack(err)
 			return
 		}
-		data.EventID = event.ID
+		data.Id = event.ID
 	}
 
 	workshop, err = s.DBAPI.CreateWorkshop(ctx, &data)
 	return
 }
 
-func (s *Service) ListWorkshops(ctx *gin.Context) (list models.WorkshopList, err error) {
+func (s *Service) ListWorkshops(ctx *gin.Context) (list WorkshopList, err error) {
 	// Check permission
 	if !roles.CanActIn(ctx, roles.RoleEventOrganizer) {
 		r, _ := roles.FromContext(ctx)

@@ -8,6 +8,8 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/smartnuance/saas-kit/pkg/lib/roles"
 	"github.com/smartnuance/saas-kit/pkg/lib/tokens"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 )
 
 func router(s *Service) *gin.Engine {
@@ -71,7 +73,7 @@ func (s *Service) ListWorkshopHandler() gin.HandlerFunc {
 			log.Error().Stack().Err(err).Msg("")
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 		} else {
-			ctx.JSON(http.StatusOK, workshops)
+			respondProto(ctx, &workshops)
 		}
 	}
 }
@@ -86,5 +88,15 @@ func (s *Service) DeleteWorkshopHandler() gin.HandlerFunc {
 		} else {
 			ctx.Status(http.StatusOK)
 		}
+	}
+}
+
+func respondProto(ctx *gin.Context, m proto.Message) {
+	jsonData, err := protojson.Marshal(m)
+	if err != nil {
+		log.Error().Stack().Err(err).Msg("")
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+	} else {
+		ctx.Data(http.StatusOK, "application/json", jsonData)
 	}
 }

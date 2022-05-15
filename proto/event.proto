@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+option go_package = "github.com/smartnuance/saas-kit/pkg/event";
+
+import "google/protobuf/timestamp.proto";
+import "proto/paging.proto";
+import "proto/auth.proto";
+
+service EventService {
+  rpc GetWorkshops(Paging) returns (WorkshopList) {}
+  rpc CreateWorkshop(Workshop) returns (Workshop) {}
+}
+
+message Event {
+  string id = 1;
+  Instance instance = 2;
+  Info eventInfo = 3;
+  google.protobuf.Timestamp starts = 4;
+  google.protobuf.Timestamp ends = 5;
+  repeated Workshop workshps = 6;
+
+  message Info {
+    string title = 1;
+    string slug = 2;
+    string locationName = 3;
+    string locationURL = 4;
+  }
+}
+
+message Workshop {
+  string id = 1;
+  string instance = 2;
+  Info workshopInfo = 3;
+  google.protobuf.Timestamp starts = 4;
+  google.protobuf.Timestamp ends = 5;
+  oneof belongsTo {
+    Event event = 6;
+    string eventID = 7;
+  }
+
+  message Info {
+    string title = 1;
+    string slug = 2;
+    string locationName = 3;
+    string locationURL = 4;
+    bool couples = 5;
+  }
+}
+
+message WorkshopList {
+  repeated Workshop items = 1;
+  Paging paging = 2;
+}

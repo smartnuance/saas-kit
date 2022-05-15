@@ -8,14 +8,14 @@ import (
 
 func (w whereHelperstring) Page(page paging.Page) qm.QueryMod {
 	switch spec := page.(type) {
-	case *paging.FirstSpec:
-		return qm.Limit(spec.PageSize)
-	case *paging.PreviousSpec:
-		return qm.Expr(w.LT(spec.EndIDExcl), qm.Limit(spec.PageSize))
-	case *paging.FullSpec:
-		return qm.Expr(w.GT(spec.StartIDIncl), w.LT(spec.EndIDIncl), qm.Limit(spec.PageSize))
-	case *paging.NextSpec:
-		return qm.Expr(w.GT(spec.StartIDExcl), qm.Limit(spec.PageSize))
+	case *paging.Paging_First:
+		return qm.Limit(int(spec.GetPageSize()))
+	case *paging.Paging_Previous:
+		return qm.Expr(w.LT(spec.End), qm.Limit(int(spec.GetPageSize())))
+	case *paging.Paging_Current:
+		return qm.Expr(w.GT(spec.Start), w.LT(spec.End), qm.Limit(int(spec.GetPageSize())))
+	case *paging.Paging_Next:
+		return qm.Expr(w.GT(spec.Start), qm.Limit(int(spec.PageSize)))
 	default:
 		// identity function not modifying query
 		return qm.QueryModFunc(func(q *queries.Query) {})

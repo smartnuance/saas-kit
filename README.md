@@ -156,6 +156,9 @@ To run all generators recursively:
 
 > go generate ./...
 
+This should also trigger the protobuf generation with `protoc` defined in `go:generate`in [`tools.go`](./tools.go).
+
+
 ### Migrate database
 
 To interact with database, we use a schema first approach with [sqlboiler](https://github.com/volatiletech/sqlboiler#getting-started). It generates type-safe code to interact with the DB.
@@ -179,7 +182,6 @@ Migrate services:
 When database is on newest version, we have to generated git-versioned DB models by
 
 > go generate ./pkg/auth/db.go
-
 
 ### Build service(s)
 

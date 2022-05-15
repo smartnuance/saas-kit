@@ -1,17 +1,13 @@
 package webbff
 
 import (
-	"context"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 
-	"github.com/99designs/gqlgen/graphql/handler"
-	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
-	"github.com/smartnuance/saas-kit/pkg/graph/queries"
 	"github.com/smartnuance/saas-kit/pkg/lib/roles"
 )
 
@@ -36,21 +32,7 @@ func router(s *Service) *gin.Engine {
 	router.Any("/auth/*proxyPath", ReverseProxy(s.authServiceAddress))
 	router.Any("/event/*proxyPath", ReverseProxy(s.eventServiceAddress))
 
-	srv := handler.NewDefaultServer(queries.NewExecutableSchema(queries.Config{Resolvers: &Resolver{s}}))
-	router.Any("/", gin.WrapH(playground.Handler("GraphQL playground", "/query")))
-	router.Any("/query", gin.WrapH(AuthHandler(srv)))
-
 	return router
-}
-
-func AuthHandler(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// merge headers into request context
-		ctx := context.WithValue(r.Context(), "Authorization", r.Header.Get("Authorization"))
-		ctx = context.WithValue(ctx, roles.RoleKey, r.Header.Get(roles.RoleHeader))
-		ctx = context.WithValue(ctx, roles.InstanceKey, r.Header.Get(roles.InstanceHeader))
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
 }
 
 type MyTransport struct {
