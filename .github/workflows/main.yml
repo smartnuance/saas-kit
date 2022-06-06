@@ -7,6 +7,7 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    environment: prod
     permissions:
       packages: write
       contents: read
@@ -14,7 +15,11 @@ jobs:
       - uses: earthly/actions/setup-earthly@v1
         with:
           version: v0.6.15
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+      - name: Unlock secret directory
+        uses: sliteteam/github-action-git-crypt-unlock@1.2.0
+        env:
+          GIT_CRYPT_KEY: ${{ secrets.GIT_CRYPT_KEY }}
       - name: Log in to container registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
       - name: what earthly version is installed?

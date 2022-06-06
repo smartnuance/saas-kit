@@ -27,5 +27,3 @@ gen/
 .env.*
 
 bin/
-
-prod/*
