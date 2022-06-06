@@ -1,0 +1,7 @@
+.devcontainer
+.github
+.venv
+.vscode
+
+.env.prod
+secret/

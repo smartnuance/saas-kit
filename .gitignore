@@ -24,8 +24,7 @@ gen/
 # VS Code related
 .vscode/
 
-.env.*
+.env.dev
 
 bin/
-
-prod/*
+dev
