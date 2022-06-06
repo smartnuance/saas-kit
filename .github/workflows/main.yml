@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: earthly/actions/setup-earthly@v1
         with:
-          version: v0.5.10
+          version: v0.6.15
       - uses: actions/checkout@v2
       - name: Log in to container registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin

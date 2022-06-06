@@ -24,7 +24,7 @@ type AccessTokenClaims struct {
 	Purpose  string `json:"purp"`
 	Role     string `json:"role"`
 	Instance string `json:"inst"`
-	jwt.StandardClaims
+	jwt.RegisteredClaims
 }
 
 // RefreshTokenClaims contain everything necessary to recreate an accesstoken,
@@ -32,7 +32,7 @@ type AccessTokenClaims struct {
 type RefreshTokenClaims struct {
 	Purpose  string `json:"purp"`
 	Instance string `json:"inst"`
-	jwt.StandardClaims
+	jwt.RegisteredClaims
 }
 
 const BearerSchema = "Bearer "

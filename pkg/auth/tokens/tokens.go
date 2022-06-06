@@ -74,12 +74,12 @@ func (c *TokenController) GenerateAccessToken(userID, instanceID string, role ro
 		Purpose:  tokens.AccessPurpose,
 		Role:     string(role),
 		Instance: instanceID,
-		StandardClaims: jwt.StandardClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   userID,
-			ExpiresAt: time.Now().Add(time.Minute * 15).Unix(),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 15)),
 			Issuer:    c.Issuer,
-			IssuedAt:  time.Now().Unix(),
-			Audience:  c.Audience,
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			Audience:  []string{c.Audience},
 		},
 	}
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodRS256, &claims)
@@ -97,12 +97,12 @@ func (c *TokenController) GenerateRefreshToken(userID, instanceID string) (token
 	claims := tokens.RefreshTokenClaims{
 		Purpose:  tokens.RefreshPurpose,
 		Instance: instanceID,
-		StandardClaims: jwt.StandardClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   userID,
-			ExpiresAt: expiresAt.Unix(),
+			ExpiresAt: jwt.NewNumericDate(expiresAt),
 			Issuer:    c.Issuer,
-			IssuedAt:  time.Now().Unix(),
-			Audience:  c.Audience,
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			Audience:  []string{c.Audience},
 		},
 	}
 

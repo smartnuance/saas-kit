@@ -1,6 +1,6 @@
 module github.com/smartnuance/saas-kit
 
-go 1.17
+go 1.18
 
 require (
 	github.com/RichardKnop/go-fixtures v0.0.0-20191226211317-8d7ddb76c9e2

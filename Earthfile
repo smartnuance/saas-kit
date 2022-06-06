@@ -1,4 +1,4 @@
-FROM golang:1.17-buster
+FROM golang:1.18-bullseye
 RUN apt-get -y update && apt-get -y upgrade && apt-get -y install git
 WORKDIR /work
 
@@ -15,7 +15,7 @@ build:
     SAVE ARTIFACT $service AS LOCAL bin/$service
 
 publish:
-    FROM debian:buster
+    FROM debian:bullseye
 
     WORKDIR /app
     COPY +build/$service .
@@ -30,6 +30,6 @@ publish:
     SAVE IMAGE --push ghcr.io/smartnuance/saas-kit:latest
 
 lint:
-    RUN go install honnef.co/go/tools/cmd/staticcheck@2021.1
+    RUN go install honnef.co/go/tools/cmd/staticcheck@2022.1
     COPY . ./
     RUN staticcheck ./...
