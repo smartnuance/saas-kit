@@ -1,0 +1,21 @@
+name: Rollout k8s deployment and dependencies using latest docker image from registry
+
+on:
+  workflow_dispatch:
+
+jobs:
+  publish:
+    uses: ./.github/workflows/publish.yml
+  deploy:
+    runs-on: ubuntu-latest
+    environment: prod
+    permissions:
+      packages: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v3
+      - name: Unlock secret directory
+        uses: sliteteam/github-action-git-crypt-unlock@1.2.0
+        env:
+          GIT_CRYPT_KEY: ${{ secrets.GIT_CRYPT_KEY }}
+      # TODO add k8s apply steps to deploy

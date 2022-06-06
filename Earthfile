@@ -1,16 +1,20 @@
+VERSION 0.6
 FROM golang:1.18-bullseye
-RUN apt-get -y update && apt-get -y upgrade && apt-get -y install git
+RUN apt-get -y update && apt-get -y upgrade && apt-get -y install git git-crypt
 WORKDIR /work
 
 all:
     BUILD +build
     BUILD +lint
 
+setup:
+    COPY . ./
+
 build:
+    FROM +setup
     ARG service
     RUN go install github.com/ahmetb/govvv@latest
     
-    COPY . ./
     RUN govvv build ./cmd/$service
     SAVE ARTIFACT $service AS LOCAL bin/$service
 
@@ -22,7 +26,7 @@ publish:
     COPY .env .
     COPY .env* .
     COPY pkg/event/modelinfo ./modelinfo
-    COPY prod ./prod
+    COPY public ./public
 
     EXPOSE 8800
     ENTRYPOINT ["/app/dev"]
@@ -30,6 +34,7 @@ publish:
     SAVE IMAGE --push ghcr.io/smartnuance/saas-kit:latest
 
 lint:
+    FROM +setup
     RUN go install honnef.co/go/tools/cmd/staticcheck@2022.1
-    COPY . ./
+
     RUN staticcheck ./...

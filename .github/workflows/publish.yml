@@ -1,12 +1,15 @@
-name: CI
+name: Build & publish docker image with the latest release
 
 on:
+  workflow_call:
+  workflow_dispatch:
   release:
     types: [created]
 
 jobs:
   publish:
     runs-on: ubuntu-latest
+    environment: prod
     permissions:
       packages: write
       contents: read
@@ -14,7 +17,7 @@ jobs:
       - uses: earthly/actions/setup-earthly@v1
         with:
           version: v0.6.15
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Log in to container registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
       - name: what earthly version is installed?
