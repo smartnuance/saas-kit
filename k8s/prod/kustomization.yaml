@@ -1,0 +1,6 @@
+namespace: saaskit
+bases:
+  - ../base
+  - ../../secret/prod
+resources:
+  - namespace.yaml

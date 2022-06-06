@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: saaskit
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+spec:
+  tls:
+  - hosts:
+    - saas-kit.smartnuance.com
+    secretName: saaskit-tls
+  rules:
+  - host: saas-kit.smartnuance.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: saaskit
+            port:
+              number: 8000
+  ingressClassName: nginx

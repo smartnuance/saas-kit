@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: saaskit
+spec:
+  selector:
+    matchLabels:
+      app: saaskit
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: saaskit
+    spec:
+      containers:
+        - name: all-services
+          image: ghcr.io/smartnuance/saas-kit:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8800
+          env:
+            - name: SAAS_KIT_ENV
+              value: prod
+          volumeMounts:
+            - mountPath: /app/.env.prod
+              subPath: ".env.prod"
+              name: env
+            - mountPath: /app/secret/prod
+              name: keys
+      volumes:
+        - name: env
+          secret:
+            secretName: saaskit-env
+        - name: keys
+          secret:
+            secretName: saaskit-keys
