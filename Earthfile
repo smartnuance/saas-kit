@@ -24,9 +24,9 @@ publish:
     WORKDIR /app
     COPY +build/$service .
     COPY .env .
-    COPY .env* .
     COPY pkg/event/modelinfo ./modelinfo
     COPY public ./public
+    COPY ./pkg/auth/fixtures/instances.yml .
 
     EXPOSE 8800
     ENTRYPOINT ["/app/dev"]

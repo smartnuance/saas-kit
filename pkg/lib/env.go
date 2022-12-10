@@ -29,7 +29,7 @@ func EnvMux(serviceName string) (envs map[string]string, err error) {
 		return
 	}
 
-	p := ".env." + env
+	p := "secret/" + env + "/.env"
 	envOverrides, err := godotenv.Read(p)
 	if err != nil {
 		err = errors.Wrap(err, "error loading env file from "+p)
@@ -42,7 +42,7 @@ func EnvMux(serviceName string) (envs map[string]string, err error) {
 	}
 
 	if serviceName != "" {
-		p = ".env." + serviceName
+		p = "secret/" + env + "/" + serviceName + ".env"
 		envOverrides, err = godotenv.Read(p)
 		if err != nil {
 			err = errors.Wrap(err, "error loading env file from "+p)

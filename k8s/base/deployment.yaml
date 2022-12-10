@@ -22,15 +22,9 @@ spec:
             - name: SAAS_KIT_ENV
               value: prod
           volumeMounts:
-            - mountPath: /app/.env.prod
-              subPath: ".env.prod"
-              name: env
             - mountPath: /app/secret/prod
-              name: keys
+              name: env
       volumes:
         - name: env
           secret:
             secretName: saaskit-env
-        - name: keys
-          secret:
-            secretName: saaskit-keys
