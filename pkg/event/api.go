@@ -35,21 +35,7 @@ func router(s *Service) *gin.Engine {
 	api.GET("/workshop/list", s.ListWorkshopHandler())
 	api.DELETE("/workshop/:id", s.DeleteWorkshopHandler())
 
-	// without authorization middleware
-	s.AddInfoHandlers(api.Group("/info"))
-
 	return router
-}
-
-// AddInfoHandlers adds new handlers to retrieve model structure info.
-func (s *Service) AddInfoHandlers(routerGroup *gin.RouterGroup) {
-	dir := http.Dir(s.modelInfoPath)
-	routerGroup.GET("/workshop", func(ctx *gin.Context) {
-		ctx.FileFromFS("/workshop.json", dir)
-	})
-	routerGroup.GET("/event", func(ctx *gin.Context) {
-		ctx.FileFromFS("/event.json", dir)
-	})
 }
 
 // CreateWorkshopHandler creates a new workshop.
