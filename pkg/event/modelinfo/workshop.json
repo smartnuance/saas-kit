@@ -30,25 +30,19 @@
           "read_only": false,
           "label": "Duration"
         },
-        "title": {
-          "type": "string",
-          "required": true,
-          "read_only": false,
-          "label": "Name",
-          "max_length": 255
-        },
-        "slug": {
-          "type": "slug",
-          "required": true,
-          "read_only": false,
-          "label": "Slug",
-          "max_length": 50
-        },
         "couples": {
           "type": "boolean",
           "required": true,
           "read_only": false,
           "label": "Couples"
+        },
+        "workshopInfo": {
+          "type": "content",
+          "required": true,
+          "read_only": false,
+          "label": "Info",
+          "service": "event",
+          "model": "workshopInfo"
         },
         "eventID": {
           "type": "relationalID",
@@ -65,20 +59,6 @@
           "label": "Event",
           "service": "event",
           "model": "event"
-        },
-        "locationName": {
-          "type": "string",
-          "required": false,
-          "read_only": false,
-          "label": "Location",
-          "max_length": 255
-        },
-        "locationURL": {
-          "type": "string",
-          "required": false,
-          "read_only": false,
-          "label": "Location URL",
-          "max_length": 255
         },
         "state": {
           "type": "choice",
@@ -99,6 +79,42 @@
               "display_name": "ARCHIVED"
             }
           ]
+        }
+      }
+    },
+    {
+      "name": "WorkshopInfo",
+      "name_plural": "WorkshopInfos",
+      "service": "event",
+      "model": "workshopInfo",
+      "fields": {
+        "title": {
+          "type": "string",
+          "required": true,
+          "read_only": false,
+          "label": "Name",
+          "max_length": 255
+        },
+        "slug": {
+          "type": "slug",
+          "required": true,
+          "read_only": false,
+          "label": "Slug",
+          "max_length": 50
+        },
+        "locationName": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "label": "Location",
+          "max_length": 255
+        },
+        "locationURL": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "label": "Location URL",
+          "max_length": 255
         }
       }
     },
@@ -126,6 +142,28 @@
           "read_only": false,
           "label": "Date"
         },
+        "instance": {
+          "type": "string",
+          "required": true,
+          "read_only": false,
+          "label": "Instance"
+        },
+        "eventInfo": {
+          "type": "content",
+          "required": true,
+          "read_only": false,
+          "label": "Info",
+          "service": "event",
+          "model": "eventInfo"
+        }
+      }
+    },
+    {
+      "name": "EventInfo",
+      "name_plural": "EventInfos",
+      "service": "event",
+      "model": "eventInfo",
+      "fields": {
         "title": {
           "type": "string",
           "required": true,
@@ -133,11 +171,12 @@
           "label": "Name",
           "max_length": 255
         },
-        "instance": {
-          "type": "string",
+        "slug": {
+          "type": "slug",
           "required": true,
           "read_only": false,
-          "label": "Instance"
+          "label": "Slug",
+          "max_length": 50
         },
         "locationName": {
           "type": "string",
